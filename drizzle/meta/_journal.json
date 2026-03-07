@@ -5,29 +5,8 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1772388636548,
+      "when": 1772823003740,
       "tag": "0000_enable_vector_extension",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1772388665920,
-      "tag": "0001_boring_toxin",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1772467200000,
-      "tag": "0002_ticket_type",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "7",
-      "when": 1772467260000,
-      "tag": "0003_remove_step_execution_attempt",
       "breakpoints": true
     }
   ]

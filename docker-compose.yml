@@ -1,0 +1,21 @@
+services:
+  db:
+    image: pgvector/pgvector:pg17
+    container_name: boboddy-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: boboddy
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "6429:5432"
+    volumes:
+      - boboddy_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d boboddy"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  boboddy_postgres_data:

@@ -1,0 +1,58 @@
+{
+  "name": "boboddy",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "pnpm@10.30.2",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "docker compose up -d db && next dev",
+    "dev:prod": "set -a && . ./.env.prod && set +a && next dev",
+    "dev:neon-dev": "set -a && . ./.env.neon-dev && set +a && next dev",
+    "build": "next build",
+    "start": "next start",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "db:generate": "drizzle-kit generate",
+    "db:push": "drizzle-kit push",
+    "db:push:prod_be_careful": "set -a && . ./.env.prod && set +a && drizzle-kit push",
+    "db:push:neon-dev": "set -a && . ./.env.neon-dev && set +a && drizzle-kit push"
+  },
+  "dependencies": {
+    "@ai-sdk/openai-compatible": "^2.0.30",
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.1",
+    "@mui/icons-material": "^7.3.8",
+    "@mui/material": "^7.3.8",
+    "@mui/material-nextjs": "^7.3.8",
+    "ai": "^6.0.103",
+    "chart.js": "^4.5.1",
+    "drizzle-orm": "^0.45.1",
+    "jira.js": "5.3.0",
+    "next": "16.1.6",
+    "octokit": "^5.0.5",
+    "postgres": "^3.4.8",
+    "react": "19.2.3",
+    "react-chartjs-2": "^5.3.1",
+    "react-dom": "19.2.3",
+    "uuid": "^13.0.0",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@testcontainers/postgresql": "^11.12.0",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "drizzle-kit": "^0.31.9",
+    "eslint": "^9",
+    "eslint-config-next": "16.1.6",
+    "tailwindcss": "^4",
+    "testcontainers": "^11.12.0",
+    "typescript": "^5",
+    "vitest": "^4.0.18"
+  }
+}

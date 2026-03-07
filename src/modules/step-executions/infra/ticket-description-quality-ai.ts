@@ -1,0 +1,112 @@
+import { spawn } from "node:child_process";
+import { z } from "zod";
+
+export type RankTicketDescriptionInput = {
+  title: string;
+  description: string;
+};
+
+export type RankTicketDescriptionOutput = {
+  stepsToReproduceScore: number;
+  expectedBehaviorScore: number;
+  observedBehaviorScore: number;
+  reasoning: string;
+  rawResponse: string;
+};
+
+export interface TicketDescriptionQualityAi {
+  rankTicketDescription(
+    input: RankTicketDescriptionInput,
+  ): Promise<RankTicketDescriptionOutput>;
+}
+
+const codexResponseSchema = z.object({
+  stepsToReproduceScore: z.number().int().min(1).max(5),
+  expectedBehaviorScore: z.number().int().min(1).max(5),
+  observedBehaviorScore: z.number().int().min(1).max(5),
+  reasoning: z.string().min(1),
+});
+
+const buildPrompt = (input: RankTicketDescriptionInput): string => `You are evaluating ticket quality.
+Given the ticket title and description below, rank from 1-5 (5 is best) how well the ticket describes:
+1. Steps to reproduce
+2. Expected behavior
+3. Observed behavior (including any error messages)
+
+Return strictly valid JSON using exactly this shape:
+{
+  "stepsToReproduceScore": 1-5,
+  "expectedBehaviorScore": 1-5,
+  "observedBehaviorScore": 1-5,
+  "reasoning": "brief explanation"
+}
+
+Ticket title:
+${input.title}
+
+Ticket description:
+${input.description}
+`;
+
+const extractJsonObject = (rawOutput: string): string => {
+  const start = rawOutput.indexOf("{");
+  const end = rawOutput.lastIndexOf("}");
+  if (start === -1 || end === -1 || end <= start) {
+    throw new Error("Codex CLI did not return valid JSON");
+  }
+  return rawOutput.slice(start, end + 1);
+};
+
+const runCodexCli = (prompt: string): Promise<string> =>
+  new Promise((resolve, reject) => {
+    const child = spawn("codex", ["exec", prompt], {
+      stdio: ["ignore", "pipe", "pipe"],
+    });
+
+    let stdout = "";
+    let stderr = "";
+
+    const timeout = setTimeout(() => {
+      child.kill();
+      reject(new Error("Codex CLI timed out"));
+    }, 120_000);
+
+    child.stdout.on("data", (chunk) => {
+      stdout += chunk.toString();
+    });
+    child.stderr.on("data", (chunk) => {
+      stderr += chunk.toString();
+    });
+
+    child.on("error", (error) => {
+      clearTimeout(timeout);
+      reject(error);
+    });
+
+    child.on("close", (code) => {
+      clearTimeout(timeout);
+      if (code !== 0) {
+        reject(new Error(`Codex CLI failed: ${stderr || `exit ${code}`}`));
+        return;
+      }
+      resolve(stdout.trim());
+    });
+  });
+
+export class CodexCliTicketDescriptionQualityAi
+  implements TicketDescriptionQualityAi
+{
+  async rankTicketDescription(
+    input: RankTicketDescriptionInput,
+  ): Promise<RankTicketDescriptionOutput> {
+    const rawResponse = await runCodexCli(buildPrompt(input));
+    const parsed = codexResponseSchema.parse(
+      JSON.parse(extractJsonObject(rawResponse)),
+    );
+
+    return {
+      ...parsed,
+      rawResponse,
+    };
+  }
+}

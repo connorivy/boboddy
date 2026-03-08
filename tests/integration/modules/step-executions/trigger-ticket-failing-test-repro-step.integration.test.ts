@@ -16,7 +16,7 @@ const hoisted = vi.hoisted(() => ({
   octokitConstructorMock: vi.fn(),
 }));
 
-vi.mock("octokit", () => {
+vi.mock("@octokit/rest", () => {
   class MockOctokit {
     request = hoisted.requestMock;
 

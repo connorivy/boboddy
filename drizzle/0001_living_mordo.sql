@@ -43,6 +43,11 @@ CREATE TABLE "failing_test_repro_attempts" (
 	"updated_at" timestamp with time zone NOT NULL
 );
 --> statement-breakpoint
+CREATE TABLE "pipeline_runs" (
+	"id" text PRIMARY KEY NOT NULL,
+	"ticket_id" text NOT NULL
+);
+--> statement-breakpoint
 CREATE TABLE "ticket_description_quality_assessments" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"ticket_id" text NOT NULL,
@@ -84,7 +89,7 @@ CREATE TABLE "ticket_github_issues" (
 --> statement-breakpoint
 CREATE TABLE "ticket_step_executions" (
 	"id" serial PRIMARY KEY NOT NULL,
-	"ticket_id" text NOT NULL,
+	"pipeline_id" text NOT NULL,
 	"step_name" text NOT NULL,
 	"status" "step_execution_status" NOT NULL,
 	"idempotency_key" text NOT NULL,
@@ -95,8 +100,8 @@ CREATE TABLE "ticket_step_executions" (
 );
 --> statement-breakpoint
 CREATE TABLE "ticket_step_executions_tph" (
-	"id" serial PRIMARY KEY NOT NULL,
-	"ticket_id" text NOT NULL,
+	"id" text PRIMARY KEY NOT NULL,
+	"pipeline_id" text NOT NULL,
 	"step_name" text NOT NULL,
 	"type" text NOT NULL,
 	"status" "step_execution_status" NOT NULL,
@@ -160,13 +165,12 @@ CREATE TABLE "tickets" (
 --> statement-breakpoint
 ALTER TABLE "failing_test_repro_attempts" ADD CONSTRAINT "failing_test_repro_attempts_ticket_id_tickets_id_fk" FOREIGN KEY ("ticket_id") REFERENCES "public"."tickets"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "failing_test_repro_attempts" ADD CONSTRAINT "failing_test_repro_attempts_step_execution_id_ticket_step_executions_id_fk" FOREIGN KEY ("step_execution_id") REFERENCES "public"."ticket_step_executions"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "pipeline_runs" ADD CONSTRAINT "pipeline_runs_ticket_id_tickets_id_fk" FOREIGN KEY ("ticket_id") REFERENCES "public"."tickets"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "ticket_description_quality_assessments" ADD CONSTRAINT "ticket_description_quality_assessments_ticket_id_tickets_id_fk" FOREIGN KEY ("ticket_id") REFERENCES "public"."tickets"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "ticket_embeddings" ADD CONSTRAINT "ticket_embeddings_ticket_id_tickets_id_fk" FOREIGN KEY ("ticket_id") REFERENCES "public"."tickets"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "ticket_git_environments" ADD CONSTRAINT "ticket_git_environments_ticket_id_tickets_id_fk" FOREIGN KEY ("ticket_id") REFERENCES "public"."tickets"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "ticket_git_environments" ADD CONSTRAINT "ticket_git_environments_base_environment_id_environments_environment_key_fk" FOREIGN KEY ("base_environment_id") REFERENCES "public"."environments"("environment_key") ON DELETE restrict ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "ticket_github_issues" ADD CONSTRAINT "ticket_github_issues_ticket_id_tickets_id_fk" FOREIGN KEY ("ticket_id") REFERENCES "public"."tickets"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "ticket_step_executions" ADD CONSTRAINT "ticket_step_executions_ticket_id_tickets_id_fk" FOREIGN KEY ("ticket_id") REFERENCES "public"."tickets"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "ticket_step_executions_tph" ADD CONSTRAINT "ticket_step_executions_tph_ticket_id_tickets_id_fk" FOREIGN KEY ("ticket_id") REFERENCES "public"."tickets"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "tickets" ADD CONSTRAINT "tickets_default_git_environment_id_ticket_git_environments_id_fk" FOREIGN KEY ("default_git_environment_id") REFERENCES "public"."ticket_git_environments"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
 CREATE UNIQUE INDEX "failing_test_repro_attempts_idempotency_key_unique" ON "failing_test_repro_attempts" USING btree ("idempotency_key");--> statement-breakpoint
 CREATE UNIQUE INDEX "ticket_embeddings_ticket_id_unique" ON "ticket_embeddings" USING btree ("ticket_id");--> statement-breakpoint

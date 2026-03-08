@@ -106,69 +106,50 @@ export async function advancePipeline(
     throw httpError(`Pipeline run with ID ${pipelineRunId} has no steps`, 400);
   }
 
-  const lastCompletedStep =
-    pipelineRun.pipelineSteps?.find(
-      (step) => step.id === pipelineRun.currentStepExecutionId,
-    ) ?? null;
+  const lastSavedStep =
+    [...(pipelineRun.pipelineSteps ?? [])].sort((a, b) => {
+      const startedAtDiff = Date.parse(b.startedAt) - Date.parse(a.startedAt);
+      if (startedAtDiff !== 0) {
+        return startedAtDiff;
+      }
 
-  if (!lastCompletedStep) {
-    throw httpError(
-      `Current step execution with ID ${pipelineRun.currentStepExecutionId} not found for pipeline run ${pipelineRunId}`,
-      404,
-    );
+      return String(b.id).localeCompare(String(a.id));
+    })[0] ?? null;
+
+  if (!lastSavedStep) {
+    throw httpError(`Pipeline run with ID ${pipelineRunId} has no steps`, 400);
   }
 
   // todo: make pipeline more flexible
-  if (lastCompletedStep.status !== "succeeded") {
+  if (lastSavedStep.status !== "succeeded") {
     throw httpError(
-      `Current step execution with ID ${pipelineRun.currentStepExecutionId} is not completed for pipeline run ${pipelineRunId}`,
+      `Latest step execution with ID ${lastSavedStep.id} is not completed for pipeline run ${pipelineRunId}`,
       400,
     );
   }
 
   const currentStepIndex = PIPELINE_STEP_SEQUENCE.indexOf(
-    lastCompletedStep.stepName,
+    lastSavedStep.stepName,
   );
   if (currentStepIndex === -1) {
     throw httpError(
-      `Step '${lastCompletedStep.stepName}' is not part of the pipeline sequence`,
+      `Step '${lastSavedStep.stepName}' is not part of the pipeline sequence`,
       400,
     );
   }
 
   const nextStepName = PIPELINE_STEP_SEQUENCE[currentStepIndex + 1];
-  const now = new Date();
 
   if (!nextStepName) {
-    pipelineRun.status = "succeeded";
-    pipelineRun.currentStepName = null;
-    pipelineRun.currentStepExecutionId = null;
-    pipelineRun.lastCompletedStepName = lastCompletedStep.stepName;
-    pipelineRun.endedAt = now;
-    pipelineRun.updatedAt = now;
-    const savedRun = await pipelineRunRepo.save(pipelineRun);
-    return pipelineRunEntityToContract(savedRun);
+    return pipelineRunEntityToContract(pipelineRun);
   }
 
-  // todo: merge transactions
-  const nextStep = await stepExecutionRepo.save(
+  await stepExecutionRepo.save(
     buildQueuedStepExecution(pipelineRun.id, nextStepName),
   );
-
-  pipelineRun.status = "running";
-  pipelineRun.currentStepName = nextStep.stepName;
-  pipelineRun.currentStepExecutionId = nextStep.id ?? null;
-  pipelineRun.lastCompletedStepName = lastCompletedStep.stepName;
-  pipelineRun.updatedAt = now;
-  pipelineRun.endedAt = null;
-
-  const savedPipelineRun = await pipelineRunRepo.save(pipelineRun);
-  const refreshedPipelineRun = await pipelineRunRepo.loadById(
-    savedPipelineRun.id,
-    {
-      includePipelineSteps: true,
-    },
-  );
+  const refreshedPipelineRun = await pipelineRunRepo.loadById(pipelineRun.id, {
+    includePipelineSteps: true,
+  });
 
   if (!refreshedPipelineRun) {
     throw httpError(`Pipeline run with ID ${pipelineRunId} not found`, 404);

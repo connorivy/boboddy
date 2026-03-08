@@ -9,13 +9,6 @@ export function pipelineRunEntityToContract(
   return pipelineRunSchema.parse({
     pipelineRunId: pipelineRun.id,
     ticketId: pipelineRun.ticketId,
-    status: pipelineRun.status,
-    currentStepName: pipelineRun.currentStepName,
-    currentStepExecutionId: pipelineRun.currentStepExecutionId,
-    lastCompletedStepName: pipelineRun.lastCompletedStepName,
-    haltReason: pipelineRun.haltReason,
-    startedAt: pipelineRun.startedAt.toISOString(),
-    endedAt: pipelineRun.endedAt?.toISOString() ?? null,
     stepExecutions:
       pipelineRun.pipelineSteps?.map(stepExecutionEntityToContract) ?? null,
   });

@@ -14,19 +14,7 @@ export class DrizzlePipelineRunRepo implements PipelineRunRepo {
   private readonly stepExecutionRepo = new DrizzleStepExecutionRepo();
 
   private toEntity(row: typeof pipelineRuns.$inferSelect): PipelineRunEntity {
-    return new PipelineRunEntity(
-      row.id,
-      row.ticketId,
-      row.status,
-      row.currentStepName,
-      row.currentStepExecutionId,
-      row.lastCompletedStepName,
-      row.haltReason,
-      row.startedAt,
-      row.endedAt,
-      row.createdAt,
-      row.updatedAt,
-    );
+    return new PipelineRunEntity(row.id, row.ticketId);
   }
 
   async loadById(
@@ -56,15 +44,6 @@ export class DrizzlePipelineRunRepo implements PipelineRunRepo {
     return new PipelineRunEntity(
       pipelineRun.id,
       pipelineRun.ticketId,
-      pipelineRun.status,
-      pipelineRun.currentStepName,
-      pipelineRun.currentStepExecutionId,
-      pipelineRun.lastCompletedStepName,
-      pipelineRun.haltReason,
-      pipelineRun.startedAt,
-      pipelineRun.endedAt,
-      pipelineRun.createdAt,
-      pipelineRun.updatedAt,
       stepExecutions,
     );
   }
@@ -75,7 +54,7 @@ export class DrizzlePipelineRunRepo implements PipelineRunRepo {
       .select()
       .from(pipelineRuns)
       .where(eq(pipelineRuns.ticketId, ticketId))
-      .orderBy(desc(pipelineRuns.startedAt), desc(pipelineRuns.createdAt));
+      .orderBy(desc(pipelineRuns.id));
 
     return rows.map((row) => this.toEntity(row));
   }
@@ -93,11 +72,7 @@ export class DrizzlePipelineRunRepo implements PipelineRunRepo {
       .select()
       .from(pipelineRuns)
       .where(inArray(pipelineRuns.ticketId, ticketIds))
-      .orderBy(
-        desc(pipelineRuns.startedAt),
-        desc(pipelineRuns.createdAt),
-        desc(pipelineRuns.id),
-      );
+      .orderBy(desc(pipelineRuns.id));
 
     const pipelineRunsByTicketId = new Map<string, PipelineRunEntity[]>();
     if (rows.length === 0) {
@@ -117,15 +92,6 @@ export class DrizzlePipelineRunRepo implements PipelineRunRepo {
           new PipelineRunEntity(
             pipelineRun.id,
             pipelineRun.ticketId,
-            pipelineRun.status,
-            pipelineRun.currentStepName,
-            pipelineRun.currentStepExecutionId,
-            pipelineRun.lastCompletedStepName,
-            pipelineRun.haltReason,
-            pipelineRun.startedAt,
-            pipelineRun.endedAt,
-            pipelineRun.createdAt,
-            pipelineRun.updatedAt,
             stepExecutionsByPipelineId.get(row.id) ?? [],
           ),
         );
@@ -158,15 +124,6 @@ export class DrizzlePipelineRunRepo implements PipelineRunRepo {
     const rows = pipelineRunsInput.map((pipelineRun) => ({
       id: pipelineRun.id,
       ticketId: pipelineRun.ticketId,
-      status: pipelineRun.status,
-      currentStepName: pipelineRun.currentStepName,
-      currentStepExecutionId: pipelineRun.currentStepExecutionId,
-      lastCompletedStepName: pipelineRun.lastCompletedStepName,
-      haltReason: pipelineRun.haltReason,
-      startedAt: pipelineRun.startedAt,
-      endedAt: pipelineRun.endedAt,
-      createdAt: pipelineRun.createdAt,
-      updatedAt: pipelineRun.updatedAt,
     }));
 
     const result = await db
@@ -176,15 +133,6 @@ export class DrizzlePipelineRunRepo implements PipelineRunRepo {
         target: pipelineRuns.id,
         set: {
           ticketId: sql`excluded.ticket_id`,
-          status: sql`excluded.status`,
-          currentStepName: sql`excluded.current_step_name`,
-          currentStepExecutionId: sql`excluded.current_step_execution_id`,
-          lastCompletedStepName: sql`excluded.last_completed_step_name`,
-          haltReason: sql`excluded.halt_reason`,
-          startedAt: sql`excluded.started_at`,
-          endedAt: sql`excluded.ended_at`,
-          createdAt: sql`excluded.created_at`,
-          updatedAt: sql`excluded.updated_at`,
         },
       })
       .returning();

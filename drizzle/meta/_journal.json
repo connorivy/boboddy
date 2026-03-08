@@ -12,22 +12,8 @@
     {
       "idx": 1,
       "version": "7",
-      "when": 1772826440012,
-      "tag": "0001_short_skreet",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1772997782103,
-      "tag": "0002_pretty_quasimodo",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "7",
-      "when": 1773072000000,
-      "tag": "0003_step_execution_pipeline_id",
+      "when": 1773090377921,
+      "tag": "0001_living_mordo",
       "breakpoints": true
     }
   ]

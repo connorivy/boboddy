@@ -1,6 +1,7 @@
 import { and, desc, eq, ilike, inArray, or, sql } from "drizzle-orm";
 import type { TicketSearchQuery } from "@/modules/tickets/contracts/ticket-contracts";
 import {
+  pipelineRuns,
   ticketGitEnvironments,
   ticketGithubIssues,
   ticketStepExecutionsTph,
@@ -86,7 +87,11 @@ export class DrizzleTicketRepo implements TicketRepo {
       const latestStepStatusSubquery = sql`(
         select tse.status
         from ${ticketStepExecutionsTph} as tse
-        where tse.ticket_id = ${tickets.id}
+        left join ${pipelineRuns} as pr on tse.pipeline_id = pr.id
+        where (
+            pr.ticket_id = ${tickets.id}
+            or tse.pipeline_id = ${tickets.id}
+          )
           and tse.step_name = ${query.stepName}
         order by tse.started_at desc, tse.id desc
         limit 1
@@ -98,7 +103,11 @@ export class DrizzleTicketRepo implements TicketRepo {
           not exists (
             select 1
             from ${ticketStepExecutionsTph} as tse
-            where tse.ticket_id = ${tickets.id}
+            left join ${pipelineRuns} as pr on tse.pipeline_id = pr.id
+            where (
+              pr.ticket_id = ${tickets.id}
+              or tse.pipeline_id = ${tickets.id}
+            )
               and tse.step_name = ${query.stepName}
           ) or ${latestStepStatusAsTextSubquery} = ${query.stepExecutionStatus}
         )`);
@@ -238,24 +247,26 @@ export class DrizzleTicketRepo implements TicketRepo {
       .onConflictDoUpdate({
         target: tickets.ticketNumber,
         set: {
-          id: sql`excluded.id`,
-          ticketNumber: sql`excluded.ticket_number`,
-          title: sql`excluded.title`,
-          slackThread: sql`excluded.slack_thread`,
-          status: sql`excluded.status`,
-          description: sql`excluded.description`,
-          companyNames: sql`excluded.company_names`,
-          employeeEmails: sql`excluded.employee_emails`,
-          priority: sql`excluded.priority`,
-          ticketType: sql`excluded.ticket_type`,
-          dueDate: sql`excluded.due_date`,
-          reporter: sql`excluded.reporter`,
-          assignee: sql`excluded.assignee`,
-          defaultGitEnvironmentId: sql`excluded.default_git_environment_id`,
-          createdAt: sql`excluded.created_at`,
-          jiraCreatedAt: sql`excluded.jira_created_at`,
-          jiraUpdatedAt: sql`excluded.jira_updated_at`,
-          updatedAt: sql`excluded.updated_at`,
+          id: sql.raw(`excluded.${tickets.id.name}`),
+          ticketNumber: sql.raw(`excluded.${tickets.ticketNumber.name}`),
+          title: sql.raw(`excluded.${tickets.title.name}`),
+          slackThread: sql.raw(`excluded.${tickets.slackThread.name}`),
+          status: sql.raw(`excluded.${tickets.status.name}`),
+          description: sql.raw(`excluded.${tickets.description.name}`),
+          companyNames: sql.raw(`excluded.${tickets.companyNames.name}`),
+          employeeEmails: sql.raw(`excluded.${tickets.employeeEmails.name}`),
+          priority: sql.raw(`excluded.${tickets.priority.name}`),
+          ticketType: sql.raw(`excluded.${tickets.ticketType.name}`),
+          dueDate: sql.raw(`excluded.${tickets.dueDate.name}`),
+          reporter: sql.raw(`excluded.${tickets.reporter.name}`),
+          assignee: sql.raw(`excluded.${tickets.assignee.name}`),
+          defaultGitEnvironmentId: sql.raw(
+            `excluded.${tickets.defaultGitEnvironmentId.name}`,
+          ),
+          createdAt: sql.raw(`excluded.${tickets.createdAt.name}`),
+          jiraCreatedAt: sql.raw(`excluded.${tickets.jiraCreatedAt.name}`),
+          jiraUpdatedAt: sql.raw(`excluded.${tickets.jiraUpdatedAt.name}`),
+          updatedAt: sql.raw(`excluded.${tickets.updatedAt.name}`),
         },
       })
       .returning();
@@ -275,7 +286,11 @@ export class DrizzleTicketRepo implements TicketRepo {
         / 3.0
       )
       from ${ticketStepExecutionsTph} as tse
-      where tse.ticket_id = ${tickets.id}
+      left join ${pipelineRuns} as pr on tse.pipeline_id = pr.id
+      where (
+        pr.ticket_id = ${tickets.id}
+        or tse.pipeline_id = ${tickets.id}
+      )
         and tse.step_name = ${TICKET_DESCRIPTION_QUALITY_STEP_NAME}
       order by tse.started_at desc, tse.id desc
       limit 1

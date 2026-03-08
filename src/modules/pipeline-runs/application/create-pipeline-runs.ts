@@ -22,20 +22,11 @@ export async function createPipelineRuns(
   } = AppContext,
 ): Promise<PipelineRunContract[]> {
   const request = createPipelineRunsRequestSchema.parse(rawRequest);
-  const now = new Date();
   const pipelineRuns = request.pipelineRuns.map((pipelineRun) =>
     PipelineRunEntity.createAndQueueFirstStep({
       id: pipelineRun.pipelineRunId,
       ticketId: pipelineRun.ticketId,
-      status: pipelineRun.status,
-      currentStepName: pipelineRun.currentStepName ?? null,
-      currentStepExecutionId: pipelineRun.currentStepExecutionId ?? null,
-      lastCompletedStepName: pipelineRun.lastCompletedStepName ?? null,
-      haltReason: pipelineRun.haltReason ?? null,
-      startedAt: new Date(pipelineRun.startedAt),
-      endedAt: pipelineRun.endedAt ? new Date(pipelineRun.endedAt) : null,
-      createdAt: pipelineRun.createdAt ? new Date(pipelineRun.createdAt) : now,
-      updatedAt: pipelineRun.updatedAt ? new Date(pipelineRun.updatedAt) : now,
+      queuedAt: new Date(),
     }),
   );
 
@@ -54,23 +45,9 @@ export async function createPipelineRuns(
       }
 
       const firstStep = await stepExecutionRepo.save(unsavedFirstStep);
-      createdRun.currentStepName = firstStep.stepName;
-      createdRun.currentStepExecutionId = firstStep.id ?? null;
-      createdRun.updatedAt = now;
-      const updatedRun = await pipelineRunRepo.save(createdRun);
-
       return new PipelineRunEntity(
-        updatedRun.id,
-        updatedRun.ticketId,
-        updatedRun.status,
-        updatedRun.currentStepName,
-        updatedRun.currentStepExecutionId,
-        updatedRun.lastCompletedStepName,
-        updatedRun.haltReason,
-        updatedRun.startedAt,
-        updatedRun.endedAt,
-        updatedRun.createdAt,
-        updatedRun.updatedAt,
+        createdRun.id,
+        createdRun.ticketId,
         [firstStep],
       );
     }),

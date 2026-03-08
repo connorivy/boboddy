@@ -15,28 +15,29 @@ describe("stepExecutionEntityToContract", () => {
         42,
         "2026-03-08T00:00:00.000Z",
         "2026-03-08T00:00:00.000Z",
-        "run-123",
+        7,
       ),
     );
 
-    expect(contract.pipelineRunId).toBe("run-123");
+    expect(contract.pipelineRunId).toBe(7);
   });
 
-  it("maps an absent pipelineRunId to null", () => {
-    const contract = stepExecutionEntityToContract(
-      new TicketPipelineStepExecutionEntity(
-        "ticket-123",
-        "custom-step",
-        "queued",
-        "idempotency-key",
-        "2026-03-08T00:00:00.000Z",
-        undefined,
-        42,
-        "2026-03-08T00:00:00.000Z",
-        "2026-03-08T00:00:00.000Z",
+  it("throws when pipelineRunId is missing", () => {
+    expect(() =>
+      stepExecutionEntityToContract(
+        new TicketPipelineStepExecutionEntity(
+          "ticket-123",
+          "custom-step",
+          "queued",
+          "idempotency-key",
+          "2026-03-08T00:00:00.000Z",
+          undefined,
+          42,
+          "2026-03-08T00:00:00.000Z",
+          "2026-03-08T00:00:00.000Z",
+          undefined as never,
+        ),
       ),
-    );
-
-    expect(contract.pipelineRunId).toBeNull();
+    ).toThrow();
   });
 });

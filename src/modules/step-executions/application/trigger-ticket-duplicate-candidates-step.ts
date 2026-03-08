@@ -8,6 +8,8 @@ import {
   type TriggerTicketDuplicateCandidatesStepResponse,
 } from "@/modules/step-executions/contracts/trigger-ticket-duplicate-candidates-step-contracts";
 import { stepExecutionEntityToContract } from "@/modules/step-executions/application/step-execution-entity-to-contract";
+import type { PipelineRunRepo } from "@/modules/pipeline-runs/application/pipeline-run-repo";
+import { PipelineRunAggregate } from "@/modules/pipeline-runs/domain/pipeline-run-aggregate";
 import {
   TERMINAL_STEP_EXECUTION_STATUSES,
   TICKET_DUPLICATE_CANDIDATES_STEP_NAME,
@@ -21,7 +23,17 @@ const DUPLICATE_MIN_SCORE = 0.82;
 
 export const triggerTicketDuplicateCandidatesStep = async (
   rawInput: TriggerTicketDuplicateCandidatesStepRequest,
-  { ticketRepo, stepExecutionRepo, ticketVectorRepo } = AppContext,
+  {
+    ticketRepo,
+    stepExecutionRepo,
+    ticketVectorRepo,
+    pipelineRunRepo = AppContext.pipelineRunRepo,
+  }: {
+    ticketRepo: typeof AppContext.ticketRepo;
+    stepExecutionRepo: typeof AppContext.stepExecutionRepo;
+    ticketVectorRepo: typeof AppContext.ticketVectorRepo;
+    pipelineRunRepo?: PipelineRunRepo;
+  } = AppContext,
 ): Promise<TriggerTicketDuplicateCandidatesStepResponse> => {
   const input =
     triggerTicketDuplicateCandidatesStepRequestSchema.parse(rawInput);
@@ -32,12 +44,27 @@ export const triggerTicketDuplicateCandidatesStep = async (
   }
 
   const now = new Date().toISOString();
+  const pipelineRun = await pipelineRunRepo.save(
+    PipelineRunAggregate.create({
+      ticketId: input.ticketId,
+      pipelineName: TICKET_DUPLICATE_CANDIDATES_STEP_NAME,
+      status: "running",
+    }),
+  );
+  if (pipelineRun.id === undefined) {
+    throw new Error("Pipeline run ID missing after persistence");
+  }
   const execution = new TicketPipelineStepExecutionEntity(
     input.ticketId,
     TICKET_DUPLICATE_CANDIDATES_STEP_NAME,
     "running",
     `${TICKET_DUPLICATE_CANDIDATES_STEP_NAME}:${input.ticketId}:${randomUUID()}`,
     now,
+    undefined,
+    undefined,
+    undefined,
+    undefined,
+    pipelineRun.id,
   );
 
   let savedExecution = await stepExecutionRepo.save(execution);
@@ -81,6 +108,7 @@ export const triggerTicketDuplicateCandidatesStep = async (
         savedExecution.createdAt,
         savedExecution.updatedAt,
         savedExecution.id,
+        savedExecution.pipelineRunId,
       ),
     );
   } catch (error) {
@@ -96,6 +124,7 @@ export const triggerTicketDuplicateCandidatesStep = async (
           savedExecution.id,
           savedExecution.createdAt,
           savedExecution.updatedAt,
+          savedExecution.pipelineRunId,
         ),
       );
     }

@@ -122,6 +122,7 @@ export const completeTicketFailingTestReproStep = async (
       existingExecution.createdAt,
       existingExecution.updatedAt,
       existingExecution.id,
+      existingExecution.pipelineRunId,
     ),
   );
 

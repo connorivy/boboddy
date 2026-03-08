@@ -205,9 +205,11 @@ export const ticketStepExecutions = pgTable(
     ticketId: text("ticket_id")
       .references(() => tickets.id, { onDelete: "cascade" })
       .notNull(),
-    pipelineRunId: text("pipeline_run_id").references(() => pipelineRuns.id, {
-      onDelete: "set null",
-    }),
+    pipelineRunId: integer("pipeline_run_id")
+      .references(() => pipelineRuns.id, {
+        onDelete: "cascade",
+      })
+      .notNull(),
     stepName: text("step_name").notNull(),
     status: stepExecutionStatusEnum("status").notNull(),
     idempotencyKey: text("idempotency_key").notNull(),
@@ -224,7 +226,7 @@ export const ticketStepExecutions = pgTable(
 );
 
 export const pipelineRuns = pgTable("pipeline_runs", {
-  id: text("id").primaryKey(),
+  id: serial("id").primaryKey(),
   ticketId: text("ticket_id")
     .references(() => tickets.id, { onDelete: "cascade" })
     .notNull(),
@@ -344,9 +346,11 @@ export const ticketStepExecutionsTph = pgTable(
     ticketId: text("ticket_id")
       .references(() => tickets.id, { onDelete: "cascade" })
       .notNull(),
-    pipelineRunId: text("pipeline_run_id").references(() => pipelineRuns.id, {
-      onDelete: "set null",
-    }),
+    pipelineRunId: integer("pipeline_run_id")
+      .references(() => pipelineRuns.id, {
+        onDelete: "cascade",
+      })
+      .notNull(),
     stepName: text("step_name").notNull(),
     type: text("type").notNull(),
     status: stepExecutionStatusEnum("status").notNull(),

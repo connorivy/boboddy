@@ -52,6 +52,11 @@ describe("completeTicketDescriptionEnrichmentStep (integration)", () => {
         "running",
         "ticket_description_enrichment:CV-952:run-1",
         new Date("2026-03-01T12:00:00.000Z").toISOString(),
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        1,
       ),
     );
 

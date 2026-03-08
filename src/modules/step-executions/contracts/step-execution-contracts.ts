@@ -142,7 +142,7 @@ export const stepExecutionStatusEnumSchema = z.enum([
 export const stepExecutionContractSchema = z.object({
   id: z.number().int().positive(),
   ticketId: z.string().min(1),
-  pipelineRunId: z.string().min(1).nullable(),
+  pipelineRunId: z.number().int().positive(),
   stepName: z.string().min(1),
   status: stepExecutionStatusEnumSchema,
   idempotencyKey: z.string().min(1),

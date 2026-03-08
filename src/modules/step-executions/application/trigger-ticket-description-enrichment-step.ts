@@ -8,6 +8,8 @@ import {
   type TriggerTicketDescriptionEnrichmentStepResponse,
 } from "@/modules/step-executions/contracts/trigger-ticket-description-enrichment-step-contracts";
 import { stepExecutionEntityToContract } from "@/modules/step-executions/application/step-execution-entity-to-contract";
+import type { PipelineRunRepo } from "@/modules/pipeline-runs/application/pipeline-run-repo";
+import { PipelineRunAggregate } from "@/modules/pipeline-runs/domain/pipeline-run-aggregate";
 import {
   TERMINAL_STEP_EXECUTION_STATUSES,
   TICKET_DESCRIPTION_ENRICHMENT_STEP_NAME,
@@ -35,9 +37,11 @@ export const triggerTicketDescriptionEnrichmentStep = async (
   {
     ticketRepo,
     stepExecutionRepo,
+    pipelineRunRepo = AppContext.pipelineRunRepo,
   }: {
     ticketRepo: TicketRepo;
     stepExecutionRepo: StepExecutionRepo;
+    pipelineRunRepo?: PipelineRunRepo;
   } = AppContext,
 ): Promise<TriggerTicketDescriptionEnrichmentStepResponse> => {
   const input =
@@ -49,12 +53,27 @@ export const triggerTicketDescriptionEnrichmentStep = async (
   }
 
   const now = new Date().toISOString();
+  const pipelineRun = await pipelineRunRepo.save(
+    PipelineRunAggregate.create({
+      ticketId: input.ticketId,
+      pipelineName: TICKET_DESCRIPTION_ENRICHMENT_STEP_NAME,
+      status: "running",
+    }),
+  );
+  if (pipelineRun.id === undefined) {
+    throw new Error("Pipeline run ID missing after persistence");
+  }
   const execution = new TicketPipelineStepExecutionEntity(
     input.ticketId,
     TICKET_DESCRIPTION_ENRICHMENT_STEP_NAME,
     "running",
     `${TICKET_DESCRIPTION_ENRICHMENT_STEP_NAME}:${input.ticketId}:${randomUUID()}`,
     now,
+    undefined,
+    undefined,
+    undefined,
+    undefined,
+    pipelineRun.id,
   );
 
   let savedExecution = await stepExecutionRepo.save(execution);
@@ -98,6 +117,7 @@ export const triggerTicketDescriptionEnrichmentStep = async (
         savedExecution.createdAt,
         savedExecution.updatedAt,
         savedExecution.id,
+        savedExecution.pipelineRunId,
       ),
     );
   } catch (error) {
@@ -113,6 +133,7 @@ export const triggerTicketDescriptionEnrichmentStep = async (
           savedExecution.id,
           savedExecution.createdAt,
           savedExecution.updatedAt,
+          savedExecution.pipelineRunId,
         ),
       );
     }

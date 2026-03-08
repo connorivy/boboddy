@@ -38,6 +38,7 @@ describe("handleAiWebhookBadRequest", () => {
       now,
       now,
       17,
+      1,
     );
 
     const stepExecutionRepo = {
@@ -107,6 +108,7 @@ describe("handleAiWebhookBadRequest", () => {
       now,
       now,
       19,
+      2,
     );
 
     const stepExecutionRepo = {
@@ -202,6 +204,7 @@ describe("handleAiWebhookBadRequest", () => {
       now,
       now,
       20,
+      3,
     );
 
     const stepExecutionRepo = {

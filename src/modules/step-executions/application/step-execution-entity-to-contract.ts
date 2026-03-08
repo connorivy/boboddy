@@ -2,7 +2,6 @@ import {
   TicketDescriptionEnrichmentStepExecutionEntity,
   TicketDescriptionQualityStepExecutionEntity,
   FailingTestFixStepExecutionEntity,
-  FailingTestFixStepResultEntity,
   FailingTestReproStepExecutionEntity,
   TicketDuplicateCandidatesStepResultEntity,
   TicketPipelineStepExecutionEntity,
@@ -239,7 +238,7 @@ export const stepExecutionEntityToContract = (
   return stepExecutionContractSchema.parse({
     id: stepExecution.id,
     ticketId: stepExecution.ticketId,
-    pipelineRunId: stepExecution.pipelineRunId ?? null,
+    pipelineRunId: stepExecution.pipelineRunId,
     stepName: stepExecution.stepName,
     status: stepExecution.status,
     idempotencyKey: stepExecution.idempotencyKey,

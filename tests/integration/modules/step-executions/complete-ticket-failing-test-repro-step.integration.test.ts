@@ -59,6 +59,11 @@ describe("completeTicketFailingTestReproStep (integration)", () => {
         "running",
         "github_repro_failing_test:CV-902:run-1",
         new Date("2026-03-01T12:00:00.000Z").toISOString(),
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        1,
       ),
     );
 
@@ -158,6 +163,11 @@ describe("completeTicketFailingTestReproStep (integration)", () => {
         "running",
         "github_repro_failing_test:CV-902:run-feedback",
         new Date("2026-03-01T12:00:00.000Z").toISOString(),
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        2,
       ),
     );
 

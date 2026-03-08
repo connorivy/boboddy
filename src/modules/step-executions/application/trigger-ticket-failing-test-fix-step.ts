@@ -27,6 +27,8 @@ import { TicketRepo } from "@/modules/tickets/application/jira-ticket-repo";
 import { StepExecutionRepo } from "./step-execution-repo";
 import { TicketGitEnvironmentRepo } from "@/modules/environments/application/ticket-git-environment-repo";
 import z from "zod";
+import type { PipelineRunRepo } from "@/modules/pipeline-runs/application/pipeline-run-repo";
+import { PipelineRunAggregate } from "@/modules/pipeline-runs/domain/pipeline-run-aggregate";
 
 const WEBHOOK_PAYLOAD_PATH = "tmp/copilot-fix-webhook-payload.json";
 
@@ -85,10 +87,12 @@ export const triggerTicketFailingTestFixStep = async (
     stepExecutionRepo,
     ticketGitEnvironmentRepo,
     githubService,
+    pipelineRunRepo = AppContext.pipelineRunRepo,
   }: {
     ticketRepo: TicketRepo;
     stepExecutionRepo: StepExecutionRepo;
     ticketGitEnvironmentRepo: TicketGitEnvironmentRepo;
+    pipelineRunRepo?: PipelineRunRepo;
     githubService: Pick<
       GithubApiService,
       "createIssue" | "assignCopilot" | "unassignCopilot"
@@ -156,12 +160,27 @@ export const triggerTicketFailingTestFixStep = async (
   }
 
   const now = new Date().toISOString();
+  const pipelineRun = await pipelineRunRepo.save(
+    PipelineRunAggregate.create({
+      ticketId: ticket.id,
+      pipelineName: FAILING_TEST_FIX_STEP_NAME,
+      status: "running",
+    }),
+  );
+  if (pipelineRun.id === undefined) {
+    throw new Error("Pipeline run ID missing after persistence");
+  }
   const execution = new TicketPipelineStepExecutionEntity(
     ticket.id,
     FAILING_TEST_FIX_STEP_NAME,
     "running",
     `${FAILING_TEST_FIX_STEP_NAME}:${ticket.id}:${ticketGitEnvironment.id ?? input.ticketGitEnvironmentId}:${randomUUID()}`,
     now,
+    undefined,
+    undefined,
+    undefined,
+    undefined,
+    pipelineRun.id,
   );
 
   let savedExecution = await stepExecutionRepo.save(execution);
@@ -226,6 +245,7 @@ export const triggerTicketFailingTestFixStep = async (
         savedExecution.createdAt,
         savedExecution.updatedAt,
         savedExecution.id,
+        savedExecution.pipelineRunId,
       ),
     );
   } catch (error) {
@@ -241,6 +261,7 @@ export const triggerTicketFailingTestFixStep = async (
           savedExecution.id,
           savedExecution.createdAt,
           savedExecution.updatedAt,
+          savedExecution.pipelineRunId,
         ),
       );
     }

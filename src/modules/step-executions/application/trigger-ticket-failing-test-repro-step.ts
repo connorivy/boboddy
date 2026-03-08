@@ -29,6 +29,8 @@ import { TicketRepo } from "@/modules/tickets/application/jira-ticket-repo";
 import { StepExecutionRepo } from "./step-execution-repo";
 import { TicketGitEnvironmentRepo } from "@/modules/environments/application/ticket-git-environment-repo";
 import { createTicketGitEnvironment } from "@/modules/environments/application/create-ticket-git-environment";
+import type { PipelineRunRepo } from "@/modules/pipeline-runs/application/pipeline-run-repo";
+import { PipelineRunAggregate } from "@/modules/pipeline-runs/domain/pipeline-run-aggregate";
 
 const WEBHOOK_PAYLOAD_PATH = "tmp/copilot-repro-webhook-payload.json";
 
@@ -91,10 +93,12 @@ export const triggerTicketFailingTestReproStep = async (
     stepExecutionRepo,
     ticketGitEnvironmentRepo,
     githubService,
+    pipelineRunRepo = AppContext.pipelineRunRepo,
   }: {
     ticketRepo: TicketRepo;
     stepExecutionRepo: StepExecutionRepo;
     ticketGitEnvironmentRepo: TicketGitEnvironmentRepo;
+    pipelineRunRepo?: PipelineRunRepo;
     githubService: Pick<
       GithubApiService,
       "createIssue" | "assignCopilot" | "unassignCopilot"
@@ -113,12 +117,27 @@ export const triggerTicketFailingTestReproStep = async (
   }
 
   const now = new Date().toISOString();
+  const pipelineRun = await pipelineRunRepo.save(
+    PipelineRunAggregate.create({
+      ticketId: input.ticketId,
+      pipelineName: FAILING_TEST_REPRO_STEP_NAME,
+      status: "running",
+    }),
+  );
+  if (pipelineRun.id === undefined) {
+    throw new Error("Pipeline run ID missing after persistence");
+  }
   const execution = new TicketPipelineStepExecutionEntity(
     input.ticketId,
     FAILING_TEST_REPRO_STEP_NAME,
     "running",
     `${FAILING_TEST_REPRO_STEP_NAME}:${input.ticketId}:${randomUUID()}`,
     now,
+    undefined,
+    undefined,
+    undefined,
+    undefined,
+    pipelineRun.id,
   );
 
   let savedExecution = await stepExecutionRepo.save(execution);
@@ -221,6 +240,7 @@ export const triggerTicketFailingTestReproStep = async (
         savedExecution.createdAt,
         savedExecution.updatedAt,
         savedExecution.id,
+        savedExecution.pipelineRunId,
       ),
     );
   } catch (error) {
@@ -236,6 +256,7 @@ export const triggerTicketFailingTestReproStep = async (
           savedExecution.id,
           savedExecution.createdAt,
           savedExecution.updatedAt,
+          savedExecution.pipelineRunId,
         ),
       );
     }

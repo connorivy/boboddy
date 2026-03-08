@@ -291,6 +291,10 @@ describe("tickets module use cases (integration)", () => {
         ),
         "2026-02-01T11:00:00.000Z",
         "2026-02-01T11:01:00.000Z",
+        undefined,
+        undefined,
+        undefined,
+        1,
       ),
     );
     await stepExecutionRepo.save(
@@ -307,6 +311,10 @@ describe("tickets module use cases (integration)", () => {
         ),
         "2026-02-01T11:02:00.000Z",
         "2026-02-01T11:03:00.000Z",
+        undefined,
+        undefined,
+        undefined,
+        2,
       ),
     );
     await stepExecutionRepo.save(
@@ -323,6 +331,10 @@ describe("tickets module use cases (integration)", () => {
         ),
         "2026-02-01T11:04:00.000Z",
         "2026-02-01T11:05:00.000Z",
+        undefined,
+        undefined,
+        undefined,
+        3,
       ),
     );
 
@@ -380,6 +392,11 @@ describe("tickets module use cases (integration)", () => {
         "queued",
         "desc-quality:CV-311:1",
         "2026-02-01T10:00:00.000Z",
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        4,
       ),
     );
     await backfillDescriptionStepResultFields(cv311QueuedExecution.id!);
@@ -391,6 +408,11 @@ describe("tickets module use cases (integration)", () => {
         "running",
         "desc-quality:CV-311:2",
         "2026-02-01T10:05:00.000Z",
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        5,
       ),
     );
     await backfillDescriptionStepResultFields(cv311RunningExecution.id!);
@@ -402,6 +424,11 @@ describe("tickets module use cases (integration)", () => {
         "succeeded",
         "desc-quality:CV-312:1",
         "2026-02-01T10:10:00.000Z",
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        6,
       ),
     );
     await backfillDescriptionStepResultFields(cv312SucceededExecution.id!);
@@ -413,6 +440,11 @@ describe("tickets module use cases (integration)", () => {
         "running",
         "dupe-search:CV-314:1",
         "2026-02-01T10:15:00.000Z",
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        7,
       ),
     );
 
@@ -478,6 +510,11 @@ describe("tickets module use cases (integration)", () => {
         "queued",
         "desc-quality:CV-401:1",
         "2026-02-01T10:00:00.000Z",
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        8,
       ),
     );
 
@@ -498,6 +535,7 @@ describe("tickets module use cases (integration)", () => {
         descriptionExecution.createdAt,
         descriptionExecution.updatedAt,
         descriptionExecution.id,
+        descriptionExecution.pipelineRunId,
       ),
     );
 
@@ -508,6 +546,11 @@ describe("tickets module use cases (integration)", () => {
         "queued",
         "dupe-search:CV-401:1",
         "2026-02-01T10:05:00.000Z",
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        9,
       ),
     );
 
@@ -528,6 +571,7 @@ describe("tickets module use cases (integration)", () => {
         duplicateExecution.createdAt,
         duplicateExecution.updatedAt,
         duplicateExecution.id,
+        duplicateExecution.pipelineRunId,
       ),
     );
 

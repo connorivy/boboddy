@@ -98,6 +98,7 @@ export const completeTicketDescriptionEnrichmentStep = async (
       existingExecution.createdAt,
       existingExecution.updatedAt,
       existingExecution.id,
+      existingExecution.pipelineRunId,
     ),
   );
 

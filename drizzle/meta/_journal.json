@@ -15,6 +15,13 @@
       "when": 1772937785310,
       "tag": "0001_talented_anthem",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1772939922027,
+      "tag": "0002_secret_zuras",
+      "breakpoints": true
     }
   ]
 }

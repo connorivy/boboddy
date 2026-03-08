@@ -25,7 +25,7 @@ describe("PipelineRunAggregate", () => {
     const updatedAt = new Date("2026-03-08T01:00:00.000Z");
 
     const aggregate = PipelineRunAggregate.rehydrate({
-      id: "run-123",
+      id: 123,
       ticketId: "ticket-123",
       pipelineName: "failing-test-fix",
       status: "failed",
@@ -34,7 +34,7 @@ describe("PipelineRunAggregate", () => {
       updatedAt,
     });
 
-    expect(aggregate.id).toBe("run-123");
+    expect(aggregate.id).toBe(123);
     expect(aggregate.status).toBe("failed");
     expect(aggregate.failureReason).toBe("agent error");
     expect(aggregate.createdAt).toBe(createdAt);

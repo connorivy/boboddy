@@ -105,6 +105,7 @@ export const completeTicketFailingTestFixStep = async (
       existingExecution.createdAt,
       existingExecution.updatedAt,
       existingExecution.id,
+      existingExecution.pipelineRunId,
     ),
   );
 

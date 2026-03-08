@@ -48,7 +48,9 @@ export const ticketSortBySchema = z.enum([
   "description_score_desc",
 ]);
 
-export const ticketPipelineStepExecutionSchema = stepExecutionContractSchema;
+export const ticketPipelineStepExecutionSchema = stepExecutionContractSchema.omit({
+  pipelineRunId: true,
+});
 
 export const ticketSchema = z.object({
   id: z.string().min(1),

@@ -1,6 +1,7 @@
 import { desc, eq, inArray, sql } from "drizzle-orm";
 import { getDb } from "@/lib/db";
 import {
+  pipelineRuns,
   ticketDuplicateCandidates,
   ticketStepExecutionsTph,
 } from "@/lib/db/schema";
@@ -82,6 +83,39 @@ function parseIsoDateOrThrow(value: string, fieldName: string): Date {
   }
 
   return parsed;
+}
+
+function requiredPipelineRunId(
+  value: number | null | undefined,
+  context: string,
+): number {
+  return requiredField(value, "pipelineRunId", context);
+}
+
+function mapPipelineRunStatus(
+  status: TicketPipelineStepExecutionEntity["status"],
+): "queued" | "running" | "succeeded" | "failed" | "timed_out" | "skipped" {
+  if (status === "queued" || status === "not_started") {
+    return "queued";
+  }
+
+  if (status === "running" || status === "waiting_for_user_feedback") {
+    return "running";
+  }
+
+  if (status === "succeeded") {
+    return "succeeded";
+  }
+
+  if (status === "failed_timeout") {
+    return "timed_out";
+  }
+
+  if (status === "skipped") {
+    return "skipped";
+  }
+
+  return "failed";
 }
 
 function parseFixOperationOutcome(
@@ -389,6 +423,11 @@ export class DrizzleStepExecutionRepo {
       );
     }
 
+    const pipelineRunId = requiredPipelineRunId(
+      row.pipelineRunId,
+      `step execution ${row.id}`,
+    );
+
     if (row.type === TICKET_DESCRIPTION_QUALITY_STEP_NAME) {
       return new TicketDescriptionQualityStepExecutionEntity(
         row.ticketId,
@@ -400,7 +439,7 @@ export class DrizzleStepExecutionRepo {
         row.createdAt.toISOString(),
         row.updatedAt.toISOString(),
         row.id,
-        row.pipelineRunId ?? undefined,
+        pipelineRunId,
       );
     }
 
@@ -415,7 +454,7 @@ export class DrizzleStepExecutionRepo {
         row.createdAt.toISOString(),
         row.updatedAt.toISOString(),
         row.id,
-        row.pipelineRunId ?? undefined,
+        pipelineRunId,
       );
     }
 
@@ -430,7 +469,7 @@ export class DrizzleStepExecutionRepo {
         row.createdAt.toISOString(),
         row.updatedAt.toISOString(),
         row.id,
-        row.pipelineRunId ?? undefined,
+        pipelineRunId,
       );
     }
 
@@ -445,7 +484,7 @@ export class DrizzleStepExecutionRepo {
         row.createdAt.toISOString(),
         row.updatedAt.toISOString(),
         row.id,
-        row.pipelineRunId ?? undefined,
+        pipelineRunId,
       );
     }
 
@@ -463,7 +502,7 @@ export class DrizzleStepExecutionRepo {
         createdAt ?? row.createdAt.toISOString(),
         updatedAt ?? row.updatedAt.toISOString(),
         row.id,
-        row.pipelineRunId ?? undefined,
+        pipelineRunId,
       );
     }
 
@@ -477,7 +516,7 @@ export class DrizzleStepExecutionRepo {
       row.id,
       row.createdAt.toISOString(),
       row.updatedAt.toISOString(),
-      row.pipelineRunId ?? undefined,
+      pipelineRunId,
     );
   }
 
@@ -589,6 +628,10 @@ export class DrizzleStepExecutionRepo {
 
     return db.transaction(async (tx) => {
       const now = new Date();
+      const pipelineRunId = requiredPipelineRunId(
+        pipeline.pipelineRunId,
+        `${pipeline.stepName} save`,
+      );
       const startedAt = parseIsoDateOrThrow(pipeline.startedAt, "startedAt");
       const endedAt = pipeline.endedAt
         ? parseIsoDateOrThrow(pipeline.endedAt, "endedAt")
@@ -794,12 +837,36 @@ export class DrizzleStepExecutionRepo {
         }
       }
 
+      await tx
+        .insert(pipelineRuns)
+        .values({
+          id: pipelineRunId,
+          ticketId: pipeline.ticketId,
+          pipelineName: pipeline.stepName,
+          status: mapPipelineRunStatus(pipeline.status),
+          failureReason: failingTestFields?.failureReason ?? null,
+          createdAt: pipeline.createdAt
+            ? parseIsoDateOrThrow(pipeline.createdAt, "createdAt")
+            : now,
+          updatedAt: now,
+        })
+        .onConflictDoUpdate({
+          target: pipelineRuns.id,
+          set: {
+            ticketId: pipeline.ticketId,
+            pipelineName: pipeline.stepName,
+            status: mapPipelineRunStatus(pipeline.status),
+            failureReason: failingTestFields?.failureReason ?? null,
+            updatedAt: now,
+          },
+        });
+
       const [saved] = await tx
         .insert(ticketStepExecutionsTph)
         .values({
           id: pipeline.id,
           ticketId: pipeline.ticketId,
-          pipelineRunId: pipeline.pipelineRunId ?? null,
+          pipelineRunId,
           stepName: pipeline.stepName,
           type: pipeline.stepName,
           status: pipeline.status,
@@ -818,7 +885,7 @@ export class DrizzleStepExecutionRepo {
           set: {
             stepName: pipeline.stepName,
             type: pipeline.stepName,
-            pipelineRunId: pipeline.pipelineRunId ?? null,
+            pipelineRunId,
             status: pipeline.status,
             startedAt,
             endedAt,
@@ -877,6 +944,11 @@ export class DrizzleStepExecutionRepo {
         );
       }
 
+      const pipelineRunId = requiredPipelineRunId(
+        row.pipelineRunId,
+        `step execution ${row.id}`,
+      );
+
       let execution: TicketPipelineStepExecutionEntity;
       if (row.type === TICKET_DESCRIPTION_QUALITY_STEP_NAME) {
         execution = new TicketDescriptionQualityStepExecutionEntity(
@@ -889,7 +961,7 @@ export class DrizzleStepExecutionRepo {
           row.createdAt.toISOString(),
           row.updatedAt.toISOString(),
           row.id,
-          row.pipelineRunId ?? undefined,
+          pipelineRunId,
         );
       } else if (row.type === TICKET_DESCRIPTION_ENRICHMENT_STEP_NAME) {
         execution = new TicketDescriptionEnrichmentStepExecutionEntity(
@@ -902,7 +974,7 @@ export class DrizzleStepExecutionRepo {
           row.createdAt.toISOString(),
           row.updatedAt.toISOString(),
           row.id,
-          row.pipelineRunId ?? undefined,
+          pipelineRunId,
         );
       } else if (
         row.type === FAILING_TEST_REPRO_STEP_NAME ||
@@ -920,7 +992,7 @@ export class DrizzleStepExecutionRepo {
                 row.createdAt.toISOString(),
                 row.updatedAt.toISOString(),
                 row.id,
-                row.pipelineRunId ?? undefined,
+                pipelineRunId,
               )
             : new FailingTestFixStepExecutionEntity(
                 row.ticketId,
@@ -932,7 +1004,7 @@ export class DrizzleStepExecutionRepo {
                 row.createdAt.toISOString(),
                 row.updatedAt.toISOString(),
                 row.id,
-                row.pipelineRunId ?? undefined,
+                pipelineRunId,
               );
       } else {
         execution = new TicketPipelineStepExecutionEntity(
@@ -945,7 +1017,7 @@ export class DrizzleStepExecutionRepo {
           row.id,
           row.createdAt.toISOString(),
           row.updatedAt.toISOString(),
-          row.pipelineRunId ?? undefined,
+          pipelineRunId,
         );
       }
 

@@ -15,7 +15,7 @@ export type PipelineRunAggregateProps = {
   pipelineName: string;
   status: PipelineRunStatus;
   failureReason?: string;
-  id?: string;
+  id?: number;
   createdAt?: Date;
   updatedAt?: Date;
 };
@@ -25,7 +25,7 @@ export class PipelineRunAggregate {
   public readonly pipelineName: string;
   public readonly status: PipelineRunStatus;
   public readonly failureReason?: string;
-  public readonly id?: string;
+  public readonly id?: number;
   public readonly createdAt?: Date;
   public readonly updatedAt?: Date;
 

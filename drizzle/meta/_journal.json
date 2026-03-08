@@ -15,6 +15,13 @@
       "when": 1772826440012,
       "tag": "0001_short_skreet",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1772997782103,
+      "tag": "0002_pretty_quasimodo",
+      "breakpoints": true
     }
   ]
 }

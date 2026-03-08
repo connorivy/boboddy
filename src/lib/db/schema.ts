@@ -78,6 +78,15 @@ export const githubMergeStatusEnum = pgEnum("github_merge_status", [
   "closed",
   "merged",
 ]);
+export const pipelineRunStatusEnum = pgEnum("pipeline_run_status", [
+  "queued",
+  "running",
+  "waiting",
+  "halted",
+  "succeeded",
+  "failed",
+  "cancelled",
+]);
 
 export const environmentAreaEnum = pgEnum("environment_area", [
   "adm",
@@ -146,6 +155,29 @@ export const ticketGithubIssues = pgTable(
     uniqueIndex("ticket_github_issues_ticket_id_unique").on(table.ticketId),
   ],
 );
+
+export const pipelineRuns = pgTable("pipeline_runs", {
+  id: text("id").primaryKey(),
+  ticketId: text("ticket_id")
+    .references(() => tickets.id, { onDelete: "cascade" })
+    .notNull(),
+  status: pipelineRunStatusEnum("status").notNull().default("queued"),
+  currentStepName: text("current_step_name"),
+  currentStepExecutionId: integer("current_step_execution_id").references(
+    (): AnyPgColumn => ticketStepExecutionsTph.id,
+    { onDelete: "set null" },
+  ),
+  lastCompletedStepName: text("last_completed_step_name"),
+  haltReason: text("halt_reason"),
+  startedAt: timestamp("started_at", { withTimezone: true }).notNull(),
+  endedAt: timestamp("ended_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
 
 export const ticketStepExecutions = pgTable(
   "ticket_step_executions",
@@ -332,6 +364,8 @@ export type TicketRow = typeof tickets.$inferSelect;
 export type NewTicketRow = typeof tickets.$inferInsert;
 export type TicketGithubIssueRow = typeof ticketGithubIssues.$inferSelect;
 export type NewTicketGithubIssueRow = typeof ticketGithubIssues.$inferInsert;
+export type PipelineRunRow = typeof pipelineRuns.$inferSelect;
+export type NewPipelineRunRow = typeof pipelineRuns.$inferInsert;
 export type TicketStepExecutionRow = typeof ticketStepExecutions.$inferSelect;
 export type NewTicketStepExecutionRow =
   typeof ticketStepExecutions.$inferInsert;

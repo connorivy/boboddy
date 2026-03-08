@@ -5,6 +5,7 @@ import { DrizzleTicketVectorRepo } from "@/modules/step-executions/ticket_duplic
 import { DrizzleEnvironmentRepo } from "@/modules/environments/infra/drizzle-environment-repo";
 import { DrizzleTicketGitEnvironmentRepo } from "@/modules/environments/infra/drizzle-ticket-git-environment-repo";
 import { GithubApiService } from "@/modules/step-executions/infra/github-copilot-coding-agent";
+import { DrizzlePipelineRunRepo } from "@/modules/pipeline-runs/infra/drizzle-pipeline-run-repo";
 
 let githubServiceInstance: GithubApiService | null = null;
 const getGithubService = (): GithubApiService => {
@@ -22,6 +23,7 @@ export const AppContext = {
   ticketVectorRepo: new DrizzleTicketVectorRepo(),
   environmentRepo: new DrizzleEnvironmentRepo(),
   ticketGitEnvironmentRepo: new DrizzleTicketGitEnvironmentRepo(),
+  pipelineRunRepo: new DrizzlePipelineRunRepo(),
   get githubService() {
     return getGithubService();
   },

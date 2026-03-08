@@ -1,8 +1,9 @@
 import { StepExecutionStepName } from "@/modules/step-executions/domain/step-execution.types";
+import { TicketPipelineStepExecutionEntity } from "@/modules/step-executions/domain/step-execution-entity";
 
 export class PipelineRunEntity {
   constructor(
-    public id: number,
+    public id: string,
     public ticketId: string,
     public status: PipelineRunStatus,
     public currentStepName: StepExecutionStepName | null,
@@ -13,6 +14,7 @@ export class PipelineRunEntity {
     public endedAt: Date | null = null,
     public createdAt: Date,
     public updatedAt: Date,
+    public readonly pipelineSteps?: TicketPipelineStepExecutionEntity[],
   ) {}
 }
 

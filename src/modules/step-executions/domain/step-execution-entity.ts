@@ -26,6 +26,7 @@ export class TicketPipelineStepExecutionEntity {
     public id?: number,
     public createdAt?: string,
     public updatedAt?: string,
+    public pipelineRunId?: string,
   ) {}
 }
 
@@ -74,6 +75,7 @@ export class TicketDescriptionEnrichmentStepExecutionEntity extends TicketPipeli
     createdAt?: string,
     updatedAt?: string,
     id?: number,
+    pipelineRunId?: string,
   ) {
     super(
       ticketId,
@@ -85,6 +87,7 @@ export class TicketDescriptionEnrichmentStepExecutionEntity extends TicketPipeli
       id,
       createdAt,
       updatedAt,
+      pipelineRunId,
     );
   }
 }
@@ -100,6 +103,7 @@ export class TicketDescriptionQualityStepExecutionEntity extends TicketPipelineS
     createdAt?: string,
     updatedAt?: string,
     id?: number,
+    pipelineRunId?: string,
   ) {
     super(
       ticketId,
@@ -111,6 +115,7 @@ export class TicketDescriptionQualityStepExecutionEntity extends TicketPipelineS
       id,
       createdAt,
       updatedAt,
+      pipelineRunId,
     );
   }
 }
@@ -126,6 +131,7 @@ export class TicketDuplicateCandidatesStepResultEntity extends TicketPipelineSte
     createdAt?: string,
     updatedAt?: string,
     id?: number,
+    pipelineRunId?: string,
   ) {
     super(
       ticketId,
@@ -137,6 +143,7 @@ export class TicketDuplicateCandidatesStepResultEntity extends TicketPipelineSte
       id,
       createdAt,
       updatedAt,
+      pipelineRunId,
     );
   }
 }
@@ -182,6 +189,7 @@ export class FailingTestReproStepExecutionEntity extends TicketPipelineStepExecu
     createdAt?: string,
     updatedAt?: string,
     id?: number,
+    pipelineRunId?: string,
   ) {
     super(
       ticketId,
@@ -193,6 +201,7 @@ export class FailingTestReproStepExecutionEntity extends TicketPipelineStepExecu
       id,
       createdAt,
       updatedAt,
+      pipelineRunId,
     );
   }
 }
@@ -244,6 +253,7 @@ export class FailingTestFixStepExecutionEntity extends TicketPipelineStepExecuti
     createdAt?: string,
     updatedAt?: string,
     id?: number,
+    pipelineRunId?: string,
   ) {
     super(
       ticketId,
@@ -255,6 +265,7 @@ export class FailingTestFixStepExecutionEntity extends TicketPipelineStepExecuti
       id,
       createdAt,
       updatedAt,
+      pipelineRunId,
     );
   }
 }

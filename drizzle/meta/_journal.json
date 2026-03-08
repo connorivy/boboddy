@@ -8,6 +8,13 @@
       "when": 1772823003740,
       "tag": "0000_enable_vector_extension",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1772937785310,
+      "tag": "0001_talented_anthem",
+      "breakpoints": true
     }
   ]
 }

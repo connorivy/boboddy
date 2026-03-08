@@ -71,6 +71,7 @@ export const truncateTestTables = async () => {
       ticket_duplicate_candidates,
       ticket_github_issues,
       ticket_git_environments,
+      pipeline_runs,
       ticket_embeddings,
       ticket_step_executions_tph,
       ticket_step_executions,

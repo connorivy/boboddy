@@ -400,6 +400,7 @@ export class DrizzleStepExecutionRepo {
         row.createdAt.toISOString(),
         row.updatedAt.toISOString(),
         row.id,
+        row.pipelineRunId ?? undefined,
       );
     }
 
@@ -414,6 +415,7 @@ export class DrizzleStepExecutionRepo {
         row.createdAt.toISOString(),
         row.updatedAt.toISOString(),
         row.id,
+        row.pipelineRunId ?? undefined,
       );
     }
 
@@ -428,6 +430,7 @@ export class DrizzleStepExecutionRepo {
         row.createdAt.toISOString(),
         row.updatedAt.toISOString(),
         row.id,
+        row.pipelineRunId ?? undefined,
       );
     }
 
@@ -442,6 +445,7 @@ export class DrizzleStepExecutionRepo {
         row.createdAt.toISOString(),
         row.updatedAt.toISOString(),
         row.id,
+        row.pipelineRunId ?? undefined,
       );
     }
 
@@ -459,6 +463,7 @@ export class DrizzleStepExecutionRepo {
         createdAt ?? row.createdAt.toISOString(),
         updatedAt ?? row.updatedAt.toISOString(),
         row.id,
+        row.pipelineRunId ?? undefined,
       );
     }
 
@@ -472,6 +477,7 @@ export class DrizzleStepExecutionRepo {
       row.id,
       row.createdAt.toISOString(),
       row.updatedAt.toISOString(),
+      row.pipelineRunId ?? undefined,
     );
   }
 
@@ -793,6 +799,7 @@ export class DrizzleStepExecutionRepo {
         .values({
           id: pipeline.id,
           ticketId: pipeline.ticketId,
+          pipelineRunId: pipeline.pipelineRunId ?? null,
           stepName: pipeline.stepName,
           type: pipeline.stepName,
           status: pipeline.status,
@@ -811,6 +818,7 @@ export class DrizzleStepExecutionRepo {
           set: {
             stepName: pipeline.stepName,
             type: pipeline.stepName,
+            pipelineRunId: pipeline.pipelineRunId ?? null,
             status: pipeline.status,
             startedAt,
             endedAt,
@@ -881,6 +889,7 @@ export class DrizzleStepExecutionRepo {
           row.createdAt.toISOString(),
           row.updatedAt.toISOString(),
           row.id,
+          row.pipelineRunId ?? undefined,
         );
       } else if (row.type === TICKET_DESCRIPTION_ENRICHMENT_STEP_NAME) {
         execution = new TicketDescriptionEnrichmentStepExecutionEntity(
@@ -893,6 +902,7 @@ export class DrizzleStepExecutionRepo {
           row.createdAt.toISOString(),
           row.updatedAt.toISOString(),
           row.id,
+          row.pipelineRunId ?? undefined,
         );
       } else if (
         row.type === FAILING_TEST_REPRO_STEP_NAME ||
@@ -910,6 +920,7 @@ export class DrizzleStepExecutionRepo {
                 row.createdAt.toISOString(),
                 row.updatedAt.toISOString(),
                 row.id,
+                row.pipelineRunId ?? undefined,
               )
             : new FailingTestFixStepExecutionEntity(
                 row.ticketId,
@@ -921,6 +932,7 @@ export class DrizzleStepExecutionRepo {
                 row.createdAt.toISOString(),
                 row.updatedAt.toISOString(),
                 row.id,
+                row.pipelineRunId ?? undefined,
               );
       } else {
         execution = new TicketPipelineStepExecutionEntity(
@@ -933,6 +945,7 @@ export class DrizzleStepExecutionRepo {
           row.id,
           row.createdAt.toISOString(),
           row.updatedAt.toISOString(),
+          row.pipelineRunId ?? undefined,
         );
       }
 

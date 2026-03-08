@@ -239,6 +239,7 @@ export const stepExecutionEntityToContract = (
   return stepExecutionContractSchema.parse({
     id: stepExecution.id,
     ticketId: stepExecution.ticketId,
+    pipelineRunId: stepExecution.pipelineRunId ?? null,
     stepName: stepExecution.stepName,
     status: stepExecution.status,
     idempotencyKey: stepExecution.idempotencyKey,

@@ -87,6 +87,16 @@ export const githubMergeStatusEnum = pgEnum("github_merge_status", [
   "merged",
 ]);
 
+export const pipelineRunStatusEnum = pgEnum("pipeline_run_status", [
+  "queued",
+  "running",
+  "succeeded",
+  "failed",
+  "timed_out",
+  "cancelled",
+  "skipped",
+]);
+
 export const environmentAreaEnum = pgEnum("environment_area", [
   "adm",
   "mem",
@@ -195,6 +205,9 @@ export const ticketStepExecutions = pgTable(
     ticketId: text("ticket_id")
       .references(() => tickets.id, { onDelete: "cascade" })
       .notNull(),
+    pipelineRunId: text("pipeline_run_id").references(() => pipelineRuns.id, {
+      onDelete: "set null",
+    }),
     stepName: text("step_name").notNull(),
     status: stepExecutionStatusEnum("status").notNull(),
     idempotencyKey: text("idempotency_key").notNull(),
@@ -209,6 +222,22 @@ export const ticketStepExecutions = pgTable(
     ),
   ],
 );
+
+export const pipelineRuns = pgTable("pipeline_runs", {
+  id: text("id").primaryKey(),
+  ticketId: text("ticket_id")
+    .references(() => tickets.id, { onDelete: "cascade" })
+    .notNull(),
+  pipelineName: text("pipeline_name").notNull(),
+  status: pipelineRunStatusEnum("status").notNull(),
+  failureReason: text("failure_reason"),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
 
 export const ticketEmbeddings = pgTable(
   "ticket_embeddings",
@@ -315,6 +344,9 @@ export const ticketStepExecutionsTph = pgTable(
     ticketId: text("ticket_id")
       .references(() => tickets.id, { onDelete: "cascade" })
       .notNull(),
+    pipelineRunId: text("pipeline_run_id").references(() => pipelineRuns.id, {
+      onDelete: "set null",
+    }),
     stepName: text("step_name").notNull(),
     type: text("type").notNull(),
     status: stepExecutionStatusEnum("status").notNull(),
@@ -375,6 +407,8 @@ export type NewTicketGithubIssueRow = typeof ticketGithubIssues.$inferInsert;
 export type TicketStepExecutionRow = typeof ticketStepExecutions.$inferSelect;
 export type NewTicketStepExecutionRow =
   typeof ticketStepExecutions.$inferInsert;
+export type PipelineRunRow = typeof pipelineRuns.$inferSelect;
+export type NewPipelineRunRow = typeof pipelineRuns.$inferInsert;
 export type TicketEmbeddingRow = typeof ticketEmbeddings.$inferSelect;
 export type NewTicketEmbeddingRow = typeof ticketEmbeddings.$inferInsert;
 export type FailingTestReproAttemptRow =

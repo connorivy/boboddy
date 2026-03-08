@@ -126,7 +126,7 @@ describe("tickets module use cases (integration)", () => {
   });
 
   it("ingestTicketsModifiedSince upserts existing rows and inserts new rows", async () => {
-    await ticketRepo.createMany([
+    await ticketRepo.saveMany([
       makeTicketAggregate({
         ticketNumber: "CV-201",
         title: "Original title",
@@ -170,7 +170,7 @@ describe("tickets module use cases (integration)", () => {
   });
 
   it("searchTickets returns filtered, paginated ticket contracts", async () => {
-    await ticketRepo.createMany([
+    await ticketRepo.saveMany([
       makeTicketAggregate({
         ticketNumber: "CV-301",
         title: "Login issue for admins",
@@ -232,7 +232,7 @@ describe("tickets module use cases (integration)", () => {
   });
 
   it("supports optional githubIssue loading semantics on the ticket aggregate", async () => {
-    await ticketRepo.createMany([
+    await ticketRepo.saveMany([
       makeTicketAggregate({
         ticketNumber: "CV-350",
         title: "GitHub issue linkage semantics",
@@ -259,7 +259,7 @@ describe("tickets module use cases (integration)", () => {
   });
 
   it("searchTickets can sort by latest description score across all results", async () => {
-    await ticketRepo.createMany([
+    await ticketRepo.saveMany([
       makeTicketAggregate({
         ticketNumber: "CV-321",
         title: "Highest score",
@@ -355,7 +355,7 @@ describe("tickets module use cases (integration)", () => {
   });
 
   it("searchTickets can filter by step name and latest step execution status", async () => {
-    await ticketRepo.createMany([
+    await ticketRepo.saveMany([
       makeTicketAggregate({
         ticketNumber: "CV-311",
         title: "Step status running",
@@ -466,7 +466,7 @@ describe("tickets module use cases (integration)", () => {
   });
 
   it("loadTicketDetail returns ticket and persisted pipeline execution data", async () => {
-    await ticketRepo.createMany([
+    await ticketRepo.saveMany([
       makeTicketAggregate({
         ticketNumber: "CV-401",
         title: "Ticket with pipeline",
@@ -564,7 +564,7 @@ describe("tickets module use cases (integration)", () => {
   });
 
   it("returns default git environment fields on ticket contracts when assigned", async () => {
-    await ticketRepo.createMany([
+    await ticketRepo.saveMany([
       makeTicketAggregate({
         ticketNumber: "CV-450",
         title: "Ticket with default git environment",
@@ -624,7 +624,7 @@ describe("tickets module use cases (integration)", () => {
   });
 
   it("returns all ticket git environments assigned to a ticket id", async () => {
-    await ticketRepo.createMany([
+    await ticketRepo.saveMany([
       makeTicketAggregate({
         ticketNumber: "CV-451",
         title: "Ticket git environment lookup",

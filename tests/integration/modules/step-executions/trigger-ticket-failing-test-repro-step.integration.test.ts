@@ -67,7 +67,7 @@ describe("triggerTicketFailingTestReproStep (integration)", () => {
   });
 
   it("creates an in-progress step execution, creates issue, and assigns Copilot using latest healthy environment", async () => {
-    await ticketRepo.createMany([makeTicketAggregate()]);
+    await ticketRepo.saveMany([makeTicketAggregate()]);
 
     hoisted.requestMock
       .mockResolvedValueOnce({
@@ -165,7 +165,7 @@ describe("triggerTicketFailingTestReproStep (integration)", () => {
   });
 
   it("reuses an existing GitHub issue mapping by unassigning and reassigning Copilot", async () => {
-    await ticketRepo.createMany([makeTicketAggregate()]);
+    await ticketRepo.saveMany([makeTicketAggregate()]);
     await ticketRepo.saveGithubIssue(
       new TicketGithubIssueEntity("CV-901", 801, "I_kwDOFAKE801"),
     );

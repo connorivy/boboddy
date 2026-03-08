@@ -42,7 +42,7 @@ describe("completeTicketDescriptionEnrichmentStep (integration)", () => {
   });
 
   it("marks enrichment step as succeeded and stores payload", async () => {
-    await ticketRepo.createMany([makeTicketAggregate()]);
+    await ticketRepo.saveMany([makeTicketAggregate()]);
 
     const runningExecution = await stepExecutionRepo.save(
       new TicketDescriptionEnrichmentStepExecutionEntity(

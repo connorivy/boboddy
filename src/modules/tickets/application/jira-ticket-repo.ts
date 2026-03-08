@@ -16,7 +16,12 @@ export type JiraTicketRepo = {
 };
 
 export type TicketRepo = {
-  createMany(tickets: TicketAggregate[]): Promise<TicketAggregate[]>;
+  saveMany(
+    tickets: TicketAggregate[],
+    dbExecutor?: DbExecutor,
+  ): Promise<
+    { entity: TicketAggregate; persistenceStatus: "created" | "updated" }[]
+  >;
   load(
     query: TicketSearchQuery,
     options?: LoadTicketsOptions,

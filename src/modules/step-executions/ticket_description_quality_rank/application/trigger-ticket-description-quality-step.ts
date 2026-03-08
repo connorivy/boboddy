@@ -91,7 +91,15 @@ export const triggerTicketDescriptionQualityStep = async (
         ),
       );
     }
-    throw error;
+
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown error";
+    throw new Error(
+      `Failed to trigger ticket description quality step: ${errorMessage}`,
+      {
+        cause: error instanceof Error ? error : undefined,
+      },
+    );
   }
 
   return triggerTicketDescriptionQualityStepResponseSchema.parse({

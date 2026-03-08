@@ -58,7 +58,7 @@ describe("triggerTicketDescriptionEnrichmentStep (integration)", () => {
   });
 
   it("runs local codex enrichment and marks the step succeeded", async () => {
-    await ticketRepo.createMany([makeTicketAggregate()]);
+    await ticketRepo.saveMany([makeTicketAggregate()]);
 
     hoisted.enrichTicketDescription.mockResolvedValue({
       operationOutcome: "enriched",

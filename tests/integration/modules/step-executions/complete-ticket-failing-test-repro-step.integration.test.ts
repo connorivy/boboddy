@@ -46,7 +46,7 @@ describe("completeTicketFailingTestReproStep (integration)", () => {
   });
 
   it("marks the failing-test execution as succeeded and stores webhook output", async () => {
-    await ticketRepo.createMany([makeTicketAggregate()]);
+    await ticketRepo.saveMany([makeTicketAggregate()]);
     await ticketRepo.saveGithubIssue(
       new TicketGithubIssueEntity("CV-902", 777, "I_kwDOFAKE777"),
     );
@@ -124,7 +124,7 @@ describe("completeTicketFailingTestReproStep (integration)", () => {
   });
 
   it("returns 404 semantics when pipeline execution does not exist for ticket", async () => {
-    await ticketRepo.createMany([makeTicketAggregate()]);
+    await ticketRepo.saveMany([makeTicketAggregate()]);
 
     await expect(
       completeTicketFailingTestReproStep(
@@ -145,7 +145,7 @@ describe("completeTicketFailingTestReproStep (integration)", () => {
   });
 
   it("marks execution as waiting_for_user_feedback and stores feedback request", async () => {
-    await ticketRepo.createMany([makeTicketAggregate()]);
+    await ticketRepo.saveMany([makeTicketAggregate()]);
     await ticketRepo.saveGithubIssue(
       new TicketGithubIssueEntity("CV-902", 778, "I_kwDOFAKE778"),
     );

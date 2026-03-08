@@ -11,6 +11,7 @@ import {
 import type { PipelineStepExecutionsQuery } from "@/modules/step-executions/contracts/get-pipeline-step-executions-contracts";
 import type { StepExecutionRepo } from "@/modules/step-executions/application/step-execution-repo";
 import { processClaimedStepExecution } from "./process-claimed-step-execution";
+import type { DbExecutor } from "@/lib/db/db-executor";
 
 const DEFAULT_POLL_INTERVAL_MS = 5_000;
 const DEFAULT_BATCH_SIZE = 10;
@@ -74,13 +75,30 @@ export class ClaimedExecutionStepRepo implements StepExecutionRepo {
 
   async save(
     stepExecution: TicketPipelineStepExecutionEntity,
+    dbExecutor?: DbExecutor,
   ): Promise<TicketPipelineStepExecutionEntity> {
     if (!this.hasRemappedFirstSave) {
       this.remapToClaimedExecution(stepExecution);
       this.hasRemappedFirstSave = true;
     }
 
-    return this.delegate.save(stepExecution);
+    return this.delegate.save(stepExecution, dbExecutor);
+  }
+
+  async saveMany(
+    stepExecutions: TicketPipelineStepExecutionEntity[],
+    dbExecutor?: DbExecutor,
+  ): Promise<TicketPipelineStepExecutionEntity[]> {
+    if (stepExecutions.length === 0) {
+      return [];
+    }
+
+    if (!this.hasRemappedFirstSave) {
+      this.remapToClaimedExecution(stepExecutions[0]);
+      this.hasRemappedFirstSave = true;
+    }
+
+    return this.delegate.saveMany(stepExecutions, dbExecutor);
   }
 }
 

@@ -46,6 +46,6 @@ export async function assignDefaultEnvironment(
     `Assigned git environment ${input.ticketGitEnvironmentId} to ticket ${input.ticketId}:`,
     ticket,
   );
-  const persistedTicket = await ticketRepo.createMany([ticket]);
-  return ticketAggregateToContract(persistedTicket[0]);
+  const persistedTicket = await ticketRepo.saveMany([ticket]);
+  return ticketAggregateToContract(persistedTicket[0].entity);
 }

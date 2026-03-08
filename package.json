@@ -21,7 +21,8 @@
     "db:migrate": "drizzle-kit migrate",
     "db:push:prod_be_careful": "set -a && . ./.env.prod && set +a && drizzle-kit push",
     "db:push:neon-dev": "set -a && . ./.env.neon-dev && set +a && drizzle-kit push",
-    "worker": "set -a && . ./.env && set +a && tsx src/worker/index.ts"
+    "worker": "set -a && . ./.env && set +a && tsx src/worker/index.ts",
+    "worker:prod": "set -a && . ./.env.prod && set +a && tsx src/worker/index.ts"
   },
   "dependencies": {
     "@ai-sdk/openai-compatible": "^2.0.30",

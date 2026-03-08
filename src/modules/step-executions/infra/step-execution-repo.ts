@@ -980,8 +980,9 @@ export class DrizzleStepExecutionRepo implements StepExecutionRepo {
 
   async save(
     pipeline: TicketPipelineStepExecutionEntity,
+    dbExecutor?: DbExecutor,
   ): Promise<TicketPipelineStepExecutionEntity> {
-    const db = getDb();
+    const db = dbExecutor ?? getDb();
 
     const now = new Date();
     const startedAt = parseIsoDateOrThrow(pipeline.startedAt, "startedAt");
@@ -1039,6 +1040,19 @@ export class DrizzleStepExecutionRepo implements StepExecutionRepo {
     }
 
     return savedExecution;
+  }
+
+  async saveMany(
+    stepExecutions: TicketPipelineStepExecutionEntity[],
+    dbExecutor?: DbExecutor,
+  ): Promise<TicketPipelineStepExecutionEntity[]> {
+    if (stepExecutions.length === 0) {
+      return [];
+    }
+
+    return Promise.all(
+      stepExecutions.map((stepExecution) => this.save(stepExecution, dbExecutor)),
+    );
   }
 
 }

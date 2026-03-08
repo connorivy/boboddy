@@ -208,10 +208,13 @@ export class DrizzleTicketRepo implements TicketRepo {
     return this.toTicketAggregate(row);
   }
 
-  async createMany(
+  async saveMany(
     ticketEntities: TicketAggregate[],
-  ): Promise<TicketAggregate[]> {
-    const db = getDb();
+    dbExecutor?: DbExecutor,
+  ): Promise<
+    { entity: TicketAggregate; persistenceStatus: "created" | "updated" }[]
+  > {
+    const db = dbExecutor ?? getDb();
     const now = new Date();
     const rows = ticketEntities.map((ticket) => {
       const row = ticket;
@@ -269,9 +272,20 @@ export class DrizzleTicketRepo implements TicketRepo {
           updatedAt: sql.raw(`excluded.${tickets.updatedAt.name}`),
         },
       })
-      .returning();
+      .returning({
+        ...ticketSelectFields,
+        persistenceStatus: sql<"created" | "updated">`
+          case
+            when xmax = 0 then 'created'
+            else 'updated'
+          end
+        `,
+      });
 
-    return result.map((row) => this.toTicketAggregate(row));
+    return result.map((row) => ({
+      entity: this.toTicketAggregate(row),
+      persistenceStatus: row.persistenceStatus,
+    }));
   }
 
   async load(

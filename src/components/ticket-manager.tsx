@@ -23,7 +23,6 @@ import { triggerTicketDuplicateCandidatesStep } from "@/modules/step-executions/
 import { triggerTicketFailingTestReproStep } from "@/modules/step-executions/github_repro_failing_test/application/trigger-ticket-failing-test-repro-step";
 import { triggerTicketFailingTestFixStep } from "@/modules/step-executions/github_fix_failing_test/application/trigger-ticket-failing-test-fix-step";
 import { mergeFailingTest } from "@/modules/step-executions/github_fix_failing_test/application/merge-failing-test";
-import { enqueueBulkStepQueueItems } from "@/modules/step-executions/application/bulk-step-queue";
 import {
   FAILING_TEST_FIX_STEP_NAME,
   FAILING_TEST_REPRO_STEP_NAME,
@@ -66,12 +65,6 @@ export const TicketManager = ({ initialTickets }: TicketManagerProps) => {
     StepExecutionStatus | ""
   >("");
   const [sortBy, setSortBy] = useState<TicketSortBy>("updated_at_desc");
-  const [bulkActionStepName, setBulkActionStepName] = useState<TicketStepName>(
-    TICKET_DESCRIPTION_QUALITY_STEP_NAME,
-  );
-  const [bulkActionLoading, setBulkActionLoading] = useState(false);
-  const [bulkActionMessage, setBulkActionMessage] = useState<string | null>(null);
-  const [bulkActionError, setBulkActionError] = useState<string | null>(null);
   const skipInitialFilterSearch = useRef(true);
 
   const totalLabel = useMemo(() => {
@@ -354,52 +347,6 @@ export const TicketManager = ({ initialTickets }: TicketManagerProps) => {
     }
   };
 
-  const handleQueueBulkAction = async () => {
-    try {
-      setBulkActionLoading(true);
-      setBulkActionError(null);
-      setBulkActionMessage(null);
-
-      const pageSize = 100;
-      const firstPage = await searchTickets({
-        ...searchQuery,
-        page: 1,
-        pageSize,
-      });
-      const matchingTicketIds = firstPage.items.map((ticket) => ticket.id);
-      const totalPages = Math.ceil(firstPage.pagination.total / pageSize);
-
-      for (let page = 2; page <= totalPages; page += 1) {
-        const pageResult = await searchTickets({
-          ...searchQuery,
-          page,
-          pageSize,
-        });
-        matchingTicketIds.push(...pageResult.items.map((ticket) => ticket.id));
-      }
-
-      const enqueueResult = enqueueBulkStepQueueItems(
-        matchingTicketIds.map((ticketId) => ({
-          ticketId,
-          stepName: bulkActionStepName,
-        })),
-      );
-
-      setBulkActionMessage(
-        `Queued ${enqueueResult.addedCount} ticket actions.` +
-        (enqueueResult.skippedCount > 0
-          ? ` Skipped ${enqueueResult.skippedCount} duplicates already queued.`
-          : ""),
-      );
-    } catch (queueError) {
-      setBulkActionError(
-        queueError instanceof Error ? queueError.message : "Unexpected error",
-      );
-    } finally {
-      setBulkActionLoading(false);
-    }
-  };
-
   return (
     <>
       <Grid container spacing={3}>
@@ -415,8 +362,6 @@ export const TicketManager = ({ initialTickets }: TicketManagerProps) => {
             loading={loading}
             error={error}
             totalLabel={totalLabel}
-            bulkActionMessage={bulkActionMessage}
-            bulkActionError={bulkActionError}
             onQChange={setQ}
             onStatusChange={setStatus}
             onPriorityChange={setPriority}
@@ -428,10 +373,6 @@ export const TicketManager = ({ initialTickets }: TicketManagerProps) => {
             }}
             onStepExecutionStatusChange={setStepExecutionStatus}
             onSortByChange={setSortBy}
-            bulkActionStepName={bulkActionStepName}
-            bulkActionLoading={bulkActionLoading}
-            onBulkActionStepNameChange={setBulkActionStepName}
-            onQueueBulkAction={handleQueueBulkAction}
             onSearch={loadTickets}
             onOpenTicket={handleOpenTicket}
           />

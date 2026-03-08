@@ -82,18 +82,12 @@ type TicketManagerSearchCardProps = {
   loading: boolean;
   error: string | null;
   totalLabel: string;
-  bulkActionMessage: string | null;
-  bulkActionError: string | null;
   onQChange: (value: string) => void;
   onStatusChange: (value: TicketStatus | "") => void;
   onPriorityChange: (value: TicketPriority | "") => void;
   onStepNameChange: (value: TicketStepName | "") => void;
   onStepExecutionStatusChange: (value: StepExecutionStatus | "") => void;
   onSortByChange: (value: TicketSortBy) => void;
-  bulkActionStepName: TicketStepName;
-  bulkActionLoading: boolean;
-  onBulkActionStepNameChange: (value: TicketStepName) => void;
-  onQueueBulkAction: () => void | Promise<void>;
   onSearch: () => void | Promise<void>;
   onOpenTicket: (ticketId: string) => void;
 };
@@ -109,18 +103,12 @@ export const TicketManagerSearchCard = ({
   loading,
   error,
   totalLabel,
-  bulkActionMessage,
-  bulkActionError,
   onQChange,
   onStatusChange,
   onPriorityChange,
   onStepNameChange,
   onStepExecutionStatusChange,
   onSortByChange,
-  bulkActionStepName,
-  bulkActionLoading,
-  onBulkActionStepNameChange,
-  onQueueBulkAction,
   onSearch,
   onOpenTicket,
 }: TicketManagerSearchCardProps) => {
@@ -218,41 +206,10 @@ export const TicketManagerSearchCard = ({
             <Button variant="outlined" onClick={() => void onSearch()} disabled={loading}>
               Search
             </Button>
-            <TextField
-              select
-              label="Bulk Action"
-              value={bulkActionStepName}
-              onChange={(event) =>
-                onBulkActionStepNameChange(event.target.value as TicketStepName)
-              }
-              sx={{ minWidth: 320 }}
-            >
-              {stepNameOptions.map((option) => (
-                <MenuItem
-                  key={`bulk-step-${option}`}
-                  value={option}
-                  disabled={option !== TICKET_DESCRIPTION_QUALITY_STEP_NAME}
-                >
-                  {option}
-                  {option !== TICKET_DESCRIPTION_QUALITY_STEP_NAME
-                    ? " (coming soon)"
-                    : ""}
-                </MenuItem>
-              ))}
-            </TextField>
-            <Button
-              variant="contained"
-              onClick={() => void onQueueBulkAction()}
-              disabled={loading || bulkActionLoading || tickets.pagination.total === 0}
-            >
-              Queue Matching Tickets
-            </Button>
           </Box>
 
           {loading ? <LinearProgress /> : null}
           {error ? <Alert severity="error">{error}</Alert> : null}
-          {bulkActionError ? <Alert severity="error">{bulkActionError}</Alert> : null}
-          {bulkActionMessage ? <Alert severity="success">{bulkActionMessage}</Alert> : null}
 
           <Stack direction="row" justifyContent="space-between" alignItems="center">
             <Typography variant="body2" color="text.secondary">

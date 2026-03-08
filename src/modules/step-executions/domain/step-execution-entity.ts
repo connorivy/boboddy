@@ -14,7 +14,7 @@ export type FailingTestReproFeedbackRequestEntity = {
   assumptions: string[];
 };
 
-export class TicketPipelineStepExecutionEntity {
+export abstract class TicketPipelineStepExecutionEntity {
   constructor(
     public ticketId: string,
     public stepName: string,

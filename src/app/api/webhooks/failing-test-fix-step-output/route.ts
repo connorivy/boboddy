@@ -1,13 +1,13 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { handleRouteError, ok } from "@/lib/api/http";
-import { completeTicketFailingTestFixStep } from "@/modules/step-executions/application/complete-ticket-failing-test-fix-step";
+import { completeTicketFailingTestFixStep } from "@/modules/step-executions/github_fix_failing_test/application/complete-ticket-failing-test-fix-step";
 import { handleAiWebhookBadRequest } from "@/modules/step-executions/application/handle-ai-webhook-bad-request";
 import {
   completeTicketFailingTestFixStepRequestBodySchema,
   completeTicketFailingTestFixStepRequestQuerySchema,
   completeTicketFailingTestFixStepRequestSchema,
-} from "@/modules/step-executions/contracts/complete-ticket-failing-test-fix-step-contracts";
+} from "@/modules/step-executions/github_fix_failing_test/contracts/complete-ticket-failing-test-fix-step-contracts";
 import { FAILING_TEST_FIX_STEP_NAME } from "@/modules/step-executions/domain/step-execution.types";
 
 const hasValidApiKey = (request: Request): boolean => {

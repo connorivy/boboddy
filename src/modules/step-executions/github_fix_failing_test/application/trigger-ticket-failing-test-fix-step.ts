@@ -6,8 +6,8 @@ import {
   triggerTicketFailingTestFixStepResponseSchema,
   type TriggerTicketFailingTestFixStepRequest,
   type TriggerTicketFailingTestFixStepResponse,
-} from "@/modules/step-executions/contracts/trigger-ticket-failing-test-fix-step-contracts";
-import { completeTicketFailingTestFixStepRequestBodySchema } from "@/modules/step-executions/contracts/complete-ticket-failing-test-fix-step-contracts";
+} from "@/modules/step-executions/github_fix_failing_test/contracts/trigger-ticket-failing-test-fix-step-contracts";
+import { completeTicketFailingTestFixStepRequestBodySchema } from "@/modules/step-executions/github_fix_failing_test/contracts/complete-ticket-failing-test-fix-step-contracts";
 import { stepExecutionEntityToContract } from "@/modules/step-executions/application/step-execution-entity-to-contract";
 import {
   FAILING_TEST_FIX_STEP_NAME,
@@ -21,10 +21,9 @@ import {
   FailingTestFixStepExecutionEntity,
   FailingTestFixStepResultEntity,
   FailingTestReproStepExecutionEntity,
-  TicketPipelineStepExecutionEntity,
-} from "../domain/step-execution-entity";
+} from "@/modules/step-executions/domain/step-execution-entity";
 import { TicketRepo } from "@/modules/tickets/application/jira-ticket-repo";
-import { StepExecutionRepo } from "./step-execution-repo";
+import { StepExecutionRepo } from "@/modules/step-executions/application/step-execution-repo";
 import { TicketGitEnvironmentRepo } from "@/modules/environments/application/ticket-git-environment-repo";
 import z from "zod";
 
@@ -156,14 +155,13 @@ export const triggerTicketFailingTestFixStep = async (
   }
 
   const now = new Date().toISOString();
-  const execution = new TicketPipelineStepExecutionEntity(
+  const execution = new FailingTestFixStepExecutionEntity(
     ticket.id,
-    FAILING_TEST_FIX_STEP_NAME,
     "running",
     `${FAILING_TEST_FIX_STEP_NAME}:${ticket.id}:${ticketGitEnvironment.id ?? input.ticketGitEnvironmentId}:${randomUUID()}`,
+    null,
     now,
   );
-
   let savedExecution = await stepExecutionRepo.save(execution);
 
   try {
@@ -230,19 +228,9 @@ export const triggerTicketFailingTestFixStep = async (
     );
   } catch (error) {
     if (!TERMINAL_STEP_EXECUTION_STATUSES.has(savedExecution.status)) {
-      await stepExecutionRepo.save(
-        new TicketPipelineStepExecutionEntity(
-          savedExecution.ticketId,
-          savedExecution.stepName,
-          "failed",
-          savedExecution.idempotencyKey,
-          savedExecution.startedAt,
-          new Date().toISOString(),
-          savedExecution.id,
-          savedExecution.createdAt,
-          savedExecution.updatedAt,
-        ),
-      );
+      execution.status = "failed";
+      execution.endedAt = new Date().toISOString();
+      await stepExecutionRepo.save(execution);
     }
 
     throw error;

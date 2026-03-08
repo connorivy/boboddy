@@ -7,7 +7,7 @@ const hoisted = vi.hoisted(() => ({
 }));
 
 vi.mock(
-  "@/modules/step-executions/application/complete-ticket-description-enrichment-step",
+  "@/modules/step-executions/ticket_description_enrichment/application/complete-ticket-description-enrichment-step",
   () => ({
     completeTicketDescriptionEnrichmentStep:
       hoisted.completeTicketDescriptionEnrichmentStep,

@@ -27,9 +27,6 @@ import {
 } from "../domain/step-execution-entity";
 import { DbExecutor } from "@/lib/db/db-executor";
 
-type DbClient = ReturnType<typeof getDb>;
-type DbTransaction = Parameters<Parameters<DbClient["transaction"]>[0]>[0];
-
 function requiredField<T>(
   value: T | null | undefined,
   fieldName: string,

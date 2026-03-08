@@ -40,7 +40,6 @@ import {
   TicketDescriptionQualityStepExecutionEntity,
   TicketDescriptionQualityStepResultEntity,
   TicketDuplicateCandidatesStepResultEntity,
-  TicketPipelineStepExecutionEntity,
 } from "@/modules/step-executions/domain/step-execution-entity";
 
 const makeTicketAggregate = (
@@ -376,44 +375,49 @@ describe("tickets module use cases (integration)", () => {
     ]);
 
     const cv311QueuedExecution = await stepExecutionRepo.save(
-      new TicketPipelineStepExecutionEntity(
+      new TicketDescriptionQualityStepExecutionEntity(
         "CV-311",
-        TICKET_DESCRIPTION_QUALITY_STEP_NAME,
         "queued",
         "desc-quality:CV-311:1",
+        null,
         "2026-02-01T10:00:00.000Z",
       ),
     );
     await backfillDescriptionStepResultFields(cv311QueuedExecution.id!);
 
     const cv311RunningExecution = await stepExecutionRepo.save(
-      new TicketPipelineStepExecutionEntity(
+      new TicketDescriptionQualityStepExecutionEntity(
         "CV-311",
-        TICKET_DESCRIPTION_QUALITY_STEP_NAME,
         "running",
         "desc-quality:CV-311:2",
+        null,
         "2026-02-01T10:05:00.000Z",
       ),
     );
     await backfillDescriptionStepResultFields(cv311RunningExecution.id!);
 
     const cv312SucceededExecution = await stepExecutionRepo.save(
-      new TicketPipelineStepExecutionEntity(
+      new TicketDescriptionQualityStepExecutionEntity(
         "CV-312",
-        TICKET_DESCRIPTION_QUALITY_STEP_NAME,
         "succeeded",
         "desc-quality:CV-312:1",
+        new TicketDescriptionQualityStepResultEntity(
+          4,
+          4,
+          4,
+          "Integration test seed payload",
+          '{"score":4}',
+        ),
         "2026-02-01T10:10:00.000Z",
       ),
     );
-    await backfillDescriptionStepResultFields(cv312SucceededExecution.id!);
 
     await stepExecutionRepo.save(
-      new TicketPipelineStepExecutionEntity(
+      new TicketDuplicateCandidatesStepResultEntity(
         "CV-314",
-        TICKET_DUPLICATE_CANDIDATES_STEP_NAME,
         "running",
         "dupe-search:CV-314:1",
+        null,
         "2026-02-01T10:15:00.000Z",
       ),
     );
@@ -474,11 +478,11 @@ describe("tickets module use cases (integration)", () => {
     ]);
 
     const descriptionExecution = await stepExecutionRepo.save(
-      new TicketPipelineStepExecutionEntity(
+      new TicketDescriptionQualityStepExecutionEntity(
         "CV-401",
-        TICKET_DESCRIPTION_QUALITY_STEP_NAME,
         "queued",
         "desc-quality:CV-401:1",
+        null,
         "2026-02-01T10:00:00.000Z",
       ),
     );
@@ -504,11 +508,11 @@ describe("tickets module use cases (integration)", () => {
     );
 
     const duplicateExecution = await stepExecutionRepo.save(
-      new TicketPipelineStepExecutionEntity(
+      new TicketDuplicateCandidatesStepResultEntity(
         "CV-401",
-        TICKET_DUPLICATE_CANDIDATES_STEP_NAME,
         "queued",
         "dupe-search:CV-401:1",
+        null,
         "2026-02-01T10:05:00.000Z",
       ),
     );

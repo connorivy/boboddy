@@ -4,13 +4,12 @@ import type { TicketIngestInput } from "@/modules/tickets/contracts/ticket-contr
 import { DrizzleTicketRepo } from "@/modules/tickets/infra/drizzle-ticket-repo";
 import { DrizzleStepExecutionRepo } from "@/modules/step-executions/infra/step-execution-repo";
 import { FAILING_TEST_REPRO_STEP_NAME } from "@/modules/step-executions/domain/step-execution.types";
-import { completeTicketFailingTestReproStep } from "@/modules/step-executions/application/complete-ticket-failing-test-repro-step";
+import { completeTicketFailingTestReproStep } from "@/modules/step-executions/github_repro_failing_test/application/complete-ticket-failing-test-repro-step";
 import {
   truncateTestTables,
 } from "../../helpers/pgvector-test-db";
 import {
   FailingTestReproStepExecutionEntity,
-  TicketPipelineStepExecutionEntity,
 } from "@/modules/step-executions/domain/step-execution-entity";
 import { TicketGithubIssueEntity } from "@/modules/tickets/domain/ticket-github-issue.entity";
 import { getDb } from "@/lib/db";
@@ -53,11 +52,11 @@ describe("completeTicketFailingTestReproStep (integration)", () => {
     );
 
     const runningExecution = await stepExecutionRepo.save(
-      new TicketPipelineStepExecutionEntity(
+      new FailingTestReproStepExecutionEntity(
         "CV-902",
-        FAILING_TEST_REPRO_STEP_NAME,
         "running",
         "github_repro_failing_test:CV-902:run-1",
+        null,
         new Date("2026-03-01T12:00:00.000Z").toISOString(),
       ),
     );
@@ -152,11 +151,11 @@ describe("completeTicketFailingTestReproStep (integration)", () => {
     );
 
     const runningExecution = await stepExecutionRepo.save(
-      new TicketPipelineStepExecutionEntity(
+      new FailingTestReproStepExecutionEntity(
         "CV-902",
-        FAILING_TEST_REPRO_STEP_NAME,
         "running",
         "github_repro_failing_test:CV-902:run-feedback",
+        null,
         new Date("2026-03-01T12:00:00.000Z").toISOString(),
       ),
     );

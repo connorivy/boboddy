@@ -12,7 +12,7 @@ import { DrizzleStepExecutionRepo } from "@/modules/step-executions/infra/step-e
 import {
   TICKET_DESCRIPTION_ENRICHMENT_STEP_NAME,
 } from "@/modules/step-executions/domain/step-execution.types";
-import { triggerTicketDescriptionEnrichmentStep } from "@/modules/step-executions/application/trigger-ticket-description-enrichment-step";
+import { triggerTicketDescriptionEnrichmentStep } from "@/modules/step-executions/ticket_description_enrichment/application/trigger-ticket-description-enrichment-step";
 import {
   truncateTestTables,
 } from "../../helpers/pgvector-test-db";
@@ -21,7 +21,7 @@ const hoisted = vi.hoisted(() => ({
   enrichTicketDescription: vi.fn(),
 }));
 
-vi.mock("@/modules/step-executions/infra/ticket-description-enrichment-ai", () => ({
+vi.mock("@/modules/step-executions/ticket_description_enrichment/infra/ticket-description-enrichment-ai", () => ({
   CodexCliTicketDescriptionEnrichmentAi: class {
     enrichTicketDescription = hoisted.enrichTicketDescription;
   },

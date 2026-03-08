@@ -4,7 +4,7 @@ import type { TicketIngestInput } from "@/modules/tickets/contracts/ticket-contr
 import { DrizzleTicketRepo } from "@/modules/tickets/infra/drizzle-ticket-repo";
 import { DrizzleStepExecutionRepo } from "@/modules/step-executions/infra/step-execution-repo";
 import { FAILING_TEST_REPRO_STEP_NAME } from "@/modules/step-executions/domain/step-execution.types";
-import { triggerTicketFailingTestReproStep } from "@/modules/step-executions/application/trigger-ticket-failing-test-repro-step";
+import { triggerTicketFailingTestReproStep } from "@/modules/step-executions/github_repro_failing_test/application/trigger-ticket-failing-test-repro-step";
 import { TicketGithubIssueEntity } from "@/modules/tickets/domain/ticket-github-issue.entity";
 import { truncateTestTables } from "../../helpers/pgvector-test-db";
 import { upsertEnvironment } from "@/modules/environments/application/upsert-environment";

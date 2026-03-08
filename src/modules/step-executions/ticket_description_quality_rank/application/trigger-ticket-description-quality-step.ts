@@ -5,19 +5,18 @@ import {
   triggerTicketDescriptionQualityStepResponseSchema,
   type TriggerTicketDescriptionQualityStepRequest,
   type TriggerTicketDescriptionQualityStepResponse,
-} from "@/modules/step-executions/contracts/trigger-ticket-description-quality-step-contracts";
+} from "@/modules/step-executions/ticket_description_quality_rank/contracts/trigger-ticket-description-quality-step-contracts";
 import { stepExecutionEntityToContract } from "@/modules/step-executions/application/step-execution-entity-to-contract";
 import {
   TERMINAL_STEP_EXECUTION_STATUSES,
   TICKET_DESCRIPTION_QUALITY_STEP_NAME,
 } from "@/modules/step-executions/domain/step-execution.types";
-import { CodexCliTicketDescriptionQualityAi } from "@/modules/step-executions/infra/ticket-description-quality-ai";
+import { CodexCliTicketDescriptionQualityAi } from "@/modules/step-executions/ticket_description_quality_rank/infra/ticket-description-quality-ai";
 import { AppContext } from "@/lib/di";
 import {
   TicketDescriptionQualityStepExecutionEntity,
   TicketDescriptionQualityStepResultEntity,
-  TicketPipelineStepExecutionEntity,
-} from "../domain/step-execution-entity";
+} from "@/modules/step-executions/domain/step-execution-entity";
 
 export const triggerTicketDescriptionQualityStep = async (
   rawInput: TriggerTicketDescriptionQualityStepRequest,
@@ -32,11 +31,11 @@ export const triggerTicketDescriptionQualityStep = async (
   }
 
   const now = new Date().toISOString();
-  const execution = new TicketPipelineStepExecutionEntity(
+  const execution = new TicketDescriptionQualityStepExecutionEntity(
     input.ticketId,
-    TICKET_DESCRIPTION_QUALITY_STEP_NAME,
     "running",
     `${TICKET_DESCRIPTION_QUALITY_STEP_NAME}:${input.ticketId}`,
+    null,
     now,
   );
 
@@ -75,16 +74,16 @@ export const triggerTicketDescriptionQualityStep = async (
   } catch (error) {
     if (!TERMINAL_STEP_EXECUTION_STATUSES.has(savedExecution.status)) {
       await stepExecutionRepo.save(
-        new TicketPipelineStepExecutionEntity(
+        new TicketDescriptionQualityStepExecutionEntity(
           savedExecution.ticketId,
-          savedExecution.stepName,
           "failed",
           savedExecution.idempotencyKey,
+          null,
           savedExecution.startedAt,
           new Date().toISOString(),
-          savedExecution.id,
           savedExecution.createdAt,
           savedExecution.updatedAt,
+          savedExecution.id,
         ),
       );
     }

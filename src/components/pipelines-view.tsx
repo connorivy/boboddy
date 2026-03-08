@@ -25,7 +25,7 @@ import {
   removeBulkStepQueueItem,
   useBulkStepQueueItems,
 } from "@/modules/step-executions/application/bulk-step-queue";
-import { triggerTicketDescriptionQualityStep } from "@/modules/step-executions/application/trigger-ticket-description-quality-step";
+import { triggerTicketDescriptionQualityStep } from "@/modules/step-executions/ticket_description_quality_rank/application/trigger-ticket-description-quality-step";
 import { getPipelineStepExecutions } from "@/modules/step-executions/application/get-pipeline-step-executions";
 import type { PaginatedPipelineStepExecutionsResponse } from "@/modules/step-executions/contracts/get-pipeline-step-executions-contracts";
 import { TICKET_DESCRIPTION_QUALITY_STEP_NAME } from "@/modules/step-executions/domain/step-execution.types";

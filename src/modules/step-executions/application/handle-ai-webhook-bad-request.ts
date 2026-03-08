@@ -5,15 +5,15 @@ import { AppContext } from "@/lib/di";
 import {
   completeTicketDescriptionEnrichmentStepRequestBodySchema,
   type CompleteTicketDescriptionEnrichmentStepRequest,
-} from "@/modules/step-executions/contracts/complete-ticket-description-enrichment-step-contracts";
+} from "@/modules/step-executions/ticket_description_enrichment/contracts/complete-ticket-description-enrichment-step-contracts";
 import {
   completeTicketFailingTestFixStepRequestBodySchema,
   type CompleteTicketFailingTestFixStepRequest,
-} from "@/modules/step-executions/contracts/complete-ticket-failing-test-fix-step-contracts";
+} from "@/modules/step-executions/github_fix_failing_test/contracts/complete-ticket-failing-test-fix-step-contracts";
 import {
   completeTicketFailingTestReproStepRequestBodySchema,
   type CompleteTicketFailingTestReproStepRequest,
-} from "@/modules/step-executions/contracts/complete-ticket-failing-test-repro-step-contracts";
+} from "@/modules/step-executions/github_repro_failing_test/contracts/complete-ticket-failing-test-repro-step-contracts";
 import {
   FAILING_TEST_FIX_STEP_NAME,
   FAILING_TEST_REPRO_STEP_NAME,

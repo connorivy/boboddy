@@ -6,7 +6,7 @@ import {
   completeTicketFailingTestFixStepResponseSchema,
   type CompleteTicketFailingTestFixStepRequest,
   type CompleteTicketFailingTestFixStepResponse,
-} from "@/modules/step-executions/contracts/complete-ticket-failing-test-fix-step-contracts";
+} from "@/modules/step-executions/github_fix_failing_test/contracts/complete-ticket-failing-test-fix-step-contracts";
 import { FAILING_TEST_FIX_STEP_NAME } from "@/modules/step-executions/domain/step-execution.types";
 import type { StepExecutionStatus } from "@/modules/tickets/contracts/ticket-contracts";
 import { httpError } from "@/lib/api/http";
@@ -15,7 +15,7 @@ import {
   FailingTestFixStepCompletionResultEntity,
   FailingTestFixStepExecutionEntity,
   FailingTestFixStepResultEntity,
-} from "../domain/step-execution-entity";
+} from "@/modules/step-executions/domain/step-execution-entity";
 
 const resolveStatus = (
   input: CompleteTicketFailingTestFixStepRequest,

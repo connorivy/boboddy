@@ -7,7 +7,7 @@ const hoisted = vi.hoisted(() => ({
 }));
 
 vi.mock(
-  "@/modules/step-executions/application/complete-ticket-failing-test-repro-step",
+  "@/modules/step-executions/github_repro_failing_test/application/complete-ticket-failing-test-repro-step",
   () => ({
     completeTicketFailingTestReproStep: hoisted.completeTicketFailingTestReproStep,
   }),

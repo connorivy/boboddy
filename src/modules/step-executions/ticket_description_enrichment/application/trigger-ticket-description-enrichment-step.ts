@@ -6,21 +6,20 @@ import {
   triggerTicketDescriptionEnrichmentStepResponseSchema,
   type TriggerTicketDescriptionEnrichmentStepRequest,
   type TriggerTicketDescriptionEnrichmentStepResponse,
-} from "@/modules/step-executions/contracts/trigger-ticket-description-enrichment-step-contracts";
+} from "@/modules/step-executions/ticket_description_enrichment/contracts/trigger-ticket-description-enrichment-step-contracts";
 import { stepExecutionEntityToContract } from "@/modules/step-executions/application/step-execution-entity-to-contract";
 import {
   TERMINAL_STEP_EXECUTION_STATUSES,
   TICKET_DESCRIPTION_ENRICHMENT_STEP_NAME,
 } from "@/modules/step-executions/domain/step-execution.types";
-import { CodexCliTicketDescriptionEnrichmentAi } from "@/modules/step-executions/infra/ticket-description-enrichment-ai";
+import { CodexCliTicketDescriptionEnrichmentAi } from "@/modules/step-executions/ticket_description_enrichment/infra/ticket-description-enrichment-ai";
 import { AppContext } from "@/lib/di";
 import {
   TicketDescriptionEnrichmentStepExecutionEntity,
   TicketDescriptionEnrichmentStepResultEntity,
-  TicketPipelineStepExecutionEntity,
-} from "../domain/step-execution-entity";
+} from "@/modules/step-executions/domain/step-execution-entity";
 import { TicketRepo } from "@/modules/tickets/application/jira-ticket-repo";
-import { StepExecutionRepo } from "./step-execution-repo";
+import { StepExecutionRepo } from "@/modules/step-executions/application/step-execution-repo";
 
 const getPostgresMcpConnectionString = (): string => {
   if (!process.env.POSTGRES_MCP_CONNECTION_STRING) {
@@ -49,11 +48,11 @@ export const triggerTicketDescriptionEnrichmentStep = async (
   }
 
   const now = new Date().toISOString();
-  const execution = new TicketPipelineStepExecutionEntity(
+  const execution = new TicketDescriptionEnrichmentStepExecutionEntity(
     input.ticketId,
-    TICKET_DESCRIPTION_ENRICHMENT_STEP_NAME,
     "running",
     `${TICKET_DESCRIPTION_ENRICHMENT_STEP_NAME}:${input.ticketId}:${randomUUID()}`,
+    null,
     now,
   );
 
@@ -103,16 +102,16 @@ export const triggerTicketDescriptionEnrichmentStep = async (
   } catch (error) {
     if (!TERMINAL_STEP_EXECUTION_STATUSES.has(savedExecution.status)) {
       await stepExecutionRepo.save(
-        new TicketPipelineStepExecutionEntity(
+        new TicketDescriptionEnrichmentStepExecutionEntity(
           savedExecution.ticketId,
-          savedExecution.stepName,
           "failed",
           savedExecution.idempotencyKey,
+          null,
           savedExecution.startedAt,
           new Date().toISOString(),
-          savedExecution.id,
           savedExecution.createdAt,
           savedExecution.updatedAt,
+          savedExecution.id,
         ),
       );
     }

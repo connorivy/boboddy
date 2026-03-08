@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { stepExecutionContractSchema } from "@/modules/step-executions/contracts/step-execution-contracts";
-import { agentStatusEnum } from "@/modules/step-executions/contracts/complete-ticket-failing-test-repro-step-contracts";
+import { agentStatusEnum } from "@/modules/step-executions/github_repro_failing_test/contracts/complete-ticket-failing-test-repro-step-contracts";
 
 export const completeTicketDescriptionEnrichmentStepRequestBodySchema = z.object({
   ticketId: z.string().trim().min(1),

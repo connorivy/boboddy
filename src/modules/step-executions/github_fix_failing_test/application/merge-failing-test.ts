@@ -1,11 +1,11 @@
 "use server";
 
 import { TicketRepo } from "@/modules/tickets/application/jira-ticket-repo";
-import { GithubApiService } from "../infra/github-copilot-coding-agent";
+import { GithubApiService } from "@/modules/step-executions/infra/github-copilot-coding-agent";
 import { TicketGitEnvironmentRepo } from "@/modules/environments/application/ticket-git-environment-repo";
 import { AppContext } from "@/lib/di";
-import { FailingTestReproStepExecutionEntity } from "../domain/step-execution-entity";
-import { StepExecutionRepo } from "./step-execution-repo";
+import { FailingTestReproStepExecutionEntity } from "@/modules/step-executions/domain/step-execution-entity";
+import { StepExecutionRepo } from "@/modules/step-executions/application/step-execution-repo";
 
 export async function mergeFailingTest(
   ticketId: string,

@@ -4,13 +4,12 @@ import type { TicketIngestInput } from "@/modules/tickets/contracts/ticket-contr
 import { DrizzleTicketRepo } from "@/modules/tickets/infra/drizzle-ticket-repo";
 import { DrizzleStepExecutionRepo } from "@/modules/step-executions/infra/step-execution-repo";
 import { TICKET_DESCRIPTION_ENRICHMENT_STEP_NAME } from "@/modules/step-executions/domain/step-execution.types";
-import { completeTicketDescriptionEnrichmentStep } from "@/modules/step-executions/application/complete-ticket-description-enrichment-step";
+import { completeTicketDescriptionEnrichmentStep } from "@/modules/step-executions/ticket_description_enrichment/application/complete-ticket-description-enrichment-step";
 import {
   truncateTestTables,
 } from "../../helpers/pgvector-test-db";
 import {
   TicketDescriptionEnrichmentStepExecutionEntity,
-  TicketPipelineStepExecutionEntity,
 } from "@/modules/step-executions/domain/step-execution-entity";
 
 const makeTicketAggregate = (
@@ -46,11 +45,11 @@ describe("completeTicketDescriptionEnrichmentStep (integration)", () => {
     await ticketRepo.createMany([makeTicketAggregate()]);
 
     const runningExecution = await stepExecutionRepo.save(
-      new TicketPipelineStepExecutionEntity(
+      new TicketDescriptionEnrichmentStepExecutionEntity(
         "CV-952",
-        TICKET_DESCRIPTION_ENRICHMENT_STEP_NAME,
         "running",
         "ticket_description_enrichment:CV-952:run-1",
+        null,
         new Date("2026-03-01T12:00:00.000Z").toISOString(),
       ),
     );

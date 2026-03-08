@@ -6,7 +6,7 @@ import {
   completeTicketDescriptionEnrichmentStepResponseSchema,
   type CompleteTicketDescriptionEnrichmentStepRequest,
   type CompleteTicketDescriptionEnrichmentStepResponse,
-} from "@/modules/step-executions/contracts/complete-ticket-description-enrichment-step-contracts";
+} from "@/modules/step-executions/ticket_description_enrichment/contracts/complete-ticket-description-enrichment-step-contracts";
 import { TICKET_DESCRIPTION_ENRICHMENT_STEP_NAME } from "@/modules/step-executions/domain/step-execution.types";
 import type { StepExecutionStatus } from "@/modules/tickets/contracts/ticket-contracts";
 import { httpError } from "@/lib/api/http";
@@ -14,8 +14,8 @@ import { AppContext } from "@/lib/di";
 import {
   TicketDescriptionEnrichmentStepExecutionEntity,
   TicketDescriptionEnrichmentStepResultEntity,
-} from "../domain/step-execution-entity";
-import { StepExecutionRepo } from "./step-execution-repo";
+} from "@/modules/step-executions/domain/step-execution-entity";
+import { StepExecutionRepo } from "@/modules/step-executions/application/step-execution-repo";
 
 const resolveStatus = (
   input: CompleteTicketDescriptionEnrichmentStepRequest,

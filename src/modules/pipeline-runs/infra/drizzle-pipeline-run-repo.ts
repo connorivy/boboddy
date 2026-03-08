@@ -23,7 +23,9 @@ export class DrizzlePipelineRunRepo implements PipelineRunRepo {
     dbExecutor?: DbExecutor,
   ): Promise<PipelineRunAggregate> {
     if (pipelineRun.id) {
-      throw new Error("Updating existing pipeline runs is not supported");
+      throw new Error(
+        "Pipeline run already has an ID. Use this repo only to create new pipeline runs.",
+      );
     }
 
     const db = dbExecutor ?? getDb();

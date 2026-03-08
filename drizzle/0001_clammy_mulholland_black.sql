@@ -46,7 +46,7 @@ CREATE TABLE "failing_test_repro_attempts" (
 );
 --> statement-breakpoint
 CREATE TABLE "pipeline_runs" (
-	"id" text PRIMARY KEY NOT NULL,
+	"id" serial PRIMARY KEY NOT NULL,
 	"ticket_id" text NOT NULL,
 	"pipeline_name" text NOT NULL,
 	"status" "pipeline_run_status" NOT NULL,
@@ -109,7 +109,7 @@ CREATE TABLE "ticket_github_issues" (
 CREATE TABLE "ticket_step_executions" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"ticket_id" text NOT NULL,
-	"pipeline_run_id" text,
+	"pipeline_run_id" integer NOT NULL,
 	"step_name" text NOT NULL,
 	"status" "step_execution_status" NOT NULL,
 	"idempotency_key" text NOT NULL,
@@ -122,7 +122,7 @@ CREATE TABLE "ticket_step_executions" (
 CREATE TABLE "ticket_step_executions_tph" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"ticket_id" text NOT NULL,
-	"pipeline_run_id" text,
+	"pipeline_run_id" integer NOT NULL,
 	"step_name" text NOT NULL,
 	"type" text NOT NULL,
 	"status" "step_execution_status" NOT NULL,
@@ -192,9 +192,9 @@ ALTER TABLE "ticket_git_environments" ADD CONSTRAINT "ticket_git_environments_ti
 ALTER TABLE "ticket_git_environments" ADD CONSTRAINT "ticket_git_environments_base_environment_id_environments_environment_key_fk" FOREIGN KEY ("base_environment_id") REFERENCES "public"."environments"("environment_key") ON DELETE restrict ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "ticket_github_issues" ADD CONSTRAINT "ticket_github_issues_ticket_id_tickets_id_fk" FOREIGN KEY ("ticket_id") REFERENCES "public"."tickets"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "ticket_step_executions" ADD CONSTRAINT "ticket_step_executions_ticket_id_tickets_id_fk" FOREIGN KEY ("ticket_id") REFERENCES "public"."tickets"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "ticket_step_executions" ADD CONSTRAINT "ticket_step_executions_pipeline_run_id_pipeline_runs_id_fk" FOREIGN KEY ("pipeline_run_id") REFERENCES "public"."pipeline_runs"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "ticket_step_executions" ADD CONSTRAINT "ticket_step_executions_pipeline_run_id_pipeline_runs_id_fk" FOREIGN KEY ("pipeline_run_id") REFERENCES "public"."pipeline_runs"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "ticket_step_executions_tph" ADD CONSTRAINT "ticket_step_executions_tph_ticket_id_tickets_id_fk" FOREIGN KEY ("ticket_id") REFERENCES "public"."tickets"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "ticket_step_executions_tph" ADD CONSTRAINT "ticket_step_executions_tph_pipeline_run_id_pipeline_runs_id_fk" FOREIGN KEY ("pipeline_run_id") REFERENCES "public"."pipeline_runs"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "ticket_step_executions_tph" ADD CONSTRAINT "ticket_step_executions_tph_pipeline_run_id_pipeline_runs_id_fk" FOREIGN KEY ("pipeline_run_id") REFERENCES "public"."pipeline_runs"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "tickets" ADD CONSTRAINT "tickets_default_git_environment_id_ticket_git_environments_id_fk" FOREIGN KEY ("default_git_environment_id") REFERENCES "public"."ticket_git_environments"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
 CREATE UNIQUE INDEX "failing_test_repro_attempts_idempotency_key_unique" ON "failing_test_repro_attempts" USING btree ("idempotency_key");--> statement-breakpoint
 CREATE UNIQUE INDEX "ticket_duplicate_candidates_pair_unique" ON "ticket_duplicate_candidates" USING btree ("ticket_id","candidate_ticket_id");--> statement-breakpoint

@@ -3,6 +3,8 @@ import { TicketAggregate } from "@/modules/tickets/domain/ticket-aggregate";
 import type { TicketIngestInput } from "@/modules/tickets/contracts/ticket-contracts";
 import { DrizzleTicketRepo } from "@/modules/tickets/infra/drizzle-ticket-repo";
 import { DrizzleStepExecutionRepo } from "@/modules/step-executions/infra/step-execution-repo";
+import { DrizzlePipelineRunRepo } from "@/modules/pipeline-runs/infra/drizzle-pipeline-run-repo";
+import { PipelineRunAggregate } from "@/modules/pipeline-runs/domain/pipeline-run-aggregate";
 import { TICKET_DESCRIPTION_ENRICHMENT_STEP_NAME } from "@/modules/step-executions/domain/step-execution.types";
 import { completeTicketDescriptionEnrichmentStep } from "@/modules/step-executions/application/complete-ticket-description-enrichment-step";
 import {
@@ -37,6 +39,7 @@ const makeTicketAggregate = (
 describe("completeTicketDescriptionEnrichmentStep (integration)", () => {
   const ticketRepo = new DrizzleTicketRepo();
   const stepExecutionRepo = new DrizzleStepExecutionRepo();
+  const pipelineRunRepo = new DrizzlePipelineRunRepo();
 
   beforeEach(async () => {
     await truncateTestTables();
@@ -44,6 +47,13 @@ describe("completeTicketDescriptionEnrichmentStep (integration)", () => {
 
   it("marks enrichment step as succeeded and stores payload", async () => {
     await ticketRepo.createMany([makeTicketAggregate()]);
+    const pipelineRun = await pipelineRunRepo.save(
+      PipelineRunAggregate.create({
+        ticketId: "CV-952",
+        pipelineName: TICKET_DESCRIPTION_ENRICHMENT_STEP_NAME,
+        status: "running",
+      }),
+    );
 
     const runningExecution = await stepExecutionRepo.save(
       new TicketPipelineStepExecutionEntity(
@@ -56,7 +66,7 @@ describe("completeTicketDescriptionEnrichmentStep (integration)", () => {
         undefined,
         undefined,
         undefined,
-        1,
+        pipelineRun.id!,
       ),
     );
 

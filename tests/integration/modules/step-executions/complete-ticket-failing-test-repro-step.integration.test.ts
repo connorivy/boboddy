@@ -3,6 +3,8 @@ import { TicketAggregate } from "@/modules/tickets/domain/ticket-aggregate";
 import type { TicketIngestInput } from "@/modules/tickets/contracts/ticket-contracts";
 import { DrizzleTicketRepo } from "@/modules/tickets/infra/drizzle-ticket-repo";
 import { DrizzleStepExecutionRepo } from "@/modules/step-executions/infra/step-execution-repo";
+import { DrizzlePipelineRunRepo } from "@/modules/pipeline-runs/infra/drizzle-pipeline-run-repo";
+import { PipelineRunAggregate } from "@/modules/pipeline-runs/domain/pipeline-run-aggregate";
 import { FAILING_TEST_REPRO_STEP_NAME } from "@/modules/step-executions/domain/step-execution.types";
 import { completeTicketFailingTestReproStep } from "@/modules/step-executions/application/complete-ticket-failing-test-repro-step";
 import {
@@ -41,6 +43,7 @@ const makeTicketAggregate = (
 describe("completeTicketFailingTestReproStep (integration)", () => {
   const ticketRepo = new DrizzleTicketRepo();
   const stepExecutionRepo = new DrizzleStepExecutionRepo();
+  const pipelineRunRepo = new DrizzlePipelineRunRepo();
 
   beforeEach(async () => {
     await truncateTestTables();
@@ -50,6 +53,13 @@ describe("completeTicketFailingTestReproStep (integration)", () => {
     await ticketRepo.createMany([makeTicketAggregate()]);
     await ticketRepo.saveGithubIssue(
       new TicketGithubIssueEntity("CV-902", 777, "I_kwDOFAKE777"),
+    );
+    const pipelineRun = await pipelineRunRepo.save(
+      PipelineRunAggregate.create({
+        ticketId: "CV-902",
+        pipelineName: FAILING_TEST_REPRO_STEP_NAME,
+        status: "running",
+      }),
     );
 
     const runningExecution = await stepExecutionRepo.save(
@@ -63,7 +73,7 @@ describe("completeTicketFailingTestReproStep (integration)", () => {
         undefined,
         undefined,
         undefined,
-        1,
+        pipelineRun.id!,
       ),
     );
 
@@ -155,6 +165,13 @@ describe("completeTicketFailingTestReproStep (integration)", () => {
     await ticketRepo.saveGithubIssue(
       new TicketGithubIssueEntity("CV-902", 778, "I_kwDOFAKE778"),
     );
+    const pipelineRun = await pipelineRunRepo.save(
+      PipelineRunAggregate.create({
+        ticketId: "CV-902",
+        pipelineName: FAILING_TEST_REPRO_STEP_NAME,
+        status: "running",
+      }),
+    );
 
     const runningExecution = await stepExecutionRepo.save(
       new TicketPipelineStepExecutionEntity(
@@ -167,7 +184,7 @@ describe("completeTicketFailingTestReproStep (integration)", () => {
         undefined,
         undefined,
         undefined,
-        2,
+        pipelineRun.id!,
       ),
     );
 

@@ -31,6 +31,8 @@ import { DrizzleTicketGitEnvironmentRepo } from "@/modules/environments/infra/dr
 import { TicketGitEnvironmentAggregate } from "@/modules/environments/domain/ticket-git-environment-aggregate";
 import { DrizzleEnvironmentRepo } from "@/modules/environments/infra/drizzle-environment-repo";
 import { EnvironmentAggregate } from "@/modules/environments/domain/environment-aggregate";
+import { DrizzlePipelineRunRepo } from "@/modules/pipeline-runs/infra/drizzle-pipeline-run-repo";
+import { PipelineRunAggregate } from "@/modules/pipeline-runs/domain/pipeline-run-aggregate";
 import {
   truncateTestTables,
 } from "../../helpers/pgvector-test-db";
@@ -79,11 +81,33 @@ const backfillDescriptionStepResultFields = async (stepExecutionId: number) => {
     .where(eq(ticketStepExecutionsTph.id, stepExecutionId));
 };
 
+const requirePipelineRunId = (pipelineRun: PipelineRunAggregate): number => {
+  if (pipelineRun.id === undefined) {
+    throw new Error("Pipeline run ID missing after persistence");
+  }
+
+  return pipelineRun.id;
+};
+
 describe("tickets module use cases (integration)", () => {
   const ticketRepo = new DrizzleTicketRepo();
   const stepExecutionRepo = new DrizzleStepExecutionRepo();
   const ticketGitEnvironmentRepo = new DrizzleTicketGitEnvironmentRepo();
   const environmentRepo = new DrizzleEnvironmentRepo();
+  const pipelineRunRepo = new DrizzlePipelineRunRepo();
+
+  const createPipelineRun = (
+    ticketId: string,
+    pipelineName: string,
+    status: PipelineRunAggregate["status"],
+  ) =>
+    pipelineRunRepo.save(
+      PipelineRunAggregate.create({
+        ticketId,
+        pipelineName,
+        status,
+      }),
+    );
 
   beforeEach(async () => {
     await truncateTestTables();
@@ -277,6 +301,11 @@ describe("tickets module use cases (integration)", () => {
       }),
     ]);
 
+    const cv321Run = await createPipelineRun(
+      "CV-321",
+      TICKET_DESCRIPTION_QUALITY_STEP_NAME,
+      "succeeded",
+    );
     await stepExecutionRepo.save(
       new TicketDescriptionQualityStepExecutionEntity(
         "CV-321",
@@ -294,8 +323,13 @@ describe("tickets module use cases (integration)", () => {
         undefined,
         undefined,
         undefined,
-        1,
+        requirePipelineRunId(cv321Run),
       ),
+    );
+    const cv322Run = await createPipelineRun(
+      "CV-322",
+      TICKET_DESCRIPTION_QUALITY_STEP_NAME,
+      "succeeded",
     );
     await stepExecutionRepo.save(
       new TicketDescriptionQualityStepExecutionEntity(
@@ -314,8 +348,13 @@ describe("tickets module use cases (integration)", () => {
         undefined,
         undefined,
         undefined,
-        2,
+        requirePipelineRunId(cv322Run),
       ),
+    );
+    const cv323Run = await createPipelineRun(
+      "CV-323",
+      TICKET_DESCRIPTION_QUALITY_STEP_NAME,
+      "succeeded",
     );
     await stepExecutionRepo.save(
       new TicketDescriptionQualityStepExecutionEntity(
@@ -334,7 +373,7 @@ describe("tickets module use cases (integration)", () => {
         undefined,
         undefined,
         undefined,
-        3,
+        requirePipelineRunId(cv323Run),
       ),
     );
 
@@ -385,6 +424,11 @@ describe("tickets module use cases (integration)", () => {
       }),
     ]);
 
+    const cv311QueuedRun = await createPipelineRun(
+      "CV-311",
+      TICKET_DESCRIPTION_QUALITY_STEP_NAME,
+      "queued",
+    );
     const cv311QueuedExecution = await stepExecutionRepo.save(
       new TicketPipelineStepExecutionEntity(
         "CV-311",
@@ -396,11 +440,16 @@ describe("tickets module use cases (integration)", () => {
         undefined,
         undefined,
         undefined,
-        4,
+        requirePipelineRunId(cv311QueuedRun),
       ),
     );
     await backfillDescriptionStepResultFields(cv311QueuedExecution.id!);
 
+    const cv311RunningRun = await createPipelineRun(
+      "CV-311",
+      TICKET_DESCRIPTION_QUALITY_STEP_NAME,
+      "running",
+    );
     const cv311RunningExecution = await stepExecutionRepo.save(
       new TicketPipelineStepExecutionEntity(
         "CV-311",
@@ -412,11 +461,16 @@ describe("tickets module use cases (integration)", () => {
         undefined,
         undefined,
         undefined,
-        5,
+        requirePipelineRunId(cv311RunningRun),
       ),
     );
     await backfillDescriptionStepResultFields(cv311RunningExecution.id!);
 
+    const cv312SucceededRun = await createPipelineRun(
+      "CV-312",
+      TICKET_DESCRIPTION_QUALITY_STEP_NAME,
+      "succeeded",
+    );
     const cv312SucceededExecution = await stepExecutionRepo.save(
       new TicketPipelineStepExecutionEntity(
         "CV-312",
@@ -428,11 +482,16 @@ describe("tickets module use cases (integration)", () => {
         undefined,
         undefined,
         undefined,
-        6,
+        requirePipelineRunId(cv312SucceededRun),
       ),
     );
     await backfillDescriptionStepResultFields(cv312SucceededExecution.id!);
 
+    const cv314DuplicateRun = await createPipelineRun(
+      "CV-314",
+      TICKET_DUPLICATE_CANDIDATES_STEP_NAME,
+      "running",
+    );
     await stepExecutionRepo.save(
       new TicketPipelineStepExecutionEntity(
         "CV-314",
@@ -444,7 +503,7 @@ describe("tickets module use cases (integration)", () => {
         undefined,
         undefined,
         undefined,
-        7,
+        requirePipelineRunId(cv314DuplicateRun),
       ),
     );
 
@@ -503,6 +562,11 @@ describe("tickets module use cases (integration)", () => {
       }),
     ]);
 
+    const descriptionRun = await createPipelineRun(
+      "CV-401",
+      TICKET_DESCRIPTION_QUALITY_STEP_NAME,
+      "queued",
+    );
     const descriptionExecution = await stepExecutionRepo.save(
       new TicketPipelineStepExecutionEntity(
         "CV-401",
@@ -514,7 +578,7 @@ describe("tickets module use cases (integration)", () => {
         undefined,
         undefined,
         undefined,
-        8,
+        requirePipelineRunId(descriptionRun),
       ),
     );
 
@@ -539,6 +603,11 @@ describe("tickets module use cases (integration)", () => {
       ),
     );
 
+    const duplicateRun = await createPipelineRun(
+      "CV-401",
+      TICKET_DUPLICATE_CANDIDATES_STEP_NAME,
+      "queued",
+    );
     const duplicateExecution = await stepExecutionRepo.save(
       new TicketPipelineStepExecutionEntity(
         "CV-401",
@@ -550,7 +619,7 @@ describe("tickets module use cases (integration)", () => {
         undefined,
         undefined,
         undefined,
-        9,
+        requirePipelineRunId(duplicateRun),
       ),
     );
 

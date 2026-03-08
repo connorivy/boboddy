@@ -1,5 +1,5 @@
 {
-  "id": "903f515e-01d0-4eab-92e9-79236049a986",
+  "id": "3363ef57-0d3a-4ffc-a602-751bca76709d",
   "prevId": "95a41f14-db03-42c3-bf78-368b414c171c",
   "version": "7",
   "dialect": "postgresql",
@@ -271,7 +271,7 @@
       "columns": {
         "id": {
           "name": "id",
-          "type": "text",
+          "type": "serial",
           "primaryKey": true,
           "notNull": true
         },
@@ -785,9 +785,9 @@
         },
         "pipeline_run_id": {
           "name": "pipeline_run_id",
-          "type": "text",
+          "type": "integer",
           "primaryKey": false,
-          "notNull": false
+          "notNull": true
         },
         "step_name": {
           "name": "step_name",
@@ -874,7 +874,7 @@
           "columnsTo": [
             "id"
           ],
-          "onDelete": "set null",
+          "onDelete": "cascade",
           "onUpdate": "no action"
         }
       },
@@ -902,9 +902,9 @@
         },
         "pipeline_run_id": {
           "name": "pipeline_run_id",
-          "type": "text",
+          "type": "integer",
           "primaryKey": false,
-          "notNull": false
+          "notNull": true
         },
         "step_name": {
           "name": "step_name",
@@ -1156,7 +1156,7 @@
           "columnsTo": [
             "id"
           ],
-          "onDelete": "set null",
+          "onDelete": "cascade",
           "onUpdate": "no action"
         }
       },

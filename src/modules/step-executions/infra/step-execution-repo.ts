@@ -5,6 +5,7 @@ import {
   ticketDuplicateCandidates,
   ticketStepExecutionsTph,
 } from "@/lib/db/schema";
+import type { PipelineRunStatus } from "@/modules/pipeline-runs/domain/pipeline-run-aggregate";
 import {
   FAILING_TEST_FIX_STEP_NAME,
   FAILING_TEST_REPRO_STEP_NAME,
@@ -92,9 +93,14 @@ function requiredPipelineRunId(
   return requiredField(value, "pipelineRunId", context);
 }
 
+/**
+ * Pipeline runs expose a coarser status model than step executions.
+ * Pre-start step states collapse to queued, active step states collapse to running,
+ * and timeout is represented as a dedicated timed_out pipeline state.
+ */
 function mapPipelineRunStatus(
   status: TicketPipelineStepExecutionEntity["status"],
-): "queued" | "running" | "succeeded" | "failed" | "timed_out" | "skipped" {
+): PipelineRunStatus {
   if (status === "queued" || status === "not_started") {
     return "queued";
   }
@@ -837,29 +843,21 @@ export class DrizzleStepExecutionRepo {
         }
       }
 
-      await tx
-        .insert(pipelineRuns)
-        .values({
-          id: pipelineRunId,
-          ticketId: pipeline.ticketId,
-          pipelineName: pipeline.stepName,
+      const [savedPipelineRun] = await tx
+        .update(pipelineRuns)
+        .set({
           status: mapPipelineRunStatus(pipeline.status),
           failureReason: failingTestFields?.failureReason ?? null,
-          createdAt: pipeline.createdAt
-            ? parseIsoDateOrThrow(pipeline.createdAt, "createdAt")
-            : now,
           updatedAt: now,
         })
-        .onConflictDoUpdate({
-          target: pipelineRuns.id,
-          set: {
-            ticketId: pipeline.ticketId,
-            pipelineName: pipeline.stepName,
-            status: mapPipelineRunStatus(pipeline.status),
-            failureReason: failingTestFields?.failureReason ?? null,
-            updatedAt: now,
-          },
-        });
+        .where(eq(pipelineRuns.id, pipelineRunId))
+        .returning({ id: pipelineRuns.id });
+
+      if (!savedPipelineRun) {
+        throw new Error(
+          `Missing pipeline run '${pipelineRunId}' for ${pipeline.stepName} save`,
+        );
+      }
 
       const [saved] = await tx
         .insert(ticketStepExecutionsTph)

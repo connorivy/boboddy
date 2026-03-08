@@ -1,5 +1,27 @@
-import { StepExecutionStepName } from "@/modules/step-executions/domain/step-execution.types";
-import { TicketPipelineStepExecutionEntity } from "@/modules/step-executions/domain/step-execution-entity";
+import { randomUUID } from "node:crypto";
+import {
+  TicketDescriptionQualityStepExecutionEntity,
+  TicketPipelineStepExecutionEntity,
+} from "@/modules/step-executions/domain/step-execution-entity";
+import {
+  StepExecutionStepName,
+  TICKET_DESCRIPTION_QUALITY_STEP_NAME,
+} from "@/modules/step-executions/domain/step-execution.types";
+import { v7 as uuidv7 } from "uuid";
+
+export type CreatePipelineRunEntityArgs = {
+  id: string;
+  ticketId: string;
+  status: PipelineRunStatus;
+  currentStepName?: StepExecutionStepName | null;
+  currentStepExecutionId?: string | null;
+  lastCompletedStepName?: StepExecutionStepName | null;
+  haltReason?: string | null;
+  startedAt: Date;
+  endedAt?: Date | null;
+  createdAt: Date;
+  updatedAt: Date;
+};
 
 export class PipelineRunEntity {
   constructor(
@@ -7,7 +29,7 @@ export class PipelineRunEntity {
     public ticketId: string,
     public status: PipelineRunStatus,
     public currentStepName: StepExecutionStepName | null,
-    public currentStepExecutionId: number | null,
+    public currentStepExecutionId: string | null,
     public lastCompletedStepName: StepExecutionStepName | null,
     public haltReason: string | null,
     public startedAt: Date,
@@ -16,6 +38,36 @@ export class PipelineRunEntity {
     public updatedAt: Date,
     public readonly pipelineSteps?: TicketPipelineStepExecutionEntity[],
   ) {}
+
+  static createAndQueueFirstStep({
+    ticketId,
+    status,
+    createdAt,
+  }: CreatePipelineRunEntityArgs): PipelineRunEntity {
+    const pipelineId = uuidv7();
+    const firstStep = new TicketDescriptionQualityStepExecutionEntity(
+      pipelineId,
+      "queued",
+      `${TICKET_DESCRIPTION_QUALITY_STEP_NAME}:${pipelineId}:${randomUUID()}`,
+      null,
+      createdAt.toISOString(),
+    );
+
+    return new PipelineRunEntity(
+      pipelineId,
+      ticketId,
+      status,
+      firstStep.stepName,
+      firstStep.id,
+      null,
+      null,
+      createdAt,
+      null,
+      createdAt,
+      createdAt,
+      [firstStep],
+    );
+  }
 }
 
 export const PIPELINE_RUN_STATUSES = [

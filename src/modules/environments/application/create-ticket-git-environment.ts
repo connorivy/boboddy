@@ -1,7 +1,7 @@
 "use server";
 import { AppContext } from "@/lib/di";
 import { TicketRepo } from "@/modules/tickets/application/jira-ticket-repo";
-import { Octokit } from "octokit";
+import { Octokit } from "@octokit/rest";
 import {
   type CreateEnvironmentRequest,
   type TicketGitEnvironmentResponse,

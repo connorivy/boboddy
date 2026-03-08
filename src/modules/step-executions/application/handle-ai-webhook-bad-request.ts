@@ -31,7 +31,7 @@ import type { GithubApiService } from "@/modules/step-executions/infra/github-co
 const webhookRepairEnvelopeSchema = z
   .object({
     ticketId: z.string().trim().min(1).optional(),
-    pipelineId: z.coerce.number().int().positive().optional(),
+    pipelineId: z.string().uuid().optional(),
     agentBranch: z.string().trim().min(1).optional(),
   })
   .passthrough();
@@ -65,7 +65,7 @@ const normalizePayload = (
 const buildCorrectionInstructions = (
   stepName: SupportedWebhookStepName,
   ticketId: string,
-  pipelineId: number,
+  pipelineId: string,
   rawPayload: Record<string, unknown>,
 ): string => {
   const webhookPayloadPath =

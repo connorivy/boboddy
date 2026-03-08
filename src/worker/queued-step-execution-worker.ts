@@ -34,7 +34,7 @@ export class ClaimedExecutionStepRepo implements StepExecutionRepo {
     stepExecution.updatedAt = this.claimedExecution.updatedAt;
   }
 
-  async load(id: number): Promise<TicketPipelineStepExecutionEntity | null> {
+  async load(id: string): Promise<TicketPipelineStepExecutionEntity | null> {
     return this.delegate.load(id);
   }
 
@@ -45,7 +45,7 @@ export class ClaimedExecutionStepRepo implements StepExecutionRepo {
   }
 
   async claimQueued(
-    id: number,
+    id: string,
   ): Promise<TicketPipelineStepExecutionEntity | null> {
     return this.delegate.claimQueued(id);
   }
@@ -201,11 +201,12 @@ export async function processQueuedStepExecutionsBatch(
     await AppContext.stepExecutionRepo.loadQueued(batchSize);
   let processedCount = 0;
 
-  for (const queuedExecution of queuedExecutions) {
-    if (queuedExecution.id === undefined) {
-      continue;
-    }
+  if (queuedExecutions.length === 0) {
+    console.log("[worker] no queued step executions found");
+    return processedCount;
+  }
 
+  for (const queuedExecution of queuedExecutions) {
     const claimedExecution = await AppContext.stepExecutionRepo.claimQueued(
       queuedExecution.id,
     );

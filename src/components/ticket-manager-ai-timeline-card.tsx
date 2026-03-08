@@ -19,8 +19,8 @@ import type { TicketStepExecution } from "@/modules/tickets/contracts/ticket-con
 import { type TimelineStepStatus, getStepStatusIcon } from "@/components/ticket-manager-step-status";
 
 export type AiTimelineStepName =
-  | typeof TICKET_DESCRIPTION_ENRICHMENT_STEP_NAME
   | typeof TICKET_DESCRIPTION_QUALITY_STEP_NAME
+  | typeof TICKET_DESCRIPTION_ENRICHMENT_STEP_NAME
   | typeof TICKET_DUPLICATE_CANDIDATES_STEP_NAME
   | typeof FAILING_TEST_REPRO_STEP_NAME
   | typeof FAILING_TEST_FIX_STEP_NAME
@@ -117,7 +117,7 @@ type TicketManagerAiTimelineCardProps = {
   actionLoading: boolean;
   detailLoading: boolean;
   onTriggerStep: (stepDefinition: AiTimelineStepDefinition) => void | Promise<void>;
-  onMergeFailingTest: (stepId: number) => void | Promise<void>;
+  onMergeFailingTest: (stepId: string) => void | Promise<void>;
 };
 
 export const TicketManagerAiTimelineCard = ({
@@ -312,7 +312,7 @@ export const TicketManagerAiTimelineCard = ({
                     result.stepName === FAILING_TEST_REPRO_STEP_NAME &&
                     (result.githubMergeStatus === "draft" ||
                       result.githubMergeStatus === "open") &&
-                    typeof step.latestExecution?.id === "number";
+                    typeof step.latestExecution?.id === "string";
                   const mergeStepId = step.latestExecution?.id;
 
                   return (
@@ -331,7 +331,7 @@ export const TicketManagerAiTimelineCard = ({
                       >
                         Outcome: {outcomeLabel}
                       </Button>
-                      {canMerge && typeof mergeStepId === "number" ? (
+                      {canMerge && typeof mergeStepId === "string" ? (
                         <Button
                           variant="outlined"
                           size="small"

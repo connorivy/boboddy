@@ -2,9 +2,9 @@ import type { PipelineStepExecutionsQuery } from "@/modules/step-executions/cont
 import { TicketPipelineStepExecutionEntity } from "../domain/step-execution-entity";
 
 export interface StepExecutionRepo {
-  load(id: number): Promise<TicketPipelineStepExecutionEntity | null>;
+  load(id: string): Promise<TicketPipelineStepExecutionEntity | null>;
   loadQueued(limit: number): Promise<TicketPipelineStepExecutionEntity[]>;
-  claimQueued(id: number): Promise<TicketPipelineStepExecutionEntity | null>;
+  claimQueued(id: string): Promise<TicketPipelineStepExecutionEntity | null>;
   loadByPipelineId(
     pipelineId: string,
   ): Promise<TicketPipelineStepExecutionEntity[]>;

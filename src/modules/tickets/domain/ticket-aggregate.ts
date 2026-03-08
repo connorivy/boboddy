@@ -35,11 +35,7 @@ export type TicketAggregateProps = {
 const mapPipelineStepToContract = (
   step: TicketPipelineStepExecutionEntity,
 ): TicketPipelineStepExecutionContract => {
-  if (
-    step.id === undefined ||
-    step.createdAt === undefined ||
-    step.updatedAt === undefined
-  ) {
+  if (step.createdAt === undefined || step.updatedAt === undefined) {
     throw new Error(
       "Ticket pipeline step execution must have persistence metadata to be converted to TicketContract",
     );

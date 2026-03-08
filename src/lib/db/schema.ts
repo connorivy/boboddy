@@ -163,7 +163,7 @@ export const pipelineRuns = pgTable("pipeline_runs", {
     .notNull(),
   status: pipelineRunStatusEnum("status").notNull().default("queued"),
   currentStepName: text("current_step_name"),
-  currentStepExecutionId: integer("current_step_execution_id").references(
+  currentStepExecutionId: text("current_step_execution_id").references(
     (): AnyPgColumn => ticketStepExecutionsTph.id,
     { onDelete: "set null" },
   ),
@@ -300,7 +300,7 @@ export const ticketGitEnvironments = pgTable("ticket_git_environments", {
 export const ticketStepExecutionsTph = pgTable(
   "ticket_step_executions_tph",
   {
-    id: serial("id").primaryKey(),
+    id: text("id").primaryKey(),
     pipelineId: text("pipeline_id").notNull(),
     stepName: text("step_name").notNull(),
     type: text("type").notNull(),

@@ -19,11 +19,6 @@ import {
 function mapDescriptionEnrichmentResult(
   stepExecution: TicketDescriptionEnrichmentStepExecutionEntity,
 ): ReturnType<typeof ticketDescriptionEnrichmentResultContractSchema.parse> {
-  if (stepExecution.id === undefined) {
-    throw new Error(
-      "Cannot map description enrichment result without execution ID",
-    );
-  }
   if (!stepExecution.result) {
     throw new Error(
       "Cannot map description enrichment result when execution has no result payload",
@@ -52,11 +47,6 @@ function mapDescriptionEnrichmentResult(
 function mapDescriptionQualityResult(
   stepExecution: TicketDescriptionQualityStepExecutionEntity,
 ): ReturnType<typeof ticketDescriptionQualityResultContractSchema.parse> {
-  if (stepExecution.id === undefined) {
-    throw new Error(
-      "Cannot map description quality result without execution ID",
-    );
-  }
   if (!stepExecution.result) {
     throw new Error(
       "Cannot map description quality result when execution has no result payload",
@@ -80,11 +70,6 @@ function mapDescriptionQualityResult(
 function mapDuplicateCandidatesResult(
   stepExecution: TicketDuplicateCandidatesStepResultEntity,
 ): ReturnType<typeof ticketDuplicateCandidatesStepResultContractSchema.parse> {
-  if (stepExecution.id === undefined) {
-    throw new Error(
-      "Cannot map duplicate candidates result without execution ID",
-    );
-  }
   if (!stepExecution.result) {
     throw new Error(
       "Cannot map duplicate candidates result when execution has no result payload",
@@ -115,12 +100,6 @@ function mapDuplicateCandidatesResult(
 function mapFailingTestReproResult(
   stepExecution: FailingTestReproStepExecutionEntity,
 ): ReturnType<typeof failingTestReproStepResultContractSchema.parse> {
-  if (stepExecution.id === undefined) {
-    throw new Error(
-      "Cannot map failing test repro result without execution ID",
-    );
-  }
-
   if (!stepExecution.result) {
     throw new Error(
       "Cannot map failing test repro result when execution has no result payload",
@@ -155,9 +134,6 @@ function mapFailingTestReproResult(
 function mapFailingTestFixResult(
   stepExecution: FailingTestFixStepExecutionEntity,
 ): ReturnType<typeof failingTestFixStepResultContractSchema.parse> {
-  if (stepExecution.id === undefined) {
-    throw new Error("Cannot map failing test fix result without execution ID");
-  }
   if (!stepExecution.result) {
     throw new Error(
       "Cannot map failing test fix result when execution has no result payload",
@@ -194,7 +170,6 @@ export const stepExecutionEntityToContract = (
   stepExecution: TicketPipelineStepExecutionEntity,
 ): StepExecutionContract => {
   if (
-    stepExecution.id === undefined ||
     stepExecution.createdAt === undefined ||
     stepExecution.updatedAt === undefined
   ) {

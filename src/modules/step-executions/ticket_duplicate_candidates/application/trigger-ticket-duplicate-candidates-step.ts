@@ -80,10 +80,6 @@ export const triggerTicketDuplicateCandidatesStep = async (
       minScore: DUPLICATE_MIN_SCORE,
     });
 
-    if (savedExecution.id === undefined) {
-      throw new Error("Step execution ID missing after persistence");
-    }
-
     savedExecution = await stepExecutionRepo.save(
       new TicketDuplicateCandidatesStepResultEntity(
         savedExecution.pipelineId,

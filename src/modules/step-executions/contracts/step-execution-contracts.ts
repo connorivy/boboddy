@@ -7,8 +7,13 @@ import {
   TICKET_DUPLICATE_CANDIDATES_STEP_NAME,
 } from "@/modules/step-executions/domain/step-execution.types";
 
+const uuidV7Schema = z
+  .string()
+  .uuid()
+  .regex(/^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i);
+
 export const ticketDescriptionQualityResultContractSchema = z.object({
-  executionId: z.number().int().positive(),
+  executionId: uuidV7Schema,
   stepName: z.literal(TICKET_DESCRIPTION_QUALITY_STEP_NAME),
   stepsToReproduceScore: z.number().int().min(1).max(5),
   expectedBehaviorScore: z.number().int().min(1).max(5),
@@ -20,7 +25,7 @@ export const ticketDescriptionQualityResultContractSchema = z.object({
 });
 
 export const ticketDescriptionEnrichmentResultContractSchema = z.object({
-  executionId: z.number().int().positive(),
+  executionId: uuidV7Schema,
   stepName: z.literal(TICKET_DESCRIPTION_ENRICHMENT_STEP_NAME),
   summaryOfEnrichment: z.string().min(1),
   enrichedTicketDescription: z.string().min(1),
@@ -47,7 +52,7 @@ export const duplicateCandidateResultContractSchema = z.object({
 });
 
 export const ticketDuplicateCandidatesStepResultContractSchema = z.object({
-  executionId: z.number().int().positive(),
+  executionId: uuidV7Schema,
   stepName: z.literal(TICKET_DUPLICATE_CANDIDATES_STEP_NAME),
   proposed: z.array(duplicateCandidateResultContractSchema),
   dismissed: z.array(duplicateCandidateResultContractSchema),
@@ -57,7 +62,7 @@ export const ticketDuplicateCandidatesStepResultContractSchema = z.object({
 });
 
 export const failingTestReproStepResultContractSchema = z.object({
-  executionId: z.number().int().positive(),
+  executionId: uuidV7Schema,
   stepName: z.literal(FAILING_TEST_REPRO_STEP_NAME),
   githubIssueNumber: z.number().int().nullable(),
   githubIssueId: z.string().nullable(),
@@ -96,7 +101,7 @@ export const failingTestReproStepResultContractSchema = z.object({
 });
 
 export const failingTestFixStepResultContractSchema = z.object({
-  executionId: z.number().int().positive(),
+  executionId: uuidV7Schema,
   stepName: z.literal(FAILING_TEST_FIX_STEP_NAME),
   githubIssueNumber: z.number().int().nullable(),
   githubIssueId: z.string().nullable(),
@@ -122,8 +127,8 @@ export const failingTestFixStepResultContractSchema = z.object({
 });
 
 export const stepExecutionResultContractSchema = z.union([
-  ticketDescriptionEnrichmentResultContractSchema,
   ticketDescriptionQualityResultContractSchema,
+  ticketDescriptionEnrichmentResultContractSchema,
   ticketDuplicateCandidatesStepResultContractSchema,
   failingTestReproStepResultContractSchema,
   failingTestFixStepResultContractSchema,
@@ -141,7 +146,7 @@ export const stepExecutionStatusEnumSchema = z.enum([
 ]);
 
 export const stepExecutionContractSchema = z.object({
-  id: z.number().int().positive(),
+  id: uuidV7Schema,
   pipelineId: z.string().min(1),
   stepName: z.string().min(1),
   status: stepExecutionStatusEnumSchema,

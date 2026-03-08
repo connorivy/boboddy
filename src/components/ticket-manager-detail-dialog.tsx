@@ -30,7 +30,7 @@ type TicketManagerDetailDialogProps = {
     baseEnvironmentId: string,
     devBranch: string | undefined,
   ) => Promise<void>;
-  onMergeFailingTest: (stepId: number) => Promise<void>;
+  onMergeFailingTest: (stepId: string) => Promise<void>;
 };
 
 export const TicketManagerDetailDialog = ({

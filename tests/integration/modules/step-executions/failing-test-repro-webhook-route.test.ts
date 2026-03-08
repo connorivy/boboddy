@@ -39,7 +39,7 @@ describe("failing-test repro webhook route", () => {
         },
         body: JSON.stringify({
           ticketId: "CV-100",
-          pipelineId: 17,
+          pipelineId: "018f47ac-7f5a-7cc1-b54a-6f91d5b8e017",
         }),
       },
     );
@@ -53,7 +53,7 @@ describe("failing-test repro webhook route", () => {
       FAILING_TEST_REPRO_STEP_NAME,
       expect.objectContaining({
         ticketId: "CV-100",
-        pipelineId: 17,
+        pipelineId: "018f47ac-7f5a-7cc1-b54a-6f91d5b8e017",
         agentStatus: "complete",
         agentBranch: "ephemeral-ADM01",
       }),

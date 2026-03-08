@@ -1,3 +1,4 @@
+import { v7 as uuidv7 } from "uuid";
 import {
   FAILING_TEST_FIX_STEP_NAME,
   FAILING_TEST_REPRO_STEP_NAME,
@@ -15,6 +16,8 @@ export type FailingTestReproFeedbackRequestEntity = {
 };
 
 export abstract class TicketPipelineStepExecutionEntity {
+  public id: string;
+
   constructor(
     public pipelineId: string,
     public stepName: string,
@@ -22,10 +25,12 @@ export abstract class TicketPipelineStepExecutionEntity {
     public idempotencyKey: string,
     public startedAt: string,
     public endedAt?: string,
-    public id?: number,
+    id?: string,
     public createdAt?: string,
     public updatedAt?: string,
-  ) {}
+  ) {
+    this.id = id ?? uuidv7();
+  }
 }
 
 export class TicketDescriptionQualityStepResultEntity {
@@ -72,7 +77,7 @@ export class TicketDescriptionEnrichmentStepExecutionEntity extends TicketPipeli
     endedAt?: string,
     createdAt?: string,
     updatedAt?: string,
-    id?: number,
+    id?: string,
   ) {
     super(
       pipelineId,
@@ -98,7 +103,7 @@ export class TicketDescriptionQualityStepExecutionEntity extends TicketPipelineS
     endedAt?: string,
     createdAt?: string,
     updatedAt?: string,
-    id?: number,
+    id?: string,
   ) {
     super(
       pipelineId,
@@ -139,7 +144,7 @@ export class TicketDuplicateCandidatesStepResultEntity extends TicketPipelineSte
     endedAt?: string,
     createdAt?: string,
     updatedAt?: string,
-    id?: number,
+    id?: string,
   ) {
     super(
       pipelineId,
@@ -195,7 +200,7 @@ export class FailingTestReproStepExecutionEntity extends TicketPipelineStepExecu
     endedAt?: string,
     createdAt?: string,
     updatedAt?: string,
-    id?: number,
+    id?: string,
   ) {
     super(
       pipelineId,
@@ -257,7 +262,7 @@ export class FailingTestFixStepExecutionEntity extends TicketPipelineStepExecuti
     endedAt?: string,
     createdAt?: string,
     updatedAt?: string,
-    id?: number,
+    id?: string,
   ) {
     super(
       pipelineId,

@@ -130,7 +130,7 @@ describe("completeTicketFailingTestReproStep (integration)", () => {
       completeTicketFailingTestReproStep(
         {
           ticketId: "CV-902",
-          pipelineId: 999999,
+          pipelineId: "018f47ac-7f5a-7cc1-b54a-6f91d5b89999",
           reproduceOperationOutcome: "agent_error",
           summaryOfFindings: "Could not reproduce after multiple attempts.",
           confidenceLevel: null,

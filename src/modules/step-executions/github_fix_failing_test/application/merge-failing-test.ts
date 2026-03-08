@@ -9,7 +9,7 @@ import { StepExecutionRepo } from "@/modules/step-executions/application/step-ex
 
 export async function mergeFailingTest(
   ticketId: string,
-  stepId: number,
+  stepId: string,
   {
     ticketRepo,
     ticketGitEnvironmentRepo,

@@ -37,7 +37,7 @@ describe("handleAiWebhookBadRequest", () => {
       undefined,
       now,
       now,
-      17,
+      "018f47ac-7f5a-7cc1-b54a-6f91d5b8e017",
     );
 
     const stepExecutionRepo = {
@@ -60,7 +60,7 @@ describe("handleAiWebhookBadRequest", () => {
       FAILING_TEST_REPRO_STEP_NAME,
       {
         ticketId: "CV-100",
-        pipelineId: 17,
+        pipelineId: "018f47ac-7f5a-7cc1-b54a-6f91d5b8e017",
         agentBranch: "ephemeral-OVERRIDE",
         summaryOfFindings: "The run output was malformed",
       },
@@ -71,7 +71,9 @@ describe("handleAiWebhookBadRequest", () => {
       } as never,
     );
 
-    expect(stepExecutionRepo.load).toHaveBeenCalledWith(17);
+    expect(stepExecutionRepo.load).toHaveBeenCalledWith(
+      "018f47ac-7f5a-7cc1-b54a-6f91d5b8e017",
+    );
     expect(ticketRepo.loadById).toHaveBeenCalledWith("CV-100", {
       loadGithubIssue: true,
     });
@@ -87,7 +89,9 @@ describe("handleAiWebhookBadRequest", () => {
       ?.customInstructions;
     expect(customInstructions).toContain("tmp/copilot-repro-webhook-payload.json");
     expect(customInstructions).toContain('"const": "CV-100"');
-    expect(customInstructions).toContain('"const": 17');
+    expect(customInstructions).toContain(
+      '"const": "018f47ac-7f5a-7cc1-b54a-6f91d5b8e017"',
+    );
   });
 
   it("falls back to execution target branch for fix payload correction", async () => {
@@ -106,7 +110,7 @@ describe("handleAiWebhookBadRequest", () => {
       undefined,
       now,
       now,
-      19,
+      "018f47ac-7f5a-7cc1-b54a-6f91d5b8e019",
     );
 
     const stepExecutionRepo = {
@@ -129,7 +133,7 @@ describe("handleAiWebhookBadRequest", () => {
       FAILING_TEST_FIX_STEP_NAME,
       {
         ticketId: "CV-101",
-        pipelineId: 19,
+        pipelineId: "018f47ac-7f5a-7cc1-b54a-6f91d5b8e019",
       },
       {
         stepExecutionRepo,
@@ -166,7 +170,7 @@ describe("handleAiWebhookBadRequest", () => {
       FAILING_TEST_REPRO_STEP_NAME,
       {
         ticketId: "CV-404",
-        pipelineId: 404,
+        pipelineId: "018f47ac-7f5a-7cc1-b54a-6f91d5b8e404",
       },
       {
         stepExecutionRepo,
@@ -201,7 +205,7 @@ describe("handleAiWebhookBadRequest", () => {
       undefined,
       now,
       now,
-      20,
+      "018f47ac-7f5a-7cc1-b54a-6f91d5b8e020",
     );
 
     const stepExecutionRepo = {
@@ -224,7 +228,7 @@ describe("handleAiWebhookBadRequest", () => {
       TICKET_DESCRIPTION_ENRICHMENT_STEP_NAME,
       {
         ticketId: "CV-102",
-        pipelineId: 20,
+        pipelineId: "018f47ac-7f5a-7cc1-b54a-6f91d5b8e020",
       },
       {
         stepExecutionRepo,

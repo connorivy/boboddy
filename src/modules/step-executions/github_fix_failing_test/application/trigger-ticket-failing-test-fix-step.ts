@@ -31,7 +31,7 @@ const WEBHOOK_PAYLOAD_PATH = "tmp/copilot-fix-webhook-payload.json";
 
 function buildCustomInstructions(
   ticketId: string,
-  pipelineId: number,
+  pipelineId: string,
   failingTestPaths: string[],
 ): string {
   const hardcodedTicketIdAndPipelineIdSchema =
@@ -141,7 +141,7 @@ export const triggerTicketFailingTestFixStep = async (
       if (startedAtDiff !== 0) {
         return startedAtDiff;
       }
-      return (b.id ?? 0) - (a.id ?? 0);
+      return b.id.localeCompare(a.id);
     })[0];
 
   const failingTestPaths =
@@ -165,9 +165,6 @@ export const triggerTicketFailingTestFixStep = async (
   let savedExecution = await stepExecutionRepo.save(execution);
 
   try {
-    if (savedExecution.id === undefined) {
-      throw new Error("Step execution ID missing after persistence");
-    }
     const pipelineId = savedExecution.id;
 
     let githubIssue = ticket.githubIssue;

@@ -33,7 +33,7 @@ const WEBHOOK_PAYLOAD_PATH = "tmp/copilot-repro-webhook-payload.json";
 
 function buildCustomInstructions(
   ticketId: string,
-  pipelineId: number,
+  pipelineId: string,
   enrichmentContext: string | null,
 ): string {
   const hardcodedTicketIdAndPipelineIdSchema =
@@ -123,10 +123,6 @@ export const triggerTicketFailingTestReproStep = async (
   let savedExecution = await stepExecutionRepo.save(execution);
 
   try {
-    if (savedExecution.id === undefined) {
-      throw new Error("Step execution ID missing after persistence");
-    }
-
     let githubIssue = ticket.githubIssue;
     if (githubIssue === undefined) {
       throw new Error(

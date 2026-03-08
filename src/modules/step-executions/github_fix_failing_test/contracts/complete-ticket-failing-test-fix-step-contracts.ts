@@ -4,7 +4,7 @@ import { agentStatusEnum } from "@/modules/step-executions/github_repro_failing_
 
 export const completeTicketFailingTestFixStepRequestBodySchema = z.object({
   ticketId: z.string().trim().min(1),
-  pipelineId: z.coerce.number().int().positive(),
+  pipelineId: z.string().uuid(),
   fixOperationOutcome: z.enum([
     "fixed",
     "not_fixed",

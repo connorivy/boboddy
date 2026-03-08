@@ -40,7 +40,7 @@ describe("ticket description enrichment webhook route", () => {
         },
         body: JSON.stringify({
           ticketId: "CV-100",
-          pipelineId: 17,
+          pipelineId: "018f47ac-7f5a-7cc1-b54a-6f91d5b8e017",
         }),
       },
     );
@@ -56,7 +56,7 @@ describe("ticket description enrichment webhook route", () => {
       TICKET_DESCRIPTION_ENRICHMENT_STEP_NAME,
       expect.objectContaining({
         ticketId: "CV-100",
-        pipelineId: 17,
+        pipelineId: "018f47ac-7f5a-7cc1-b54a-6f91d5b8e017",
         agentStatus: "complete",
         agentBranch: "ephemeral-ADM01",
       }),

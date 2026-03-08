@@ -1,5 +1,3 @@
-import "server-only";
-
 import { embed } from "ai";
 import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
 import { TicketAggregate } from "@/modules/tickets/domain/ticket-aggregate";

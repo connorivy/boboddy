@@ -297,7 +297,7 @@ export const TicketManager = ({ initialTickets }: TicketManagerProps) => {
     }
   };
 
-  const handleMergeFailingTest = async (stepId: number) => {
+  const handleMergeFailingTest = async (stepId: string) => {
     if (!selectedTicketId) {
       return;
     }

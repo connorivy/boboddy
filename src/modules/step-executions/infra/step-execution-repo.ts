@@ -514,7 +514,7 @@ export class DrizzleStepExecutionRepo implements StepExecutionRepo {
     );
   }
 
-  async load(id: number): Promise<TicketPipelineStepExecutionEntity | null> {
+  async load(id: string): Promise<TicketPipelineStepExecutionEntity | null> {
     const db = getDb();
 
     const [row] = await db
@@ -548,7 +548,7 @@ export class DrizzleStepExecutionRepo implements StepExecutionRepo {
   }
 
   async claimQueued(
-    id: number,
+    id: string,
   ): Promise<TicketPipelineStepExecutionEntity | null> {
     const db = getDb();
     const now = new Date();

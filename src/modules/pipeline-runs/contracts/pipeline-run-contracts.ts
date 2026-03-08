@@ -3,13 +3,17 @@ import { stepExecutionContractSchema } from "@/modules/step-executions/contracts
 import { PIPELINE_RUN_STATUSES } from "../domain/pipeline-run-aggregate";
 
 export const pipelineRunStatusSchema = z.enum(PIPELINE_RUN_STATUSES);
+const uuidV7Schema = z
+  .string()
+  .uuid()
+  .regex(/^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i);
 
 export const pipelineRunSchema = z.object({
   pipelineRunId: z.string().min(1),
   ticketId: z.string().min(1),
   status: pipelineRunStatusSchema,
   currentStepName: z.string().min(1).nullable(),
-  currentStepExecutionId: z.number().int().positive().nullable(),
+  currentStepExecutionId: uuidV7Schema.nullable(),
   lastCompletedStepName: z.string().min(1).nullable(),
   haltReason: z.string().min(1).nullable(),
   startedAt: z.iso.datetime(),
@@ -27,7 +31,7 @@ export const createPipelineRunRequestSchema = z.object({
   ticketId: z.string().trim().min(1),
   status: pipelineRunStatusSchema.default("queued"),
   currentStepName: z.string().trim().min(1).nullable().optional(),
-  currentStepExecutionId: z.number().int().positive().nullable().optional(),
+  currentStepExecutionId: uuidV7Schema.nullable().optional(),
   lastCompletedStepName: z.string().trim().min(1).nullable().optional(),
   haltReason: z.string().trim().min(1).nullable().optional(),
   startedAt: z.iso.datetime(),

@@ -4,7 +4,7 @@ import { agentStatusEnum } from "@/modules/step-executions/github_repro_failing_
 
 export const completeTicketDescriptionEnrichmentStepRequestBodySchema = z.object({
   ticketId: z.string().trim().min(1),
-  pipelineId: z.coerce.number().int().positive(),
+  pipelineId: z.string().uuid(),
   operationOutcome: z.enum([
     "enriched",
     "insufficient_evidence",

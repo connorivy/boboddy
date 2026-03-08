@@ -65,7 +65,7 @@ const makeTicketAggregate = (
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
-const backfillDescriptionStepResultFields = async (stepExecutionId: number) => {
+const backfillDescriptionStepResultFields = async (stepExecutionId: string) => {
   const db = getDb();
   await db
     .update(ticketStepExecutionsTph)

@@ -41,5 +41,6 @@ export async function ingestTicketsFromBoards({
     lastModifiedTicketDate,
   );
   const result = await ticketRepo.createMany([...admTickets, ...vocTickets]);
+  // todo: in same transaction as above, create a pipeline run for each ingested ticket and create the first step execution for each pipeline run with status = queued, so that they will be picked up by the worker and processed without needing a separate trigger step
   return result.map(ticketAggregateToContract);
 }

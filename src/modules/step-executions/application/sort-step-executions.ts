@@ -1,5 +1,5 @@
 type SortableStepExecution = {
-  id: number;
+  id: string;
   startedAt: string;
 };
 
@@ -11,5 +11,5 @@ export const sortStepExecutionsNewestFirst = <T extends SortableStepExecution>(
     if (startedAtDiff !== 0) {
       return startedAtDiff;
     }
-    return b.id - a.id;
+    return b.id.localeCompare(a.id);
   });

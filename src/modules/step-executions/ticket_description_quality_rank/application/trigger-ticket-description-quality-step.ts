@@ -56,10 +56,6 @@ export const triggerTicketDescriptionQualityStep = async (
         description: ticket.description,
       });
 
-    if (savedExecution.id === undefined) {
-      throw new Error("Step execution ID missing after persistence");
-    }
-
     savedExecution = await stepExecutionRepo.save(
       new TicketDescriptionQualityStepExecutionEntity(
         savedExecution.pipelineId,

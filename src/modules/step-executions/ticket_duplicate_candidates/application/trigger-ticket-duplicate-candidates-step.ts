@@ -19,13 +19,27 @@ import {
   TicketDuplicateCandidatesResultEntity,
   TicketDuplicateCandidatesStepResultEntity,
 } from "@/modules/step-executions/domain/step-execution-entity";
+import type { TicketRepo } from "@/modules/tickets/application/jira-ticket-repo";
+import type { StepExecutionRepo } from "@/modules/step-executions/application/step-execution-repo";
+import type { DrizzleTicketVectorRepo } from "@/modules/step-executions/ticket_duplicate_candidates/infra/ticket-vector.repository";
 
 const DUPLICATE_TOP_K = 5;
 const DUPLICATE_MIN_SCORE = 0.82;
 
 export const triggerTicketDuplicateCandidatesStep = async (
   rawInput: TriggerTicketDuplicateCandidatesStepRequest,
-  { ticketRepo, stepExecutionRepo, ticketVectorRepo } = AppContext,
+  {
+    ticketRepo,
+    stepExecutionRepo,
+    ticketVectorRepo,
+  }: {
+    ticketRepo: Pick<TicketRepo, "loadById">;
+    stepExecutionRepo: StepExecutionRepo;
+    ticketVectorRepo: Pick<
+      DrizzleTicketVectorRepo,
+      "saveTicketEmbedding" | "findNearestNeighbors"
+    >;
+  } = AppContext,
 ): Promise<TriggerTicketDuplicateCandidatesStepResponse> => {
   const input =
     triggerTicketDuplicateCandidatesStepRequestSchema.parse(rawInput);

@@ -1,4 +1,4 @@
-import { desc, eq, inArray, or, sql } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, or, sql } from "drizzle-orm";
 import { getDb } from "@/lib/db";
 import { pipelineRuns, ticketStepExecutionsTph } from "@/lib/db/schema";
 import {
@@ -530,6 +530,51 @@ export class DrizzleStepExecutionRepo implements StepExecutionRepo {
     return this.mapRowToExecution(row);
   }
 
+  async loadQueued(limit: number): Promise<TicketPipelineStepExecutionEntity[]> {
+    const db = getDb();
+    const safeLimit = Math.max(1, Math.min(limit, 100));
+
+    const rows = await db
+      .select()
+      .from(ticketStepExecutionsTph)
+      .where(eq(ticketStepExecutionsTph.status, "queued"))
+      .orderBy(
+        asc(ticketStepExecutionsTph.startedAt),
+        asc(ticketStepExecutionsTph.id),
+      )
+      .limit(safeLimit);
+
+    return rows.map((row) => this.mapRowToExecution(row));
+  }
+
+  async claimQueued(
+    id: number,
+  ): Promise<TicketPipelineStepExecutionEntity | null> {
+    const db = getDb();
+    const now = new Date();
+
+    const [row] = await db
+      .update(ticketStepExecutionsTph)
+      .set({
+        status: "running",
+        updatedAt: now,
+        endedAt: null,
+      })
+      .where(
+        and(
+          eq(ticketStepExecutionsTph.id, id),
+          eq(ticketStepExecutionsTph.status, "queued"),
+        ),
+      )
+      .returning();
+
+    if (!row) {
+      return null;
+    }
+
+    return this.mapRowToExecution(row);
+  }
+
   async loadByPipelineId(
     pipelineId: string,
   ): Promise<TicketPipelineStepExecutionEntity[]> {
@@ -545,6 +590,41 @@ export class DrizzleStepExecutionRepo implements StepExecutionRepo {
       );
 
     return rows.map((row) => this.mapRowToExecution(row));
+  }
+
+  async loadByPipelineIds(
+    pipelineIds: string[],
+  ): Promise<Map<string, TicketPipelineStepExecutionEntity[]>> {
+    if (pipelineIds.length === 0) {
+      return new Map();
+    }
+
+    const db = getDb();
+    const rows = await db
+      .select()
+      .from(ticketStepExecutionsTph)
+      .where(inArray(ticketStepExecutionsTph.pipelineId, pipelineIds))
+      .orderBy(
+        desc(ticketStepExecutionsTph.startedAt),
+        desc(ticketStepExecutionsTph.id),
+      );
+
+    const stepExecutionsByPipelineId = new Map<
+      string,
+      TicketPipelineStepExecutionEntity[]
+    >();
+
+    for (const row of rows) {
+      const execution = this.mapRowToExecution(row);
+      const executions = stepExecutionsByPipelineId.get(row.pipelineId);
+      if (executions) {
+        executions.push(execution);
+      } else {
+        stepExecutionsByPipelineId.set(row.pipelineId, [execution]);
+      }
+    }
+
+    return stepExecutionsByPipelineId;
   }
 
   async loadByTicketId(
@@ -961,48 +1041,4 @@ export class DrizzleStepExecutionRepo implements StepExecutionRepo {
     return savedExecution;
   }
 
-  async loadByTicketIds(
-    ticketIds: string[],
-  ): Promise<Map<string, TicketPipelineStepExecutionEntity[]>> {
-    if (ticketIds.length === 0) {
-      return new Map();
-    }
-
-    const db = getDb();
-    const rows = await db
-      .select({
-        execution: ticketStepExecutionsTph,
-        ticketId: pipelineRuns.ticketId,
-      })
-      .from(ticketStepExecutionsTph)
-      .leftJoin(
-        pipelineRuns,
-        eq(ticketStepExecutionsTph.pipelineId, pipelineRuns.id),
-      )
-      .where(
-        or(
-          inArray(pipelineRuns.ticketId, ticketIds),
-          inArray(ticketStepExecutionsTph.pipelineId, ticketIds),
-        ),
-      );
-
-    const stepExecutionsByTicketId = new Map<
-      string,
-      TicketPipelineStepExecutionEntity[]
-    >();
-
-    for (const row of rows) {
-      const execution = this.mapRowToExecution(row.execution);
-
-      const ticketId = row.ticketId ?? row.execution.pipelineId;
-      const executions = stepExecutionsByTicketId.get(ticketId);
-      if (executions) {
-        executions.push(execution);
-      } else {
-        stepExecutionsByTicketId.set(ticketId, [execution]);
-      }
-    }
-
-    return stepExecutionsByTicketId;
-  }
 }

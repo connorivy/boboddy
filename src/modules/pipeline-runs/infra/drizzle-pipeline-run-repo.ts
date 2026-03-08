@@ -1,9 +1,10 @@
-import { desc, eq, sql } from "drizzle-orm";
+import { desc, eq, inArray, sql } from "drizzle-orm";
 import { getDb } from "@/lib/db";
 import { pipelineRuns } from "@/lib/db/schema";
 import type { DbExecutor } from "@/lib/db/db-executor";
 import type {
   LoadPipelineRunByIdOptions,
+  LoadPipelineRunsByTicketIdsOptions,
   PipelineRunRepo,
 } from "@/modules/pipeline-runs/application/pipeline-run-repo";
 import { PipelineRunEntity } from "@/modules/pipeline-runs/domain/pipeline-run-aggregate";
@@ -77,6 +78,72 @@ export class DrizzlePipelineRunRepo implements PipelineRunRepo {
       .orderBy(desc(pipelineRuns.startedAt), desc(pipelineRuns.createdAt));
 
     return rows.map((row) => this.toEntity(row));
+  }
+
+  async loadByTicketIds(
+    ticketIds: string[],
+    options?: LoadPipelineRunsByTicketIdsOptions,
+  ): Promise<Map<string, PipelineRunEntity[]>> {
+    if (ticketIds.length === 0) {
+      return new Map();
+    }
+
+    const db = getDb();
+    const rows = await db
+      .select()
+      .from(pipelineRuns)
+      .where(inArray(pipelineRuns.ticketId, ticketIds))
+      .orderBy(
+        desc(pipelineRuns.startedAt),
+        desc(pipelineRuns.createdAt),
+        desc(pipelineRuns.id),
+      );
+
+    const pipelineRunsByTicketId = new Map<string, PipelineRunEntity[]>();
+    if (rows.length === 0) {
+      return pipelineRunsByTicketId;
+    }
+
+    const pipelineRunsWithStepsById = new Map<string, PipelineRunEntity>();
+    if (options?.includePipelineSteps) {
+      const pipelineIds = rows.map((row) => row.id);
+      const stepExecutionsByPipelineId =
+        await this.stepExecutionRepo.loadByPipelineIds(pipelineIds);
+
+      for (const row of rows) {
+        const pipelineRun = this.toEntity(row);
+        pipelineRunsWithStepsById.set(
+          row.id,
+          new PipelineRunEntity(
+            pipelineRun.id,
+            pipelineRun.ticketId,
+            pipelineRun.status,
+            pipelineRun.currentStepName,
+            pipelineRun.currentStepExecutionId,
+            pipelineRun.lastCompletedStepName,
+            pipelineRun.haltReason,
+            pipelineRun.startedAt,
+            pipelineRun.endedAt,
+            pipelineRun.createdAt,
+            pipelineRun.updatedAt,
+            stepExecutionsByPipelineId.get(row.id) ?? [],
+          ),
+        );
+      }
+    }
+
+    for (const row of rows) {
+      const pipelineRun =
+        pipelineRunsWithStepsById.get(row.id) ?? this.toEntity(row);
+      const existing = pipelineRunsByTicketId.get(row.ticketId);
+      if (existing) {
+        existing.push(pipelineRun);
+      } else {
+        pipelineRunsByTicketId.set(row.ticketId, [pipelineRun]);
+      }
+    }
+
+    return pipelineRunsByTicketId;
   }
 
   async createMany(

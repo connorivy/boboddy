@@ -14,6 +14,8 @@ import {
   TicketRepo,
 } from "../application/jira-ticket-repo";
 import { DrizzleStepExecutionRepo } from "@/modules/step-executions/infra/step-execution-repo";
+import { DrizzlePipelineRunRepo } from "@/modules/pipeline-runs/infra/drizzle-pipeline-run-repo";
+import type { PipelineRunEntity } from "@/modules/pipeline-runs/domain/pipeline-run-aggregate";
 import { TicketGithubIssueEntity } from "@/modules/tickets/domain/ticket-github-issue.entity";
 import type { DbExecutor } from "@/lib/db/db-executor";
 import { TicketGitEnvironmentAggregate } from "@/modules/environments/domain/ticket-git-environment-aggregate";
@@ -53,6 +55,7 @@ const ticketSelectFields = {
 export class DrizzleTicketRepo implements TicketRepo {
   constructor(
     private readonly stepExecutionRepo = new DrizzleStepExecutionRepo(),
+    private readonly pipelineRunRepo = new DrizzlePipelineRunRepo(),
   ) {}
 
   private buildFilters(query: TicketSearchQuery) {
@@ -310,13 +313,15 @@ export class DrizzleTicketRepo implements TicketRepo {
       .filter((id): id is number => id !== undefined);
 
     const [
-      pipelineStepsByTicketId,
+      pipelineRunsByTicketId,
       githubIssuesByTicketId,
       ticketGitEnvironmentById,
     ] = await Promise.all([
       options.loadTicketPipeline
-        ? this.stepExecutionRepo.loadByTicketIds(ticketIds)
-        : Promise.resolve(new Map()),
+        ? this.pipelineRunRepo.loadByTicketIds(ticketIds, {
+            includePipelineSteps: true,
+          })
+        : Promise.resolve(new Map<string, PipelineRunEntity[]>()),
       options.loadGithubIssue
         ? this.loadGithubIssuesByTicketIds(ticketIds)
         : Promise.resolve(new Map()),
@@ -329,8 +334,14 @@ export class DrizzleTicketRepo implements TicketRepo {
       let aggregate = ticket;
 
       if (options.loadTicketPipeline) {
+        const pipelineSteps =
+          ticket.id
+            ? (pipelineRunsByTicketId.get(ticket.id) ?? []).flatMap(
+                (pipelineRun) => pipelineRun.pipelineSteps ?? [],
+              )
+            : undefined;
         aggregate = aggregate.withPipelineSteps(
-          ticket.id ? pipelineStepsByTicketId.get(ticket.id) : undefined,
+          pipelineSteps,
         );
       }
 

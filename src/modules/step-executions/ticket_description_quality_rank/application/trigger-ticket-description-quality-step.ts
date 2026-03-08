@@ -17,10 +17,18 @@ import {
   TicketDescriptionQualityStepExecutionEntity,
   TicketDescriptionQualityStepResultEntity,
 } from "@/modules/step-executions/domain/step-execution-entity";
+import type { TicketRepo } from "@/modules/tickets/application/jira-ticket-repo";
+import type { StepExecutionRepo } from "@/modules/step-executions/application/step-execution-repo";
 
 export const triggerTicketDescriptionQualityStep = async (
   rawInput: TriggerTicketDescriptionQualityStepRequest,
-  { ticketRepo, stepExecutionRepo } = AppContext,
+  {
+    ticketRepo,
+    stepExecutionRepo,
+  }: {
+    ticketRepo: Pick<TicketRepo, "loadById">;
+    stepExecutionRepo: StepExecutionRepo;
+  } = AppContext,
 ): Promise<TriggerTicketDescriptionQualityStepResponse> => {
   const input =
     triggerTicketDescriptionQualityStepRequestSchema.parse(rawInput);

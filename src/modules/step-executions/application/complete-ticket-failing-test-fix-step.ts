@@ -11,6 +11,7 @@ import { FAILING_TEST_FIX_STEP_NAME } from "@/modules/step-executions/domain/ste
 import type { StepExecutionStatus } from "@/modules/tickets/contracts/ticket-contracts";
 import { httpError } from "@/lib/api/http";
 import { AppContext } from "@/lib/di";
+import { advancePipelineStep } from "@/modules/step-executions/application/advance-pipeline-step";
 import {
   FailingTestFixStepCompletionResultEntity,
   FailingTestFixStepExecutionEntity,
@@ -44,12 +45,24 @@ const resolveStatus = (
 
 export const completeTicketFailingTestFixStep = async (
   rawInput: CompleteTicketFailingTestFixStepRequest,
-  { stepExecutionRepo } = AppContext,
+  deps: Partial<{
+    stepExecutionRepo: typeof AppContext.stepExecutionRepo;
+    ticketRepo: typeof AppContext.ticketRepo;
+    pipelineRunRepo: typeof AppContext.pipelineRunRepo;
+    ticketVectorRepo: typeof AppContext.ticketVectorRepo;
+    ticketGitEnvironmentRepo: typeof AppContext.ticketGitEnvironmentRepo;
+    githubService: typeof AppContext.githubService;
+  }> = {},
 ): Promise<CompleteTicketFailingTestFixStepResponse> => {
   const input = completeTicketFailingTestFixStepRequestSchema.parse(rawInput);
+  const stepExecutionRepo = deps.stepExecutionRepo ?? AppContext.stepExecutionRepo;
 
-  const existingExecution = await stepExecutionRepo.load(input.pipelineId);
-  if (!existingExecution || existingExecution.ticketId !== input.ticketId) {
+  const existingExecution = await stepExecutionRepo.load(input.stepExecutionId);
+  if (
+    !existingExecution ||
+    existingExecution.ticketId !== input.ticketId ||
+    existingExecution.pipelineRunId !== input.pipelineRunId
+  ) {
     throw httpError("Pipeline step execution not found", 404);
   }
 
@@ -78,6 +91,7 @@ export const completeTicketFailingTestFixStep = async (
   const savedExecution = await stepExecutionRepo.save(
     new FailingTestFixStepExecutionEntity(
       existingExecution.ticketId,
+      existingExecution.pipelineRunId,
       resolveStatus(input),
       existingExecution.idempotencyKey,
       new FailingTestFixStepResultEntity(
@@ -108,10 +122,27 @@ export const completeTicketFailingTestFixStep = async (
     ),
   );
 
+  const advancedPipeline = await advancePipelineStep(
+    {
+      ticketId: input.ticketId,
+      pipelineRunId: input.pipelineRunId,
+    },
+    {
+      stepExecutionRepo,
+      ticketRepo: deps.ticketRepo ?? AppContext.ticketRepo,
+      pipelineRunRepo: deps.pipelineRunRepo ?? AppContext.pipelineRunRepo,
+      ticketVectorRepo: deps.ticketVectorRepo ?? AppContext.ticketVectorRepo,
+      ticketGitEnvironmentRepo:
+        deps.ticketGitEnvironmentRepo ?? AppContext.ticketGitEnvironmentRepo,
+      githubService: deps.githubService ?? AppContext.githubService,
+    },
+  );
+
   return completeTicketFailingTestFixStepResponseSchema.parse({
     ok: true,
     data: {
       stepExecution: stepExecutionEntityToContract(savedExecution),
+      pipeline: advancedPipeline.data.pipeline,
     },
   });
 };

@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { stepExecutionContractSchema } from "@/modules/step-executions/contracts/step-execution-contracts";
+import { pipelineRunStateSchema } from "@/modules/pipeline-runs/contracts/pipeline-run-contracts";
 
 export const agentStatusEnum = z.enum([
   "complete",
@@ -18,7 +19,8 @@ export const failingTestReproFeedbackRequestSchema = z.object({
 
 export const completeTicketFailingTestReproStepRequestBodySchema = z.object({
   ticketId: z.string().trim().min(1),
-  pipelineId: z.coerce.number().int().positive(),
+  pipelineRunId: z.string().trim().min(1),
+  stepExecutionId: z.coerce.number().int().positive(),
   reproduceOperationOutcome: z.enum([
     "reproduced",
     "not_reproducible",
@@ -80,6 +82,7 @@ export const completeTicketFailingTestReproStepResponseSchema = z.object({
   ok: z.literal(true),
   data: z.object({
     stepExecution: stepExecutionContractSchema,
+    pipeline: pipelineRunStateSchema,
   }),
 });
 

@@ -1,10 +1,20 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { TicketAggregate } from "@/modules/tickets/domain/ticket-aggregate";
 import type { TicketIngestInput } from "@/modules/tickets/contracts/ticket-contracts";
 import { DrizzleTicketRepo } from "@/modules/tickets/infra/drizzle-ticket-repo";
 import { DrizzleStepExecutionRepo } from "@/modules/step-executions/infra/step-execution-repo";
+import { DrizzlePipelineRunRepo } from "@/modules/pipeline-runs/infra/pipeline-run-repo";
 import { TICKET_DESCRIPTION_ENRICHMENT_STEP_NAME } from "@/modules/step-executions/domain/step-execution.types";
 import { completeTicketDescriptionEnrichmentStep } from "@/modules/step-executions/application/complete-ticket-description-enrichment-step";
+import { PipelineRunEntity } from "@/modules/pipeline-runs/domain/pipeline-run-entity";
+
+const hoisted = vi.hoisted(() => ({
+  advancePipelineStep: vi.fn(),
+}));
+
+vi.mock("@/modules/step-executions/application/advance-pipeline-step", () => ({
+  advancePipelineStep: hoisted.advancePipelineStep,
+}));
 import {
   truncateTestTables,
 } from "../../helpers/pgvector-test-db";
@@ -37,17 +47,51 @@ const makeTicketAggregate = (
 describe("completeTicketDescriptionEnrichmentStep (integration)", () => {
   const ticketRepo = new DrizzleTicketRepo();
   const stepExecutionRepo = new DrizzleStepExecutionRepo();
+  const pipelineRunRepo = new DrizzlePipelineRunRepo();
 
   beforeEach(async () => {
     await truncateTestTables();
+    hoisted.advancePipelineStep.mockReset();
+    hoisted.advancePipelineStep.mockResolvedValue({
+      ok: true,
+      data: {
+        pipeline: {
+          pipelineRunId: "pipeline-run-enrichment-1",
+          ticketId: "CV-952",
+          status: "running",
+          currentStepName: TICKET_DESCRIPTION_ENRICHMENT_STEP_NAME,
+          currentStepExecutionId: 1,
+          lastCompletedStepName: TICKET_DESCRIPTION_ENRICHMENT_STEP_NAME,
+          haltReason: null,
+          startedAt: "2026-03-01T12:00:00.000Z",
+          endedAt: null,
+          pipelineType: "default",
+          definitionVersion: 1,
+          stepExecutions: [],
+        },
+      },
+    });
   });
 
   it("marks enrichment step as succeeded and stores payload", async () => {
     await ticketRepo.createMany([makeTicketAggregate()]);
+    const pipelineRun = await pipelineRunRepo.save(
+      new PipelineRunEntity(
+        "pipeline-run-enrichment-1",
+        "CV-952",
+        "waiting",
+        TICKET_DESCRIPTION_ENRICHMENT_STEP_NAME,
+        null,
+        null,
+        null,
+        new Date("2026-03-01T12:00:00.000Z").toISOString(),
+      ),
+    );
 
     const runningExecution = await stepExecutionRepo.save(
       new TicketPipelineStepExecutionEntity(
         "CV-952",
+        pipelineRun.id,
         TICKET_DESCRIPTION_ENRICHMENT_STEP_NAME,
         "running",
         "ticket_description_enrichment:CV-952:run-1",
@@ -58,7 +102,8 @@ describe("completeTicketDescriptionEnrichmentStep (integration)", () => {
     const result = await completeTicketDescriptionEnrichmentStep(
       {
         ticketId: "CV-952",
-        pipelineId: runningExecution.id!,
+        pipelineRunId: pipelineRun.id,
+        stepExecutionId: runningExecution.id!,
         operationOutcome: "enriched",
         summaryOfEnrichment:
           "Errors spike on /api/auth/refresh for Acme users in us-east-1.",
@@ -74,12 +119,12 @@ describe("completeTicketDescriptionEnrichmentStep (integration)", () => {
         agentStatus: "complete",
         agentBranch: "ephemeral-MEM9-dev1",
       },
-      { stepExecutionRepo },
     );
 
     expect(result.ok).toBe(true);
     expect(result.data.stepExecution.id).toBe(runningExecution.id);
     expect(result.data.stepExecution.status).toBe("succeeded");
+    expect(result.data.pipeline.pipelineRunId).toBe(pipelineRun.id);
     expect(result.data.stepExecution.result).toMatchObject({
       stepName: TICKET_DESCRIPTION_ENRICHMENT_STEP_NAME,
       operationOutcome: "enriched",

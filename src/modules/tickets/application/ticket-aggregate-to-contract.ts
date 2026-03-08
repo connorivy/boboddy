@@ -6,6 +6,7 @@ import {
 import { TicketAggregate } from "../domain/ticket-aggregate";
 import { stepExecutionEntityToContract } from "@/modules/step-executions/application/step-execution-entity-to-contract";
 import { ticketGitEnvironmentAggregateToContract } from "@/modules/environments/application/ticket-git-environment-aggregate-to-contract";
+import { pipelineRunEntityToContract } from "@/modules/pipeline-runs/application/pipeline-run-entity-to-contract";
 
 const mapPipelineStepToContract = (
   step: TicketPipelineStepExecutionEntity,
@@ -42,6 +43,12 @@ export function ticketAggregateToContract(
         )
       : undefined,
     pipelineSteps: ticket.pipelineSteps?.map(mapPipelineStepToContract),
+    pipelineRun: ticket.pipelineRun
+      ? pipelineRunEntityToContract(
+          ticket.pipelineRun,
+          ticket.pipelineSteps ?? [],
+        )
+      : null,
     createdAt: ticket.createdAt.toISOString(),
     updatedAt: ticket.updatedAt.toISOString(),
   };

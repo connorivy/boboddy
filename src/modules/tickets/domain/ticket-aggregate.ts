@@ -1,5 +1,6 @@
 import { TicketGitEnvironmentAggregate } from "@/modules/environments/domain/ticket-git-environment-aggregate";
 import { TicketPipelineStepExecutionEntity } from "@/modules/step-executions/domain/step-execution-entity";
+import { PipelineRunEntity } from "@/modules/pipeline-runs/domain/pipeline-run-entity";
 import type {
   TicketPipelineStepExecutionEntity as TicketPipelineStepExecutionContract,
   StepExecutionStatus,
@@ -28,6 +29,7 @@ export type TicketAggregateProps = {
   updatedAt?: Date;
   defaultGitEnvironmentId?: number;
   pipelineSteps?: TicketPipelineStepExecutionEntity[];
+  pipelineRun?: PipelineRunEntity | null;
   githubIssue?: TicketGithubIssueEntity | null;
   ticketGitEnvironmentAggregate?: TicketGitEnvironmentAggregate | null;
 };
@@ -46,10 +48,11 @@ const mapPipelineStepToContract = (
   }
 
   return {
-    id: step.id,
-    ticketId: step.ticketId,
-    stepName: step.stepName,
-    status: step.status,
+      id: step.id,
+      ticketId: step.ticketId,
+      pipelineRunId: step.pipelineRunId,
+      stepName: step.stepName,
+      status: step.status,
     idempotencyKey: step.idempotencyKey,
     startedAt: step.startedAt,
     endedAt: step.endedAt ?? null,
@@ -99,6 +102,7 @@ export class TicketAggregate {
   public readonly createdAt?: Date;
   public readonly updatedAt?: Date;
   public readonly pipelineSteps?: TicketPipelineStepExecutionEntity[];
+  public readonly pipelineRun?: PipelineRunEntity | null;
   public readonly githubIssue?: TicketGithubIssueEntity | null;
   public readonly defaultGitEnvironmentId?: number;
   public readonly ticketGitEnvironmentAggregate?: TicketGitEnvironmentAggregate | null;
@@ -122,6 +126,7 @@ export class TicketAggregate {
     this.createdAt = props.createdAt;
     this.updatedAt = props.updatedAt;
     this.pipelineSteps = props.pipelineSteps;
+    this.pipelineRun = props.pipelineRun;
     this.githubIssue = props.githubIssue;
     this.defaultGitEnvironmentId = props.defaultGitEnvironmentId;
     this.ticketGitEnvironmentAggregate = props.ticketGitEnvironmentAggregate;
@@ -148,6 +153,7 @@ export class TicketAggregate {
       updatedAt: this.updatedAt,
       defaultGitEnvironmentId: this.defaultGitEnvironmentId,
       pipelineSteps: this.pipelineSteps,
+      pipelineRun: this.pipelineRun,
       githubIssue: this.githubIssue,
       ticketGitEnvironmentAggregate: this.ticketGitEnvironmentAggregate,
     };
@@ -174,6 +180,13 @@ export class TicketAggregate {
     return new TicketAggregate({
       ...this.toConstructorProps(),
       pipelineSteps,
+    });
+  }
+
+  withPipelineRun(pipelineRun?: PipelineRunEntity | null): TicketAggregate {
+    return new TicketAggregate({
+      ...this.toConstructorProps(),
+      pipelineRun,
     });
   }
 
@@ -257,6 +270,22 @@ export class TicketAggregate {
       ),
       id: this.id,
       pipelineSteps: this.pipelineSteps?.map(mapPipelineStepToContract),
+      pipelineRun: this.pipelineRun
+        ? {
+            pipelineRunId: this.pipelineRun.id,
+            ticketId: this.pipelineRun.ticketId,
+            status: this.pipelineRun.status,
+            currentStepName: this.pipelineRun.currentStepName,
+            currentStepExecutionId: this.pipelineRun.currentStepExecutionId,
+            lastCompletedStepName: this.pipelineRun.lastCompletedStepName,
+            haltReason: this.pipelineRun.haltReason,
+            startedAt: this.pipelineRun.startedAt,
+            endedAt: this.pipelineRun.endedAt,
+            pipelineType: this.pipelineRun.pipelineType,
+            definitionVersion: this.pipelineRun.definitionVersion,
+            stepExecutions: this.pipelineSteps?.map(mapPipelineStepToContract) ?? [],
+          }
+        : null,
       createdAt: this.createdAt.toISOString(),
       updatedAt: this.updatedAt.toISOString(),
     };

@@ -8,6 +8,7 @@ import {
 
 export const triggerTicketDuplicateCandidatesStepRequestSchema = z.object({
   ticketId: z.string().min(1),
+  pipelineRunId: z.string().min(1),
 });
 
 export const triggerTicketDuplicateCandidatesStepResponseSchema = z.object({

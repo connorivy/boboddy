@@ -49,7 +49,10 @@ export const TicketManagerDetailDialog = ({
   onCreateTicketGitEnvironment,
   onMergeFailingTest,
 }: TicketManagerDetailDialogProps) => {
-  const sortedStepRuns = sortStepExecutionsNewestFirst(ticketDetail?.pipeline.stepExecutions ?? []);
+  const pipelineRun = ticketDetail?.pipeline.run ?? null;
+  const sortedStepRuns = sortStepExecutionsNewestFirst(
+    pipelineRun?.stepExecutions ?? ticketDetail?.pipeline.stepExecutions ?? [],
+  );
   const selectedTicketId = ticketDetail?.ticket.id;
   const [selectedTimelineBranchByTicket, setSelectedTimelineBranchByTicket] = useState<{
     ticketId: string;
@@ -97,6 +100,7 @@ export const TicketManagerDetailDialog = ({
                 <Chip label={`Priority: ${ticketDetail.ticket.priority}`} />
                 <Chip label={`Assignee: ${ticketDetail.ticket.assignee ?? "-"}`} />
                 <Chip label={`Reporter: ${ticketDetail.ticket.reporter}`} />
+                <Chip label={`Pipeline: ${pipelineRun?.status ?? "not started"}`} />
               </Stack>
 
               <Card variant="outlined">
@@ -123,7 +127,7 @@ export const TicketManagerDetailDialog = ({
               />
 
               <TicketManagerAiTimelineCard
-                stepExecutions={ticketDetail.pipeline.stepExecutions}
+                stepExecutions={pipelineRun?.stepExecutions ?? ticketDetail.pipeline.stepExecutions}
                 defaultTicketGitEnvironmentDevBranch={visibleTimelineDevBranch}
                 stepDefinitions={stepDefinitions}
                 actionLoading={actionLoading}

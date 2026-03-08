@@ -9,10 +9,12 @@ import { TicketAggregate } from "@/modules/tickets/domain/ticket-aggregate";
 import type { TicketIngestInput } from "@/modules/tickets/contracts/ticket-contracts";
 import { DrizzleTicketRepo } from "@/modules/tickets/infra/drizzle-ticket-repo";
 import { DrizzleStepExecutionRepo } from "@/modules/step-executions/infra/step-execution-repo";
+import { DrizzlePipelineRunRepo } from "@/modules/pipeline-runs/infra/pipeline-run-repo";
 import {
   TICKET_DESCRIPTION_ENRICHMENT_STEP_NAME,
 } from "@/modules/step-executions/domain/step-execution.types";
 import { triggerTicketDescriptionEnrichmentStep } from "@/modules/step-executions/application/trigger-ticket-description-enrichment-step";
+import { PipelineRunEntity } from "@/modules/pipeline-runs/domain/pipeline-run-entity";
 import {
   truncateTestTables,
 } from "../../helpers/pgvector-test-db";
@@ -51,6 +53,7 @@ const makeTicketAggregate = (
 describe("triggerTicketDescriptionEnrichmentStep (integration)", () => {
   const ticketRepo = new DrizzleTicketRepo();
   const stepExecutionRepo = new DrizzleStepExecutionRepo();
+  const pipelineRunRepo = new DrizzlePipelineRunRepo();
 
   beforeEach(async () => {
     await truncateTestTables();
@@ -59,6 +62,18 @@ describe("triggerTicketDescriptionEnrichmentStep (integration)", () => {
 
   it("runs local codex enrichment and marks the step succeeded", async () => {
     await ticketRepo.createMany([makeTicketAggregate()]);
+    const pipelineRun = await pipelineRunRepo.save(
+      new PipelineRunEntity(
+        "pipeline-run-trigger-enrichment-1",
+        "CV-951",
+        "queued",
+        null,
+        null,
+        null,
+        null,
+        new Date("2026-03-01T12:00:00.000Z").toISOString(),
+      ),
+    );
 
     hoisted.enrichTicketDescription.mockResolvedValue({
       operationOutcome: "enriched",
@@ -75,7 +90,7 @@ describe("triggerTicketDescriptionEnrichmentStep (integration)", () => {
     });
 
     const result = await triggerTicketDescriptionEnrichmentStep(
-      { ticketId: "CV-951" },
+      { ticketId: "CV-951", pipelineRunId: pipelineRun.id },
       {
         ticketRepo,
         stepExecutionRepo,

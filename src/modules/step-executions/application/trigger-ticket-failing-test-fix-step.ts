@@ -25,25 +25,27 @@ import {
 } from "../domain/step-execution-entity";
 import { TicketRepo } from "@/modules/tickets/application/jira-ticket-repo";
 import { StepExecutionRepo } from "./step-execution-repo";
-import { TicketGitEnvironmentRepo } from "@/modules/environments/application/ticket-git-environment-repo";
 import z from "zod";
 
 const WEBHOOK_PAYLOAD_PATH = "tmp/copilot-fix-webhook-payload.json";
 
 function buildCustomInstructions(
   ticketId: string,
-  pipelineId: number,
+  pipelineRunId: string,
+  stepExecutionId: number,
   failingTestPaths: string[],
 ): string {
   const hardcodedTicketIdAndPipelineIdSchema =
     completeTicketFailingTestFixStepRequestBodySchema
       .omit({
         ticketId: true,
-        pipelineId: true,
+        pipelineRunId: true,
+        stepExecutionId: true,
       })
       .extend({
         ticketId: z.literal(ticketId),
-        pipelineId: z.literal(pipelineId),
+        pipelineRunId: z.literal(pipelineRunId),
+        stepExecutionId: z.literal(stepExecutionId),
       });
   const jsonSchema = hardcodedTicketIdAndPipelineIdSchema.toJSONSchema();
   const jsonSchemaText = JSON.stringify(jsonSchema, null, 2);
@@ -69,7 +71,7 @@ Rules for fields:
 - summaryOfFix: 1-2000 chars, concrete and evidence-based.
 - fixConfidenceLevel: 0..1 when outcome is "fixed" or "not_fixed"; otherwise null.
 - fixedTestPath: keep the original failing test path unless there is a justified reason to change it.
-- ticketId and pipelineId must match exactly.
+- ticketId, pipelineRunId, and stepExecutionId must match exactly.
 
 Required final action:
 - Overwrite ${WEBHOOK_PAYLOAD_PATH} with valid JSON matching this schema exactly:
@@ -83,59 +85,43 @@ export const triggerTicketFailingTestFixStep = async (
   {
     ticketRepo,
     stepExecutionRepo,
-    ticketGitEnvironmentRepo,
     githubService,
-  }: {
-    ticketRepo: TicketRepo;
-    stepExecutionRepo: StepExecutionRepo;
-    ticketGitEnvironmentRepo: TicketGitEnvironmentRepo;
-    githubService: Pick<
-      GithubApiService,
-      "createIssue" | "assignCopilot" | "unassignCopilot"
-    >;
-  } = AppContext,
+    }: {
+      ticketRepo: TicketRepo;
+      stepExecutionRepo: StepExecutionRepo;
+      githubService: Pick<
+        GithubApiService,
+        "createIssue" | "assignCopilot" | "unassignCopilot"
+      >;
+    } = {
+      ticketRepo: AppContext.ticketRepo,
+      stepExecutionRepo: AppContext.stepExecutionRepo,
+      githubService: AppContext.githubService,
+    },
 ): Promise<TriggerTicketFailingTestFixStepResponse> => {
   const input = triggerTicketFailingTestFixStepRequestSchema.parse(rawInput);
 
-  const ticketByNumber = await ticketRepo.loadByTicketNumbers([
-    input.ticketNumber,
-  ]);
-  const ticketId = ticketByNumber[0]?.id;
-  if (!ticketId) {
-    throw new Error(`Ticket with number ${input.ticketNumber} not found`);
-  }
-
-  const ticket = await ticketRepo.loadById(ticketId, {
+  const ticket = await ticketRepo.loadById(input.ticketId, {
     loadGithubIssue: true,
   });
   if (!ticket) {
-    throw new Error(`Ticket with ID ${ticketId} not found`);
+    throw new Error(`Ticket with ID ${input.ticketId} not found`);
+  }
+  const ticketId = ticket.id;
+  if (!ticketId) {
+    throw new Error(`Ticket with ID ${input.ticketId} is missing persistence metadata`);
   }
 
-  const ticketGitEnvironment = await ticketGitEnvironmentRepo.loadById(
-    input.ticketGitEnvironmentId,
+  const previousRuns = await stepExecutionRepo.loadByPipelineRunId(
+    input.pipelineRunId,
   );
-  if (!ticketGitEnvironment) {
-    throw new Error(
-      `Ticket Git environment with ID ${input.ticketGitEnvironmentId} not found`,
-    );
-  }
-
-  if (ticketGitEnvironment.ticketId !== ticket.id) {
-    throw new Error(
-      `Ticket Git environment ${input.ticketGitEnvironmentId} does not belong to ticket ${ticket.id}`,
-    );
-  }
-
-  const previousRuns = await stepExecutionRepo.loadByTicketId(ticket.id);
   const reproStep = previousRuns
     .filter(
       (run): run is FailingTestReproStepExecutionEntity =>
         run instanceof FailingTestReproStepExecutionEntity &&
         run.stepName === FAILING_TEST_REPRO_STEP_NAME &&
-        run.result?.githubMergeStatus === "merged" &&
-        run.result?.githubPrTargetBranch?.trim() ===
-          ticketGitEnvironment.devBranch.trim(),
+        run.pipelineRunId === input.pipelineRunId &&
+        run.status === "succeeded",
     )
     .sort((a, b) => {
       const startedAtDiff = Date.parse(b.startedAt) - Date.parse(a.startedAt);
@@ -151,16 +137,23 @@ export const triggerTicketFailingTestFixStep = async (
     ) ?? [];
   if (failingTestPaths.length === 0) {
     throw new Error(
-      `Could not find failing test paths from ${FAILING_TEST_REPRO_STEP_NAME} for branch ${ticketGitEnvironment.devBranch}`,
+      `Could not find failing test paths from ${FAILING_TEST_REPRO_STEP_NAME} for pipeline run ${input.pipelineRunId}`,
+    );
+  }
+  const baseBranch = reproStep?.result?.githubPrTargetBranch?.trim();
+  if (!baseBranch) {
+    throw new Error(
+      `Could not determine target branch from ${FAILING_TEST_REPRO_STEP_NAME} for pipeline run ${input.pipelineRunId}`,
     );
   }
 
   const now = new Date().toISOString();
   const execution = new TicketPipelineStepExecutionEntity(
-    ticket.id,
+    ticketId,
+    input.pipelineRunId,
     FAILING_TEST_FIX_STEP_NAME,
     "running",
-    `${FAILING_TEST_FIX_STEP_NAME}:${ticket.id}:${ticketGitEnvironment.id ?? input.ticketGitEnvironmentId}:${randomUUID()}`,
+    `${FAILING_TEST_FIX_STEP_NAME}:${ticketId}:${input.pipelineRunId}:${randomUUID()}`,
     now,
   );
 
@@ -170,8 +163,6 @@ export const triggerTicketFailingTestFixStep = async (
     if (savedExecution.id === undefined) {
       throw new Error("Step execution ID missing after persistence");
     }
-    const pipelineId = savedExecution.id;
-
     let githubIssue = ticket.githubIssue;
     if (githubIssue === undefined) {
       throw new Error(
@@ -187,7 +178,7 @@ export const triggerTicketFailingTestFixStep = async (
 
       githubIssue = await ticketRepo.saveGithubIssue(
         new TicketGithubIssueEntity(
-          ticket.id,
+          ticketId,
           issue.issueNumber,
           issue.issueId,
         ),
@@ -198,10 +189,11 @@ export const triggerTicketFailingTestFixStep = async (
 
     await githubService.assignCopilot({
       issueNumber: githubIssue.githubIssueNumber,
-      baseBranch: ticketGitEnvironment.devBranch,
+      baseBranch,
       customInstructions: buildCustomInstructions(
-        ticket.id,
-        pipelineId,
+        ticketId,
+        input.pipelineRunId,
+        savedExecution.id,
         failingTestPaths,
       ),
     });
@@ -209,13 +201,14 @@ export const triggerTicketFailingTestFixStep = async (
     savedExecution = await stepExecutionRepo.save(
       new FailingTestFixStepExecutionEntity(
         savedExecution.ticketId,
+        savedExecution.pipelineRunId,
         savedExecution.status,
         savedExecution.idempotencyKey,
         new FailingTestFixStepResultEntity(
           "draft",
           githubIssue.githubIssueNumber,
           githubIssue.githubIssueId,
-          ticketGitEnvironment.devBranch,
+          baseBranch,
           null,
           undefined,
           undefined,
@@ -233,6 +226,7 @@ export const triggerTicketFailingTestFixStep = async (
       await stepExecutionRepo.save(
         new TicketPipelineStepExecutionEntity(
           savedExecution.ticketId,
+          savedExecution.pipelineRunId,
           savedExecution.stepName,
           "failed",
           savedExecution.idempotencyKey,

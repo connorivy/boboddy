@@ -1,10 +1,12 @@
 import { z } from "zod";
 import { stepExecutionContractSchema } from "@/modules/step-executions/contracts/step-execution-contracts";
 import { agentStatusEnum } from "@/modules/step-executions/contracts/complete-ticket-failing-test-repro-step-contracts";
+import { pipelineRunStateSchema } from "@/modules/pipeline-runs/contracts/pipeline-run-contracts";
 
 export const completeTicketFailingTestFixStepRequestBodySchema = z.object({
   ticketId: z.string().trim().min(1),
-  pipelineId: z.coerce.number().int().positive(),
+  pipelineRunId: z.string().trim().min(1),
+  stepExecutionId: z.coerce.number().int().positive(),
   fixOperationOutcome: z.enum([
     "fixed",
     "not_fixed",
@@ -30,6 +32,7 @@ export const completeTicketFailingTestFixStepResponseSchema = z.object({
   ok: z.literal(true),
   data: z.object({
     stepExecution: stepExecutionContractSchema,
+    pipeline: pipelineRunStateSchema,
   }),
 });
 

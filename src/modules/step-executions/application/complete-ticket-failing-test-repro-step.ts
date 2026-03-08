@@ -11,6 +11,7 @@ import { FAILING_TEST_REPRO_STEP_NAME } from "@/modules/step-executions/domain/s
 import type { StepExecutionStatus } from "@/modules/tickets/contracts/ticket-contracts";
 import { httpError } from "@/lib/api/http";
 import { AppContext } from "@/lib/di";
+import { advancePipelineStep } from "@/modules/step-executions/application/advance-pipeline-step";
 import {
   FailingTestReproStepExecutionEntity,
   FailingTestReproStepResultEntity,
@@ -49,18 +50,25 @@ const resolveStatus = (
 
 export const completeTicketFailingTestReproStep = async (
   rawInput: CompleteTicketFailingTestReproStepRequest,
-  {
-    stepExecutionRepo,
-    ticketRepo,
-  }: {
+  deps: Partial<{
     stepExecutionRepo: StepExecutionRepo;
     ticketRepo: TicketRepo;
-  } = AppContext,
+    pipelineRunRepo: typeof AppContext.pipelineRunRepo;
+    ticketVectorRepo: typeof AppContext.ticketVectorRepo;
+    ticketGitEnvironmentRepo: typeof AppContext.ticketGitEnvironmentRepo;
+    githubService: typeof AppContext.githubService;
+  }> = {},
 ): Promise<CompleteTicketFailingTestReproStepResponse> => {
   const input = completeTicketFailingTestReproStepRequestSchema.parse(rawInput);
+  const stepExecutionRepo = deps.stepExecutionRepo ?? AppContext.stepExecutionRepo;
+  const ticketRepo = deps.ticketRepo ?? AppContext.ticketRepo;
 
-  const existingExecution = await stepExecutionRepo.load(input.pipelineId);
-  if (!existingExecution || existingExecution.ticketId !== input.ticketId) {
+  const existingExecution = await stepExecutionRepo.load(input.stepExecutionId);
+  if (
+    !existingExecution ||
+    existingExecution.ticketId !== input.ticketId ||
+    existingExecution.pipelineRunId !== input.pipelineRunId
+  ) {
     throw httpError("Pipeline step execution not found", 404);
   }
 
@@ -98,6 +106,7 @@ export const completeTicketFailingTestReproStep = async (
   const savedExecution = await stepExecutionRepo.save(
     new FailingTestReproStepExecutionEntity(
       existingExecution.ticketId,
+      existingExecution.pipelineRunId,
       nextStatus,
       existingExecution.idempotencyKey,
       new FailingTestReproStepResultEntity(
@@ -125,10 +134,27 @@ export const completeTicketFailingTestReproStep = async (
     ),
   );
 
+  const advancedPipeline = await advancePipelineStep(
+    {
+      ticketId: input.ticketId,
+      pipelineRunId: input.pipelineRunId,
+    },
+    {
+      stepExecutionRepo,
+      ticketRepo,
+      pipelineRunRepo: deps.pipelineRunRepo ?? AppContext.pipelineRunRepo,
+      ticketVectorRepo: deps.ticketVectorRepo ?? AppContext.ticketVectorRepo,
+      ticketGitEnvironmentRepo:
+        deps.ticketGitEnvironmentRepo ?? AppContext.ticketGitEnvironmentRepo,
+      githubService: deps.githubService ?? AppContext.githubService,
+    },
+  );
+
   return completeTicketFailingTestReproStepResponseSchema.parse({
     ok: true,
     data: {
       stepExecution: stepExecutionEntityToContract(savedExecution),
+      pipeline: advancedPipeline.data.pipeline,
     },
   });
 };

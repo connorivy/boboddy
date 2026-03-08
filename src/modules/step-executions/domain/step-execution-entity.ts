@@ -18,6 +18,7 @@ export type FailingTestReproFeedbackRequestEntity = {
 export class TicketPipelineStepExecutionEntity {
   constructor(
     public ticketId: string,
+    public pipelineRunId: string,
     public stepName: string,
     public status: StepExecutionStatus,
     public idempotencyKey: string,
@@ -66,6 +67,7 @@ export class TicketDescriptionEnrichmentStepResultEntity {
 export class TicketDescriptionEnrichmentStepExecutionEntity extends TicketPipelineStepExecutionEntity {
   constructor(
     ticketId: string,
+    pipelineRunId: string,
     status: StepExecutionStatus,
     idempotencyKey: string,
     public result: TicketDescriptionEnrichmentStepResultEntity | null,
@@ -77,6 +79,7 @@ export class TicketDescriptionEnrichmentStepExecutionEntity extends TicketPipeli
   ) {
     super(
       ticketId,
+      pipelineRunId,
       TICKET_DESCRIPTION_ENRICHMENT_STEP_NAME,
       status,
       idempotencyKey,
@@ -92,6 +95,7 @@ export class TicketDescriptionEnrichmentStepExecutionEntity extends TicketPipeli
 export class TicketDescriptionQualityStepExecutionEntity extends TicketPipelineStepExecutionEntity {
   constructor(
     ticketId: string,
+    pipelineRunId: string,
     status: StepExecutionStatus,
     idempotencyKey: string,
     public result: TicketDescriptionQualityStepResultEntity | null,
@@ -103,6 +107,7 @@ export class TicketDescriptionQualityStepExecutionEntity extends TicketPipelineS
   ) {
     super(
       ticketId,
+      pipelineRunId,
       TICKET_DESCRIPTION_QUALITY_STEP_NAME,
       status,
       idempotencyKey,
@@ -118,6 +123,7 @@ export class TicketDescriptionQualityStepExecutionEntity extends TicketPipelineS
 export class TicketDuplicateCandidatesStepResultEntity extends TicketPipelineStepExecutionEntity {
   constructor(
     ticketId: string,
+    pipelineRunId: string,
     status: StepExecutionStatus,
     idempotencyKey: string,
     public candidates: DuplicateCandidateResultItem[],
@@ -129,6 +135,7 @@ export class TicketDuplicateCandidatesStepResultEntity extends TicketPipelineSte
   ) {
     super(
       ticketId,
+      pipelineRunId,
       TICKET_DUPLICATE_CANDIDATES_STEP_NAME,
       status,
       idempotencyKey,
@@ -174,6 +181,7 @@ export class FailingTestReproStepResultEntity {
 export class FailingTestReproStepExecutionEntity extends TicketPipelineStepExecutionEntity {
   constructor(
     ticketId: string,
+    pipelineRunId: string,
     status: StepExecutionStatus,
     idempotencyKey: string,
     public result: FailingTestReproStepResultEntity | null,
@@ -185,6 +193,7 @@ export class FailingTestReproStepExecutionEntity extends TicketPipelineStepExecu
   ) {
     super(
       ticketId,
+      pipelineRunId,
       FAILING_TEST_REPRO_STEP_NAME,
       status,
       idempotencyKey,
@@ -236,6 +245,7 @@ export class FailingTestFixStepCompletionResultEntity {
 export class FailingTestFixStepExecutionEntity extends TicketPipelineStepExecutionEntity {
   constructor(
     ticketId: string,
+    pipelineRunId: string,
     status: StepExecutionStatus,
     idempotencyKey: string,
     public result: FailingTestFixStepResultEntity | null,
@@ -247,6 +257,7 @@ export class FailingTestFixStepExecutionEntity extends TicketPipelineStepExecuti
   ) {
     super(
       ticketId,
+      pipelineRunId,
       FAILING_TEST_FIX_STEP_NAME,
       status,
       idempotencyKey,

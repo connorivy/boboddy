@@ -354,7 +354,9 @@ function mapDescriptionEnrichmentResultOrNull(
 }
 
 export class DrizzleStepExecutionRepo {
-  private async loadDuplicateCandidatesResult(ticketId: string): Promise<{
+  private async loadDuplicateCandidatesResult(
+    stepExecutionId: number,
+  ): Promise<{
     candidates: DuplicateCandidateResultItem[];
     createdAt?: string;
     updatedAt?: string;
@@ -363,7 +365,7 @@ export class DrizzleStepExecutionRepo {
     const rows = await db
       .select()
       .from(ticketDuplicateCandidates)
-      .where(eq(ticketDuplicateCandidates.ticketId, ticketId))
+      .where(eq(ticketDuplicateCandidates.stepExecutionId, stepExecutionId))
       .orderBy(
         desc(ticketDuplicateCandidates.score),
         desc(ticketDuplicateCandidates.updatedAt),
@@ -392,6 +394,7 @@ export class DrizzleStepExecutionRepo {
     if (row.type === TICKET_DESCRIPTION_QUALITY_STEP_NAME) {
       return new TicketDescriptionQualityStepExecutionEntity(
         row.ticketId,
+        row.pipelineRunId,
         row.status,
         row.idempotencyKey,
         mapDescriptionQualityResultOrNull(row),
@@ -406,6 +409,7 @@ export class DrizzleStepExecutionRepo {
     if (row.type === TICKET_DESCRIPTION_ENRICHMENT_STEP_NAME) {
       return new TicketDescriptionEnrichmentStepExecutionEntity(
         row.ticketId,
+        row.pipelineRunId,
         row.status,
         row.idempotencyKey,
         mapDescriptionEnrichmentResultOrNull(row),
@@ -420,6 +424,7 @@ export class DrizzleStepExecutionRepo {
     if (row.type === FAILING_TEST_REPRO_STEP_NAME) {
       return new FailingTestReproStepExecutionEntity(
         row.ticketId,
+        row.pipelineRunId,
         row.status,
         row.idempotencyKey,
         mapFailingTestReproResultOrNull(row),
@@ -434,6 +439,7 @@ export class DrizzleStepExecutionRepo {
     if (row.type === FAILING_TEST_FIX_STEP_NAME) {
       return new FailingTestFixStepExecutionEntity(
         row.ticketId,
+        row.pipelineRunId,
         row.status,
         row.idempotencyKey,
         mapFailingTestFixResultOrNull(row),
@@ -447,10 +453,11 @@ export class DrizzleStepExecutionRepo {
 
     if (row.type === TICKET_DUPLICATE_CANDIDATES_STEP_NAME) {
       const { candidates, createdAt, updatedAt } =
-        await this.loadDuplicateCandidatesResult(row.ticketId);
+        await this.loadDuplicateCandidatesResult(row.id);
 
       return new TicketDuplicateCandidatesStepResultEntity(
         row.ticketId,
+        row.pipelineRunId,
         row.status,
         row.idempotencyKey,
         candidates,
@@ -464,6 +471,7 @@ export class DrizzleStepExecutionRepo {
 
     return new TicketPipelineStepExecutionEntity(
       row.ticketId,
+      row.pipelineRunId,
       row.stepName,
       row.status,
       row.idempotencyKey,
@@ -489,6 +497,23 @@ export class DrizzleStepExecutionRepo {
     }
 
     return this.mapRowToExecution(row);
+  }
+
+  async loadByPipelineRunId(
+    pipelineRunId: string,
+  ): Promise<TicketPipelineStepExecutionEntity[]> {
+    const db = getDb();
+
+    const rows = await db
+      .select()
+      .from(ticketStepExecutionsTph)
+      .where(eq(ticketStepExecutionsTph.pipelineRunId, pipelineRunId))
+      .orderBy(
+        desc(ticketStepExecutionsTph.startedAt),
+        desc(ticketStepExecutionsTph.id),
+      );
+
+    return Promise.all(rows.map((row) => this.mapRowToExecution(row)));
   }
 
   async loadByTicketId(
@@ -538,6 +563,7 @@ export class DrizzleStepExecutionRepo {
 
   private async saveDuplicateCandidatesResult(
     db: DbExecutor,
+    stepExecutionId: number,
     ticketId: string,
     candidates: DuplicateCandidateResultItem[],
   ): Promise<void> {
@@ -545,7 +571,7 @@ export class DrizzleStepExecutionRepo {
 
     await db
       .delete(ticketDuplicateCandidates)
-      .where(eq(ticketDuplicateCandidates.ticketId, ticketId));
+      .where(eq(ticketDuplicateCandidates.stepExecutionId, stepExecutionId));
 
     if (candidates.length === 0) {
       return;
@@ -555,6 +581,7 @@ export class DrizzleStepExecutionRepo {
       .insert(ticketDuplicateCandidates)
       .values(
         candidates.map((candidate) => ({
+          stepExecutionId,
           ticketId,
           candidateTicketId: candidate.candidateTicketId,
           score: candidate.score.toFixed(4),
@@ -565,7 +592,7 @@ export class DrizzleStepExecutionRepo {
       )
       .onConflictDoUpdate({
         target: [
-          ticketDuplicateCandidates.ticketId,
+          ticketDuplicateCandidates.stepExecutionId,
           ticketDuplicateCandidates.candidateTicketId,
         ],
         set: {
@@ -792,6 +819,7 @@ export class DrizzleStepExecutionRepo {
         .insert(ticketStepExecutionsTph)
         .values({
           id: pipeline.id,
+          pipelineRunId: pipeline.pipelineRunId,
           ticketId: pipeline.ticketId,
           stepName: pipeline.stepName,
           type: pipeline.stepName,
@@ -809,6 +837,7 @@ export class DrizzleStepExecutionRepo {
         .onConflictDoUpdate({
           target: ticketStepExecutionsTph.idempotencyKey,
           set: {
+            pipelineRunId: pipeline.pipelineRunId,
             stepName: pipeline.stepName,
             type: pipeline.stepName,
             status: pipeline.status,
@@ -833,8 +862,14 @@ export class DrizzleStepExecutionRepo {
         pipeline instanceof TicketDuplicateCandidatesStepResultEntity &&
         pipeline.status === "succeeded"
       ) {
+        if (pipeline.id === undefined) {
+          throw new Error(
+            "Duplicate candidates execution must have an ID before saving result rows",
+          );
+        }
         await this.saveDuplicateCandidatesResult(
           tx,
+          pipeline.id,
           pipeline.ticketId,
           pipeline.candidates,
         );
@@ -869,72 +904,7 @@ export class DrizzleStepExecutionRepo {
         );
       }
 
-      let execution: TicketPipelineStepExecutionEntity;
-      if (row.type === TICKET_DESCRIPTION_QUALITY_STEP_NAME) {
-        execution = new TicketDescriptionQualityStepExecutionEntity(
-          row.ticketId,
-          row.status,
-          row.idempotencyKey,
-          mapDescriptionQualityResultOrNull(row),
-          row.startedAt.toISOString(),
-          row.endedAt?.toISOString(),
-          row.createdAt.toISOString(),
-          row.updatedAt.toISOString(),
-          row.id,
-        );
-      } else if (row.type === TICKET_DESCRIPTION_ENRICHMENT_STEP_NAME) {
-        execution = new TicketDescriptionEnrichmentStepExecutionEntity(
-          row.ticketId,
-          row.status,
-          row.idempotencyKey,
-          mapDescriptionEnrichmentResultOrNull(row),
-          row.startedAt.toISOString(),
-          row.endedAt?.toISOString(),
-          row.createdAt.toISOString(),
-          row.updatedAt.toISOString(),
-          row.id,
-        );
-      } else if (
-        row.type === FAILING_TEST_REPRO_STEP_NAME ||
-        row.type === FAILING_TEST_FIX_STEP_NAME
-      ) {
-        execution =
-          row.type === FAILING_TEST_REPRO_STEP_NAME
-            ? new FailingTestReproStepExecutionEntity(
-                row.ticketId,
-                row.status,
-                row.idempotencyKey,
-                mapFailingTestReproResultOrNull(row),
-                row.startedAt.toISOString(),
-                row.endedAt?.toISOString(),
-                row.createdAt.toISOString(),
-                row.updatedAt.toISOString(),
-                row.id,
-              )
-            : new FailingTestFixStepExecutionEntity(
-                row.ticketId,
-                row.status,
-                row.idempotencyKey,
-                mapFailingTestFixResultOrNull(row),
-                row.startedAt.toISOString(),
-                row.endedAt?.toISOString(),
-                row.createdAt.toISOString(),
-                row.updatedAt.toISOString(),
-                row.id,
-              );
-      } else {
-        execution = new TicketPipelineStepExecutionEntity(
-          row.ticketId,
-          row.stepName,
-          row.status,
-          row.idempotencyKey,
-          row.startedAt.toISOString(),
-          row.endedAt?.toISOString(),
-          row.id,
-          row.createdAt.toISOString(),
-          row.updatedAt.toISOString(),
-        );
-      }
+      const execution = await this.mapRowToExecution(row);
 
       const executions = stepExecutionsByTicketId.get(row.ticketId);
       if (executions) {

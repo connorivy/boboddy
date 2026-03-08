@@ -1,10 +1,20 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { TicketAggregate } from "@/modules/tickets/domain/ticket-aggregate";
 import type { TicketIngestInput } from "@/modules/tickets/contracts/ticket-contracts";
 import { DrizzleTicketRepo } from "@/modules/tickets/infra/drizzle-ticket-repo";
 import { DrizzleStepExecutionRepo } from "@/modules/step-executions/infra/step-execution-repo";
+import { DrizzlePipelineRunRepo } from "@/modules/pipeline-runs/infra/pipeline-run-repo";
 import { FAILING_TEST_REPRO_STEP_NAME } from "@/modules/step-executions/domain/step-execution.types";
 import { completeTicketFailingTestReproStep } from "@/modules/step-executions/application/complete-ticket-failing-test-repro-step";
+import { PipelineRunEntity } from "@/modules/pipeline-runs/domain/pipeline-run-entity";
+
+const hoisted = vi.hoisted(() => ({
+  advancePipelineStep: vi.fn(),
+}));
+
+vi.mock("@/modules/step-executions/application/advance-pipeline-step", () => ({
+  advancePipelineStep: hoisted.advancePipelineStep,
+}));
 import {
   truncateTestTables,
 } from "../../helpers/pgvector-test-db";
@@ -41,13 +51,46 @@ const makeTicketAggregate = (
 describe("completeTicketFailingTestReproStep (integration)", () => {
   const ticketRepo = new DrizzleTicketRepo();
   const stepExecutionRepo = new DrizzleStepExecutionRepo();
+  const pipelineRunRepo = new DrizzlePipelineRunRepo();
 
   beforeEach(async () => {
     await truncateTestTables();
+    hoisted.advancePipelineStep.mockReset();
+    hoisted.advancePipelineStep.mockResolvedValue({
+      ok: true,
+      data: {
+        pipeline: {
+          pipelineRunId: "pipeline-run-repro-1",
+          ticketId: "CV-902",
+          status: "running",
+          currentStepName: FAILING_TEST_REPRO_STEP_NAME,
+          currentStepExecutionId: 1,
+          lastCompletedStepName: FAILING_TEST_REPRO_STEP_NAME,
+          haltReason: null,
+          startedAt: "2026-03-01T12:00:00.000Z",
+          endedAt: null,
+          pipelineType: "default",
+          definitionVersion: 1,
+          stepExecutions: [],
+        },
+      },
+    });
   });
 
   it("marks the failing-test execution as succeeded and stores webhook output", async () => {
     await ticketRepo.createMany([makeTicketAggregate()]);
+    const pipelineRun = await pipelineRunRepo.save(
+      new PipelineRunEntity(
+        "pipeline-run-repro-1",
+        "CV-902",
+        "waiting",
+        FAILING_TEST_REPRO_STEP_NAME,
+        null,
+        null,
+        null,
+        new Date("2026-03-01T12:00:00.000Z").toISOString(),
+      ),
+    );
     await ticketRepo.saveGithubIssue(
       new TicketGithubIssueEntity("CV-902", 777, "I_kwDOFAKE777"),
     );
@@ -55,6 +98,7 @@ describe("completeTicketFailingTestReproStep (integration)", () => {
     const runningExecution = await stepExecutionRepo.save(
       new TicketPipelineStepExecutionEntity(
         "CV-902",
+        pipelineRun.id,
         FAILING_TEST_REPRO_STEP_NAME,
         "running",
         "github_repro_failing_test:CV-902:run-1",
@@ -67,7 +111,8 @@ describe("completeTicketFailingTestReproStep (integration)", () => {
     const result = await completeTicketFailingTestReproStep(
       {
         ticketId: "CV-902",
-        pipelineId: runningExecution.id!,
+        pipelineRunId: pipelineRun.id,
+        stepExecutionId: runningExecution.id!,
         reproduceOperationOutcome: "reproduced",
         summaryOfFindings:
           "Added a profile-save regression test and confirmed it fails with 500.",
@@ -86,6 +131,7 @@ describe("completeTicketFailingTestReproStep (integration)", () => {
     expect(result.ok).toBe(true);
     expect(result.data.stepExecution.id).toBe(runningExecution.id);
     expect(result.data.stepExecution.status).toBe("succeeded");
+    expect(result.data.pipeline.pipelineRunId).toBe(pipelineRun.id);
     expect(result.data.stepExecution.endedAt).not.toBeNull();
     expect(result.data.stepExecution.result).toMatchObject({
       stepName: FAILING_TEST_REPRO_STEP_NAME,
@@ -131,7 +177,8 @@ describe("completeTicketFailingTestReproStep (integration)", () => {
       completeTicketFailingTestReproStep(
         {
           ticketId: "CV-902",
-          pipelineId: 999999,
+          pipelineRunId: "missing-pipeline-run",
+          stepExecutionId: 999999,
           reproduceOperationOutcome: "agent_error",
           summaryOfFindings: "Could not reproduce after multiple attempts.",
           confidenceLevel: null,
@@ -147,6 +194,18 @@ describe("completeTicketFailingTestReproStep (integration)", () => {
 
   it("marks execution as waiting_for_user_feedback and stores feedback request", async () => {
     await ticketRepo.createMany([makeTicketAggregate()]);
+    const pipelineRun = await pipelineRunRepo.save(
+      new PipelineRunEntity(
+        "pipeline-run-repro-feedback",
+        "CV-902",
+        "waiting",
+        FAILING_TEST_REPRO_STEP_NAME,
+        null,
+        null,
+        null,
+        new Date("2026-03-01T12:00:00.000Z").toISOString(),
+      ),
+    );
     await ticketRepo.saveGithubIssue(
       new TicketGithubIssueEntity("CV-902", 778, "I_kwDOFAKE778"),
     );
@@ -154,6 +213,7 @@ describe("completeTicketFailingTestReproStep (integration)", () => {
     const runningExecution = await stepExecutionRepo.save(
       new TicketPipelineStepExecutionEntity(
         "CV-902",
+        pipelineRun.id,
         FAILING_TEST_REPRO_STEP_NAME,
         "running",
         "github_repro_failing_test:CV-902:run-feedback",
@@ -164,7 +224,8 @@ describe("completeTicketFailingTestReproStep (integration)", () => {
     const result = await completeTicketFailingTestReproStep(
       {
         ticketId: "CV-902",
-        pipelineId: runningExecution.id!,
+        pipelineRunId: pipelineRun.id,
+        stepExecutionId: runningExecution.id!,
         reproduceOperationOutcome: "needs_user_feedback",
         summaryOfFindings:
           "Observed two conflicting expected behaviors in issue comments.",

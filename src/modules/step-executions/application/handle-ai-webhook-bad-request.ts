@@ -31,7 +31,8 @@ import type { GithubApiService } from "@/modules/step-executions/infra/github-co
 const webhookRepairEnvelopeSchema = z
   .object({
     ticketId: z.string().trim().min(1).optional(),
-    pipelineId: z.coerce.number().int().positive().optional(),
+    pipelineRunId: z.string().trim().min(1).optional(),
+    stepExecutionId: z.coerce.number().int().positive().optional(),
     agentBranch: z.string().trim().min(1).optional(),
   })
   .passthrough();
@@ -65,7 +66,8 @@ const normalizePayload = (
 const buildCorrectionInstructions = (
   stepName: SupportedWebhookStepName,
   ticketId: string,
-  pipelineId: number,
+  pipelineRunId: string,
+  stepExecutionId: number,
   rawPayload: Record<string, unknown>,
 ): string => {
   const webhookPayloadPath =
@@ -79,30 +81,36 @@ const buildCorrectionInstructions = (
       ? completeTicketDescriptionEnrichmentStepRequestBodySchema
           .omit({
             ticketId: true,
-            pipelineId: true,
+            pipelineRunId: true,
+            stepExecutionId: true,
           })
           .extend({
             ticketId: z.literal(ticketId),
-            pipelineId: z.literal(pipelineId),
+            pipelineRunId: z.literal(pipelineRunId),
+            stepExecutionId: z.literal(stepExecutionId),
           })
       : stepName === FAILING_TEST_REPRO_STEP_NAME
       ? completeTicketFailingTestReproStepRequestBodySchema
           .omit({
             ticketId: true,
-            pipelineId: true,
+            pipelineRunId: true,
+            stepExecutionId: true,
           })
           .extend({
             ticketId: z.literal(ticketId),
-            pipelineId: z.literal(pipelineId),
+            pipelineRunId: z.literal(pipelineRunId),
+            stepExecutionId: z.literal(stepExecutionId),
           })
       : completeTicketFailingTestFixStepRequestBodySchema
           .omit({
             ticketId: true,
-            pipelineId: true,
+            pipelineRunId: true,
+            stepExecutionId: true,
           })
           .extend({
             ticketId: z.literal(ticketId),
-            pipelineId: z.literal(pipelineId),
+            pipelineRunId: z.literal(pipelineRunId),
+            stepExecutionId: z.literal(stepExecutionId),
           });
 
   const jsonSchemaText = JSON.stringify(
@@ -117,7 +125,7 @@ const buildCorrectionInstructions = (
 
 Goal:
 - Produce a corrected JSON payload with the same intent as the previous output.
-- Keep ticketId and pipelineId unchanged.
+- Keep ticketId, pipelineRunId, and stepExecutionId unchanged.
 - Overwrite ${webhookPayloadPath} with valid JSON matching this schema exactly.
 
 Rejected payload:
@@ -181,12 +189,13 @@ export const handleAiWebhookBadRequest = async (
     return;
   }
 
-  const pipelineId = parsedEnvelope.data.pipelineId;
-  if (!pipelineId) {
+  const pipelineRunId = parsedEnvelope.data.pipelineRunId;
+  const stepExecutionId = parsedEnvelope.data.stepExecutionId;
+  if (!pipelineRunId || !stepExecutionId) {
     return;
   }
 
-  const existingExecution = await stepExecutionRepo.load(pipelineId);
+  const existingExecution = await stepExecutionRepo.load(stepExecutionId);
   if (!existingExecution || existingExecution.stepName !== stepName) {
     return;
   }
@@ -197,6 +206,9 @@ export const handleAiWebhookBadRequest = async (
   }
 
   if (existingExecution.ticketId !== ticketId) {
+    return;
+  }
+  if (existingExecution.pipelineRunId !== pipelineRunId) {
     return;
   }
 
@@ -225,11 +237,12 @@ export const handleAiWebhookBadRequest = async (
   }
 
   const customInstructions = buildCorrectionInstructions(
-    stepName,
-    ticketId,
-    pipelineId,
-    normalizedPayload,
-  );
+      stepName,
+      ticketId,
+      pipelineRunId,
+      stepExecutionId,
+      normalizedPayload,
+    );
 
   await githubService.unassignCopilot(ticket.githubIssue.githubIssueNumber);
   await githubService.assignCopilot({

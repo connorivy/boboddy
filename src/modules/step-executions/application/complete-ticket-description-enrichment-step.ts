@@ -11,6 +11,7 @@ import { TICKET_DESCRIPTION_ENRICHMENT_STEP_NAME } from "@/modules/step-executio
 import type { StepExecutionStatus } from "@/modules/tickets/contracts/ticket-contracts";
 import { httpError } from "@/lib/api/http";
 import { AppContext } from "@/lib/di";
+import { advancePipelineStep } from "@/modules/step-executions/application/advance-pipeline-step";
 import {
   TicketDescriptionEnrichmentStepExecutionEntity,
   TicketDescriptionEnrichmentStepResultEntity,
@@ -44,12 +45,24 @@ const resolveStatus = (
 
 export const completeTicketDescriptionEnrichmentStep = async (
   rawInput: CompleteTicketDescriptionEnrichmentStepRequest,
-  { stepExecutionRepo }: { stepExecutionRepo: StepExecutionRepo } = AppContext,
+  deps: Partial<{
+    stepExecutionRepo: StepExecutionRepo;
+    ticketRepo: typeof AppContext.ticketRepo;
+    pipelineRunRepo: typeof AppContext.pipelineRunRepo;
+    ticketVectorRepo: typeof AppContext.ticketVectorRepo;
+    ticketGitEnvironmentRepo: typeof AppContext.ticketGitEnvironmentRepo;
+    githubService: typeof AppContext.githubService;
+  }> = {},
 ): Promise<CompleteTicketDescriptionEnrichmentStepResponse> => {
   const input = completeTicketDescriptionEnrichmentStepRequestSchema.parse(rawInput);
+  const stepExecutionRepo = deps.stepExecutionRepo ?? AppContext.stepExecutionRepo;
 
-  const existingExecution = await stepExecutionRepo.load(input.pipelineId);
-  if (!existingExecution || existingExecution.ticketId !== input.ticketId) {
+  const existingExecution = await stepExecutionRepo.load(input.stepExecutionId);
+  if (
+    !existingExecution ||
+    existingExecution.ticketId !== input.ticketId ||
+    existingExecution.pipelineRunId !== input.pipelineRunId
+  ) {
     throw httpError("Pipeline step execution not found", 404);
   }
 
@@ -72,6 +85,7 @@ export const completeTicketDescriptionEnrichmentStep = async (
   const savedExecution = await stepExecutionRepo.save(
     new TicketDescriptionEnrichmentStepExecutionEntity(
       existingExecution.ticketId,
+      existingExecution.pipelineRunId,
       resolveStatus(input),
       existingExecution.idempotencyKey,
       new TicketDescriptionEnrichmentStepResultEntity(
@@ -101,10 +115,27 @@ export const completeTicketDescriptionEnrichmentStep = async (
     ),
   );
 
+  const advancedPipeline = await advancePipelineStep(
+    {
+      ticketId: input.ticketId,
+      pipelineRunId: input.pipelineRunId,
+    },
+    {
+      stepExecutionRepo,
+      ticketRepo: deps.ticketRepo ?? AppContext.ticketRepo,
+      pipelineRunRepo: deps.pipelineRunRepo ?? AppContext.pipelineRunRepo,
+      ticketVectorRepo: deps.ticketVectorRepo ?? AppContext.ticketVectorRepo,
+      ticketGitEnvironmentRepo:
+        deps.ticketGitEnvironmentRepo ?? AppContext.ticketGitEnvironmentRepo,
+      githubService: deps.githubService ?? AppContext.githubService,
+    },
+  );
+
   return completeTicketDescriptionEnrichmentStepResponseSchema.parse({
     ok: true,
     data: {
       stepExecution: stepExecutionEntityToContract(savedExecution),
+      pipeline: advancedPipeline.data.pipeline,
     },
   });
 };

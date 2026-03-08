@@ -12,6 +12,7 @@ import {
   real,
   numeric,
   uniqueIndex,
+  index,
   jsonb,
 } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
@@ -54,6 +55,16 @@ export const stepExecutionStatusEnum = pgEnum("step_execution_status", [
   "failed",
   "skipped",
   "failed_timeout",
+]);
+
+export const pipelineRunStatusEnum = pgEnum("pipeline_run_status", [
+  "queued",
+  "running",
+  "waiting",
+  "halted",
+  "succeeded",
+  "failed",
+  "cancelled",
 ]);
 
 export const reproAttemptStatusEnum = pgEnum("repro_attempt_status", [
@@ -142,6 +153,9 @@ export const ticketDuplicateCandidates = pgTable(
   "ticket_duplicate_candidates",
   {
     id: serial("id").primaryKey(),
+    stepExecutionId: integer("step_execution_id")
+      .references(() => ticketStepExecutionsTph.id, { onDelete: "cascade" })
+      .notNull(),
     ticketId: text("ticket_id")
       .references(() => tickets.id, { onDelete: "cascade" })
       .notNull(),
@@ -157,7 +171,7 @@ export const ticketDuplicateCandidates = pgTable(
   },
   (table) => [
     uniqueIndex("ticket_duplicate_candidates_pair_unique").on(
-      table.ticketId,
+      table.stepExecutionId,
       table.candidateTicketId,
     ),
     check(
@@ -188,10 +202,44 @@ export const ticketGithubIssues = pgTable(
   ],
 );
 
+export const pipelineRuns = pgTable(
+  "pipeline_runs",
+  {
+    id: text("id").primaryKey(),
+    ticketId: text("ticket_id")
+      .references(() => tickets.id, { onDelete: "cascade" })
+      .notNull(),
+    status: pipelineRunStatusEnum("status").notNull(),
+    currentStepName: text("current_step_name"),
+    currentStepExecutionId: integer("current_step_execution_id"),
+    lastCompletedStepName: text("last_completed_step_name"),
+    haltReason: text("halt_reason"),
+    pipelineType: text("pipeline_type").notNull().default("default"),
+    definitionVersion: integer("definition_version").notNull().default(1),
+    startedAt: timestamp("started_at", { withTimezone: true }).notNull(),
+    endedAt: timestamp("ended_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("pipeline_runs_ticket_started_at_unique").on(
+      table.ticketId,
+      table.startedAt,
+    ),
+  ],
+);
+
 export const ticketStepExecutions = pgTable(
   "ticket_step_executions",
   {
     id: serial("id").primaryKey(),
+    pipelineRunId: text("pipeline_run_id")
+      .references(() => pipelineRuns.id, { onDelete: "cascade" })
+      .notNull(),
     ticketId: text("ticket_id")
       .references(() => tickets.id, { onDelete: "cascade" })
       .notNull(),
@@ -206,6 +254,9 @@ export const ticketStepExecutions = pgTable(
   (table) => [
     uniqueIndex("ticket_step_executions_idempotency_key_unique").on(
       table.idempotencyKey,
+    ),
+    index("ticket_step_executions_pipeline_run_id_idx").on(
+      table.pipelineRunId,
     ),
   ],
 );
@@ -312,6 +363,9 @@ export const ticketStepExecutionsTph = pgTable(
   "ticket_step_executions_tph",
   {
     id: serial("id").primaryKey(),
+    pipelineRunId: text("pipeline_run_id")
+      .references(() => pipelineRuns.id, { onDelete: "cascade" })
+      .notNull(),
     ticketId: text("ticket_id")
       .references(() => tickets.id, { onDelete: "cascade" })
       .notNull(),
@@ -361,6 +415,9 @@ export const ticketStepExecutionsTph = pgTable(
     uniqueIndex("ticket_step_executions_tph_idempotency_key_unique").on(
       table.idempotencyKey,
     ),
+    index("ticket_step_executions_tph_pipeline_run_id_idx").on(
+      table.pipelineRunId,
+    ),
   ],
 );
 
@@ -372,6 +429,8 @@ export type NewTicketDuplicateCandidateRow =
   typeof ticketDuplicateCandidates.$inferInsert;
 export type TicketGithubIssueRow = typeof ticketGithubIssues.$inferSelect;
 export type NewTicketGithubIssueRow = typeof ticketGithubIssues.$inferInsert;
+export type PipelineRunRow = typeof pipelineRuns.$inferSelect;
+export type NewPipelineRunRow = typeof pipelineRuns.$inferInsert;
 export type TicketStepExecutionRow = typeof ticketStepExecutions.$inferSelect;
 export type NewTicketStepExecutionRow =
   typeof ticketStepExecutions.$inferInsert;

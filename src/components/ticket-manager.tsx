@@ -17,11 +17,7 @@ import type {
   StepExecutionStatus,
 } from "@/modules/tickets/contracts/ticket-contracts";
 import { loadTicketDetail as loadTicketDetailAction, searchTickets } from "@/modules/tickets/application/get-tickets";
-import { triggerTicketDescriptionQualityStep } from "@/modules/step-executions/application/trigger-ticket-description-quality-step";
-import { triggerTicketDescriptionEnrichmentStep } from "@/modules/step-executions/application/trigger-ticket-description-enrichment-step";
-import { triggerTicketDuplicateCandidatesStep } from "@/modules/step-executions/application/trigger-ticket-duplicate-candidates-step";
-import { triggerTicketFailingTestReproStep } from "@/modules/step-executions/application/trigger-ticket-failing-test-repro-step";
-import { triggerTicketFailingTestFixStep } from "@/modules/step-executions/application/trigger-ticket-failing-test-fix-step";
+import { advancePipelineStep } from "@/modules/step-executions/application/advance-pipeline-step";
 import { mergeFailingTest } from "@/modules/step-executions/application/merge-failing-test";
 import { enqueueBulkStepQueueItems } from "@/modules/step-executions/application/bulk-step-queue";
 import {
@@ -85,76 +81,52 @@ export const TicketManager = ({ initialTickets }: TicketManagerProps) => {
       {
         stepName: TICKET_DESCRIPTION_ENRICHMENT_STEP_NAME,
         trigger: async (ticketId) => {
-          const result = await triggerTicketDescriptionEnrichmentStep({
-            ticketId,
-          });
+          const result = await advancePipelineStep({ ticketId });
           return {
             ok: true,
-            data: { message: `execution ${result.data.stepExecution.id}` },
+            data: { message: `run ${result.data.pipeline.pipelineRunId}` },
           };
         },
       },
       {
         stepName: TICKET_DESCRIPTION_QUALITY_STEP_NAME,
         trigger: async (ticketId) => {
-          await triggerTicketDescriptionQualityStep({
-            ticketId,
-          });
-          return { ok: true, data: { message: `todo` } };
+          const result = await advancePipelineStep({ ticketId });
+          return { ok: true, data: { message: `run ${result.data.pipeline.pipelineRunId}` } };
         },
       },
       {
         stepName: TICKET_DUPLICATE_CANDIDATES_STEP_NAME,
         trigger: async (ticketId) => {
-          const result = await triggerTicketDuplicateCandidatesStep({
-            ticketId,
-          });
+          const result = await advancePipelineStep({ ticketId });
           return {
             ok: true,
-            data: { message: `execution ${result.data.stepExecution.id}` },
+            data: { message: `run ${result.data.pipeline.pipelineRunId}` },
           };
         },
       },
       {
         stepName: FAILING_TEST_REPRO_STEP_NAME,
         trigger: async (ticketId) => {
-          const result = await triggerTicketFailingTestReproStep({
-            ticketId,
-          });
+          const result = await advancePipelineStep({ ticketId });
           return {
             ok: true,
-            data: { message: `execution ${result.data.stepExecution.id}` },
+            data: { message: `run ${result.data.pipeline.pipelineRunId}` },
           };
         },
       },
       {
         stepName: FAILING_TEST_FIX_STEP_NAME,
-        trigger: async () => {
-          const ticketNumber = ticketDetail?.ticket.ticketNumber;
-          if (!ticketNumber) {
-            throw new Error("Ticket number is required to run this step");
-          }
-
-          const ticketGitEnvironmentId =
-            ticketDetail?.ticket.defaultGitEnvironmentId;
-          if (!ticketGitEnvironmentId) {
-            throw new Error(
-              "Set a default Git environment before triggering this step",
-            );
-          }
-
-          const result = await triggerTicketFailingTestFixStep({
-            ticketNumber,
-            ticketGitEnvironmentId,
-          });
+        trigger: async (ticketId) => {
+          const result = await advancePipelineStep({ ticketId });
           return {
             ok: true,
-            data: { message: `execution ${result.data.stepExecution.id}` },
+            data: { message: `run ${result.data.pipeline.pipelineRunId}` },
           };
         },
       },
     ],
-    [ticketDetail],
+    [],
   );
 
   const searchQuery = useMemo(

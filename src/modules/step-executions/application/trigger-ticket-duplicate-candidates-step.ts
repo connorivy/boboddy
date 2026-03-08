@@ -15,13 +15,28 @@ import {
 import { TicketDuplicateSemanticSearchService } from "@/modules/step-executions/infra/ticket-duplicate-semantic-search";
 import { AppContext } from "@/lib/di";
 import { TicketDuplicateCandidatesStepResultEntity, TicketPipelineStepExecutionEntity } from "../domain/step-execution-entity";
+import { StepExecutionRepo } from "./step-execution-repo";
+import { TicketRepo } from "@/modules/tickets/application/jira-ticket-repo";
+import { DrizzleTicketVectorRepo } from "@/modules/step-executions/infra/ticket-vector.repository";
 
 const DUPLICATE_TOP_K = 5;
 const DUPLICATE_MIN_SCORE = 0.82;
 
 export const triggerTicketDuplicateCandidatesStep = async (
   rawInput: TriggerTicketDuplicateCandidatesStepRequest,
-  { ticketRepo, stepExecutionRepo, ticketVectorRepo } = AppContext,
+  {
+    ticketRepo,
+    stepExecutionRepo,
+    ticketVectorRepo,
+  }: {
+    ticketRepo: TicketRepo;
+    stepExecutionRepo: StepExecutionRepo;
+    ticketVectorRepo: DrizzleTicketVectorRepo;
+  } = {
+    ticketRepo: AppContext.ticketRepo,
+    stepExecutionRepo: AppContext.stepExecutionRepo,
+    ticketVectorRepo: AppContext.ticketVectorRepo,
+  },
 ): Promise<TriggerTicketDuplicateCandidatesStepResponse> => {
   const input =
     triggerTicketDuplicateCandidatesStepRequestSchema.parse(rawInput);
@@ -34,6 +49,7 @@ export const triggerTicketDuplicateCandidatesStep = async (
   const now = new Date().toISOString();
   const execution = new TicketPipelineStepExecutionEntity(
     input.ticketId,
+    input.pipelineRunId,
     TICKET_DUPLICATE_CANDIDATES_STEP_NAME,
     "running",
     `${TICKET_DUPLICATE_CANDIDATES_STEP_NAME}:${input.ticketId}:${randomUUID()}`,
@@ -69,6 +85,7 @@ export const triggerTicketDuplicateCandidatesStep = async (
     savedExecution = await stepExecutionRepo.save(
       new TicketDuplicateCandidatesStepResultEntity(
         savedExecution.ticketId,
+        savedExecution.pipelineRunId,
         "succeeded",
         savedExecution.idempotencyKey,
         candidates.map((candidate) => ({
@@ -88,6 +105,7 @@ export const triggerTicketDuplicateCandidatesStep = async (
       await stepExecutionRepo.save(
         new TicketPipelineStepExecutionEntity(
           savedExecution.ticketId,
+          savedExecution.pipelineRunId,
           savedExecution.stepName,
           "failed",
           savedExecution.idempotencyKey,

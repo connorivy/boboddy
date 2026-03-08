@@ -38,7 +38,10 @@ export const triggerTicketDescriptionEnrichmentStep = async (
   }: {
     ticketRepo: TicketRepo;
     stepExecutionRepo: StepExecutionRepo;
-  } = AppContext,
+  } = {
+    ticketRepo: AppContext.ticketRepo,
+    stepExecutionRepo: AppContext.stepExecutionRepo,
+  },
 ): Promise<TriggerTicketDescriptionEnrichmentStepResponse> => {
   const input =
     triggerTicketDescriptionEnrichmentStepRequestSchema.parse(rawInput);
@@ -51,6 +54,7 @@ export const triggerTicketDescriptionEnrichmentStep = async (
   const now = new Date().toISOString();
   const execution = new TicketPipelineStepExecutionEntity(
     input.ticketId,
+    input.pipelineRunId,
     TICKET_DESCRIPTION_ENRICHMENT_STEP_NAME,
     "running",
     `${TICKET_DESCRIPTION_ENRICHMENT_STEP_NAME}:${input.ticketId}:${randomUUID()}`,
@@ -76,6 +80,7 @@ export const triggerTicketDescriptionEnrichmentStep = async (
     savedExecution = await stepExecutionRepo.save(
       new TicketDescriptionEnrichmentStepExecutionEntity(
         savedExecution.ticketId,
+        savedExecution.pipelineRunId,
         "succeeded",
         savedExecution.idempotencyKey,
         new TicketDescriptionEnrichmentStepResultEntity(
@@ -105,6 +110,7 @@ export const triggerTicketDescriptionEnrichmentStep = async (
       await stepExecutionRepo.save(
         new TicketPipelineStepExecutionEntity(
           savedExecution.ticketId,
+          savedExecution.pipelineRunId,
           savedExecution.stepName,
           "failed",
           savedExecution.idempotencyKey,

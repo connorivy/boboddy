@@ -3,6 +3,7 @@ import { stepExecutionContractSchema } from "@/modules/step-executions/contracts
 
 export const triggerTicketFailingTestReproStepRequestSchema = z.object({
   ticketId: z.string().min(1),
+  pipelineRunId: z.string().min(1),
 });
 
 export const triggerTicketFailingTestReproStepResponseSchema = z.object({

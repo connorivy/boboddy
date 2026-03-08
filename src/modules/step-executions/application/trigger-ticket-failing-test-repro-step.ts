@@ -34,18 +34,21 @@ const WEBHOOK_PAYLOAD_PATH = "tmp/copilot-repro-webhook-payload.json";
 
 function buildCustomInstructions(
   ticketId: string,
-  pipelineId: number,
+  pipelineRunId: string,
+  stepExecutionId: number,
   enrichmentContext: string | null,
 ): string {
   const hardcodedTicketIdAndPipelineIdSchema =
     completeTicketFailingTestReproStepRequestBodySchema
       .omit({
         ticketId: true,
-        pipelineId: true,
+        pipelineRunId: true,
+        stepExecutionId: true,
       })
       .extend({
         ticketId: z.literal(ticketId),
-        pipelineId: z.literal(pipelineId),
+        pipelineRunId: z.literal(pipelineRunId),
+        stepExecutionId: z.literal(stepExecutionId),
       });
   const jsonSchema = hardcodedTicketIdAndPipelineIdSchema.toJSONSchema();
   const jsonSchemaText = JSON.stringify(jsonSchema, null, 2);
@@ -74,7 +77,7 @@ Rules for fields:
 - feedbackRequest.reason should explain the blocking ambiguity.
 - feedbackRequest.questions should contain concrete questions the user can answer asynchronously.
 - feedbackRequest.assumptions should list assumptions you made so far (can be empty array).
-- ticketId and pipelineId must match exactly.
+- ticketId, pipelineRunId, and stepExecutionId must match exactly.
 
 Required final action:
 - Overwrite ${WEBHOOK_PAYLOAD_PATH} with valid JSON matching this schema exactly:
@@ -91,22 +94,26 @@ export const triggerTicketFailingTestReproStep = async (
     stepExecutionRepo,
     ticketGitEnvironmentRepo,
     githubService,
-  }: {
-    ticketRepo: TicketRepo;
-    stepExecutionRepo: StepExecutionRepo;
-    ticketGitEnvironmentRepo: TicketGitEnvironmentRepo;
-    githubService: Pick<
-      GithubApiService,
-      "createIssue" | "assignCopilot" | "unassignCopilot"
-    >;
-  } = AppContext,
+    }: {
+      ticketRepo: TicketRepo;
+      stepExecutionRepo: StepExecutionRepo;
+      ticketGitEnvironmentRepo: TicketGitEnvironmentRepo;
+      githubService: Pick<
+        GithubApiService,
+        "createIssue" | "assignCopilot" | "unassignCopilot"
+      >;
+    } = {
+      ticketRepo: AppContext.ticketRepo,
+      stepExecutionRepo: AppContext.stepExecutionRepo,
+      ticketGitEnvironmentRepo: AppContext.ticketGitEnvironmentRepo,
+      githubService: AppContext.githubService,
+    },
 ): Promise<TriggerTicketFailingTestReproStepResponse> => {
   const input = triggerTicketFailingTestReproStepRequestSchema.parse(rawInput);
 
   const ticket = await ticketRepo.loadById(input.ticketId, {
     loadGithubIssue: true,
     loadTicketGitEnvironmentAggregate: true,
-    loadTicketPipeline: true,
   });
   if (!ticket) {
     throw new Error(`Ticket with ID ${input.ticketId} not found`);
@@ -115,6 +122,7 @@ export const triggerTicketFailingTestReproStep = async (
   const now = new Date().toISOString();
   const execution = new TicketPipelineStepExecutionEntity(
     input.ticketId,
+    input.pipelineRunId,
     FAILING_TEST_REPRO_STEP_NAME,
     "running",
     `${FAILING_TEST_REPRO_STEP_NAME}:${input.ticketId}:${randomUUID()}`,
@@ -181,8 +189,11 @@ export const triggerTicketFailingTestReproStep = async (
     }
 
     const baseBranch = ticketGitEnvironment.devBranch;
-    const latestEnrichmentStep = ticket
-      .getLatestPipelineStep(TICKET_DESCRIPTION_ENRICHMENT_STEP_NAME);
+    const pipelineExecutions =
+      await stepExecutionRepo.loadByPipelineRunId(input.pipelineRunId);
+    const latestEnrichmentStep = pipelineExecutions.find(
+      (step) => step.stepName === TICKET_DESCRIPTION_ENRICHMENT_STEP_NAME,
+    );
     let enrichmentContext: string | null = null;
     if (
       latestEnrichmentStep instanceof TicketDescriptionEnrichmentStepExecutionEntity &&
@@ -205,6 +216,7 @@ export const triggerTicketFailingTestReproStep = async (
       baseBranch,
       customInstructions: buildCustomInstructions(
         input.ticketId,
+        input.pipelineRunId,
         savedExecution.id,
         enrichmentContext,
       ),
@@ -213,6 +225,7 @@ export const triggerTicketFailingTestReproStep = async (
     savedExecution = await stepExecutionRepo.save(
       new FailingTestReproStepExecutionEntity(
         savedExecution.ticketId,
+        savedExecution.pipelineRunId,
         savedExecution.status,
         savedExecution.idempotencyKey,
         null,
@@ -228,6 +241,7 @@ export const triggerTicketFailingTestReproStep = async (
       await stepExecutionRepo.save(
         new TicketPipelineStepExecutionEntity(
           savedExecution.ticketId,
+          savedExecution.pipelineRunId,
           savedExecution.stepName,
           "failed",
           savedExecution.idempotencyKey,

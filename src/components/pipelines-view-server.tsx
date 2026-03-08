@@ -1,13 +1,13 @@
 import { unstable_noStore as noStore } from "next/cache";
 import { PipelinesView } from "@/components/pipelines-view";
-import { getPipelineStepExecutions } from "@/modules/step-executions/application/get-pipeline-step-executions";
+import { getPipelineRuns } from "@/modules/pipeline-runs/application/get-pipeline-runs";
 
 export const PipelinesViewServer = async () => {
   noStore();
-  const initialStepExecutions = await getPipelineStepExecutions({
+  const initialPipelineRuns = await getPipelineRuns({
     page: 1,
     pageSize: 25,
   });
 
-  return <PipelinesView initialStepExecutions={initialStepExecutions} />;
+  return <PipelinesView initialPipelineRuns={initialPipelineRuns} />;
 };

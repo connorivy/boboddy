@@ -13,15 +13,26 @@ import {
 } from "@/modules/step-executions/domain/step-execution.types";
 import { CodexCliTicketDescriptionQualityAi } from "@/modules/step-executions/infra/ticket-description-quality-ai";
 import { AppContext } from "@/lib/di";
+import { TicketRepo } from "@/modules/tickets/application/jira-ticket-repo";
 import {
   TicketDescriptionQualityStepExecutionEntity,
   TicketDescriptionQualityStepResultEntity,
   TicketPipelineStepExecutionEntity,
 } from "../domain/step-execution-entity";
+import { StepExecutionRepo } from "./step-execution-repo";
 
 export const triggerTicketDescriptionQualityStep = async (
   rawInput: TriggerTicketDescriptionQualityStepRequest,
-  { ticketRepo, stepExecutionRepo } = AppContext,
+  {
+    ticketRepo,
+    stepExecutionRepo,
+  }: {
+    ticketRepo: TicketRepo;
+    stepExecutionRepo: StepExecutionRepo;
+  } = {
+    ticketRepo: AppContext.ticketRepo,
+    stepExecutionRepo: AppContext.stepExecutionRepo,
+  },
 ): Promise<TriggerTicketDescriptionQualityStepResponse> => {
   const input =
     triggerTicketDescriptionQualityStepRequestSchema.parse(rawInput);
@@ -34,6 +45,7 @@ export const triggerTicketDescriptionQualityStep = async (
   const now = new Date().toISOString();
   const execution = new TicketPipelineStepExecutionEntity(
     input.ticketId,
+    input.pipelineRunId,
     TICKET_DESCRIPTION_QUALITY_STEP_NAME,
     "running",
     `${TICKET_DESCRIPTION_QUALITY_STEP_NAME}:${input.ticketId}`,
@@ -56,6 +68,7 @@ export const triggerTicketDescriptionQualityStep = async (
     savedExecution = await stepExecutionRepo.save(
       new TicketDescriptionQualityStepExecutionEntity(
         savedExecution.ticketId,
+        savedExecution.pipelineRunId,
         "succeeded",
         savedExecution.idempotencyKey,
         new TicketDescriptionQualityStepResultEntity(
@@ -77,6 +90,7 @@ export const triggerTicketDescriptionQualityStep = async (
       await stepExecutionRepo.save(
         new TicketPipelineStepExecutionEntity(
           savedExecution.ticketId,
+          savedExecution.pipelineRunId,
           savedExecution.stepName,
           "failed",
           savedExecution.idempotencyKey,

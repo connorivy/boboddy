@@ -2,8 +2,8 @@ import { z } from "zod";
 import { stepExecutionContractSchema } from "@/modules/step-executions/contracts/step-execution-contracts";
 
 export const triggerTicketFailingTestFixStepRequestSchema = z.object({
-  ticketNumber: z.string().trim().min(1),
-  ticketGitEnvironmentId: z.number().int().positive(),
+  ticketId: z.string().trim().min(1),
+  pipelineRunId: z.string().trim().min(1),
 });
 
 export const triggerTicketFailingTestFixStepResponseSchema = z.object({

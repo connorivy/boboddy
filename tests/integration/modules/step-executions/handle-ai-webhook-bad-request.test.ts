@@ -20,6 +20,7 @@ describe("handleAiWebhookBadRequest", () => {
   it("reassigns Copilot for repro payload correction when ticket and pipeline are resolved", async () => {
     const execution = new FailingTestReproStepExecutionEntity(
       "CV-100",
+      "pipeline-run-100",
       "running",
       "repro:CV-100:1",
       new FailingTestReproStepResultEntity(
@@ -60,7 +61,8 @@ describe("handleAiWebhookBadRequest", () => {
       FAILING_TEST_REPRO_STEP_NAME,
       {
         ticketId: "CV-100",
-        pipelineId: 17,
+        pipelineRunId: "pipeline-run-100",
+        stepExecutionId: 17,
         agentBranch: "ephemeral-OVERRIDE",
         summaryOfFindings: "The run output was malformed",
       },
@@ -87,12 +89,14 @@ describe("handleAiWebhookBadRequest", () => {
       ?.customInstructions;
     expect(customInstructions).toContain("tmp/copilot-repro-webhook-payload.json");
     expect(customInstructions).toContain('"const": "CV-100"');
+    expect(customInstructions).toContain('"const": "pipeline-run-100"');
     expect(customInstructions).toContain('"const": 17');
   });
 
   it("falls back to execution target branch for fix payload correction", async () => {
     const execution = new FailingTestFixStepExecutionEntity(
       "CV-101",
+      "pipeline-run-101",
       "running",
       "fix:CV-101:1",
       new FailingTestFixStepResultEntity(
@@ -129,7 +133,8 @@ describe("handleAiWebhookBadRequest", () => {
       FAILING_TEST_FIX_STEP_NAME,
       {
         ticketId: "CV-101",
-        pipelineId: 19,
+        pipelineRunId: "pipeline-run-101",
+        stepExecutionId: 19,
       },
       {
         stepExecutionRepo,
@@ -166,7 +171,8 @@ describe("handleAiWebhookBadRequest", () => {
       FAILING_TEST_REPRO_STEP_NAME,
       {
         ticketId: "CV-404",
-        pipelineId: 404,
+        pipelineRunId: "pipeline-run-missing",
+        stepExecutionId: 404,
       },
       {
         stepExecutionRepo,
@@ -183,6 +189,7 @@ describe("handleAiWebhookBadRequest", () => {
   it("reassigns Copilot for enrichment payload correction", async () => {
     const execution = new TicketDescriptionEnrichmentStepExecutionEntity(
       "CV-102",
+      "pipeline-run-102",
       "running",
       "enrich:CV-102:1",
       new TicketDescriptionEnrichmentStepResultEntity(
@@ -224,7 +231,8 @@ describe("handleAiWebhookBadRequest", () => {
       TICKET_DESCRIPTION_ENRICHMENT_STEP_NAME,
       {
         ticketId: "CV-102",
-        pipelineId: 20,
+        pipelineRunId: "pipeline-run-102",
+        stepExecutionId: 20,
       },
       {
         stepExecutionRepo,

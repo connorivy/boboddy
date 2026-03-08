@@ -8,6 +8,7 @@ import {
   TICKET_DUPLICATE_CANDIDATES_STEP_NAME,
 } from "@/modules/step-executions/domain/step-execution.types";
 import { stepExecutionContractSchema } from "@/modules/step-executions/contracts/step-execution-contracts";
+import { pipelineRunStateSchema } from "@/modules/pipeline-runs/contracts/pipeline-run-contracts";
 import { ticketGitEnvironmentResponseSchema } from "@/modules/environments/contracts/environment-contracts";
 
 export const ticketStatusSchema = z.enum([
@@ -67,6 +68,7 @@ export const ticketSchema = z.object({
   jiraCreatedAt: z.iso.datetime().nullable(),
   jiraUpdatedAt: z.iso.datetime().nullable(),
   pipelineSteps: z.array(ticketPipelineStepExecutionSchema).optional(),
+  pipelineRun: pipelineRunStateSchema.nullable().optional(),
   defaultGitEnvironmentId: z.number().int().positive().optional(),
   defaultGitEnvironment: ticketGitEnvironmentResponseSchema.optional(),
   createdAt: z.iso.datetime(),
@@ -77,6 +79,7 @@ export const ticketIngestSchema = ticketSchema
   .omit({
     id: true,
     pipelineSteps: true,
+    pipelineRun: true,
     createdAt: true,
     updatedAt: true,
   })
@@ -139,6 +142,7 @@ export const paginatedTicketsResponseSchema = z.object({
 export const ticketStepExecutionSchema = ticketPipelineStepExecutionSchema;
 
 export const ticketPipelineStatusSchema = z.object({
+  run: pipelineRunStateSchema.nullable(),
   stepExecutions: z.array(ticketStepExecutionSchema),
 });
 

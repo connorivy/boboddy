@@ -22,5 +22,15 @@ export const FAILING_TEST_FIX_STEP_NAME = "github_fix_failing_test";
 export const TICKET_DUPLICATE_CANDIDATES_STEP_NAME =
   "ticket_duplicate_candidates";
 
+export const PIPELINE_STEP_ORDER = [
+  TICKET_DESCRIPTION_ENRICHMENT_STEP_NAME,
+  TICKET_DESCRIPTION_QUALITY_STEP_NAME,
+  TICKET_DUPLICATE_CANDIDATES_STEP_NAME,
+  FAILING_TEST_REPRO_STEP_NAME,
+  FAILING_TEST_FIX_STEP_NAME,
+] as const;
+
+export const PIPELINE_DEFINITION_VERSION = 1 as const;
+
 export const TERMINAL_STEP_EXECUTION_STATUSES: ReadonlySet<StepExecutionStatus> =
   new Set(["succeeded", "failed", "skipped", "failed_timeout"]);

@@ -25,17 +25,17 @@ import {
   removeBulkStepQueueItem,
   useBulkStepQueueItems,
 } from "@/modules/step-executions/application/bulk-step-queue";
-import { triggerTicketDescriptionQualityStep } from "@/modules/step-executions/application/trigger-ticket-description-quality-step";
-import { getPipelineStepExecutions } from "@/modules/step-executions/application/get-pipeline-step-executions";
-import type { PaginatedPipelineStepExecutionsResponse } from "@/modules/step-executions/contracts/get-pipeline-step-executions-contracts";
+import { advancePipelineStep } from "@/modules/step-executions/application/advance-pipeline-step";
+import { getPipelineRuns } from "@/modules/pipeline-runs/application/get-pipeline-runs";
+import type { PaginatedPipelineRunsResponse } from "@/modules/pipeline-runs/contracts/pipeline-run-contracts";
 import { TICKET_DESCRIPTION_QUALITY_STEP_NAME } from "@/modules/step-executions/domain/step-execution.types";
 
 type PipelinesViewProps = {
-  initialStepExecutions: PaginatedPipelineStepExecutionsResponse;
+  initialPipelineRuns: PaginatedPipelineRunsResponse;
 };
 
-export const PipelinesView = ({ initialStepExecutions }: PipelinesViewProps) => {
-  const [stepExecutions, setStepExecutions] = useState(initialStepExecutions);
+export const PipelinesView = ({ initialPipelineRuns }: PipelinesViewProps) => {
+  const [pipelineRuns, setPipelineRuns] = useState(initialPipelineRuns);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const queueItems = useBulkStepQueueItems();
@@ -45,23 +45,23 @@ export const PipelinesView = ({ initialStepExecutions }: PipelinesViewProps) => 
 
   const totalPages = Math.max(
     1,
-    Math.ceil(stepExecutions.pagination.total / stepExecutions.pagination.pageSize),
+    Math.ceil(pipelineRuns.pagination.total / pipelineRuns.pagination.pageSize),
   );
-  const start = (stepExecutions.pagination.page - 1) * stepExecutions.pagination.pageSize + 1;
+  const start = (pipelineRuns.pagination.page - 1) * pipelineRuns.pagination.pageSize + 1;
   const end = Math.min(
-    stepExecutions.pagination.page * stepExecutions.pagination.pageSize,
-    stepExecutions.pagination.total,
+    pipelineRuns.pagination.page * pipelineRuns.pagination.pageSize,
+    pipelineRuns.pagination.total,
   );
 
   const handlePageChange = async (page: number) => {
     try {
       setLoading(true);
       setError(null);
-      const result = await getPipelineStepExecutions({
+      const result = await getPipelineRuns({
         page,
         pageSize: 25,
       });
-      setStepExecutions(result);
+      setPipelineRuns(result);
     } catch (loadError) {
       setError(
         loadError instanceof Error ? loadError.message : "Unexpected error",
@@ -99,7 +99,7 @@ export const PipelinesView = ({ initialStepExecutions }: PipelinesViewProps) => 
               throw new Error(`Step ${nextQueueItem.stepName} is not implemented yet`);
             }
 
-            await triggerTicketDescriptionQualityStep({
+            await advancePipelineStep({
               ticketId: nextQueueItem.ticketId,
             });
           } catch (queueError) {
@@ -111,11 +111,11 @@ export const PipelinesView = ({ initialStepExecutions }: PipelinesViewProps) => 
           } finally {
             removeBulkStepQueueItem(nextQueueItem.id);
             try {
-              const refreshed = await getPipelineStepExecutions({
+              const refreshed = await getPipelineRuns({
                 page: 1,
                 pageSize: 25,
               });
-              setStepExecutions(refreshed);
+              setPipelineRuns(refreshed);
             } catch {
               // Keep queue processing resilient even if refresh fails.
             }
@@ -183,9 +183,9 @@ export const PipelinesView = ({ initialStepExecutions }: PipelinesViewProps) => 
 
           <Typography variant="h6">Pipeline Actions</Typography>
           <Typography variant="body2" color="text.secondary">
-            {stepExecutions.pagination.total === 0
+            {pipelineRuns.pagination.total === 0
               ? "No actions yet."
-              : `Showing ${start}-${end} of ${stepExecutions.pagination.total}`}
+              : `Showing ${start}-${end} of ${pipelineRuns.pagination.total}`}
           </Typography>
 
           {loading ? <LinearProgress /> : null}
@@ -194,26 +194,30 @@ export const PipelinesView = ({ initialStepExecutions }: PipelinesViewProps) => 
           <Table size="small">
             <TableHead>
               <TableRow>
+                <TableCell>Run</TableCell>
                 <TableCell>Ticket</TableCell>
                 <TableCell>Status</TableCell>
-                <TableCell>Step</TableCell>
+                <TableCell>Current Step</TableCell>
+                <TableCell>Last Completed</TableCell>
                 <TableCell>Started</TableCell>
                 <TableCell>Ended</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
-              {stepExecutions.items.map((step) => (
-                <TableRow key={`pipeline-step-${step.id}`}>
-                  <TableCell>{step.ticketId}</TableCell>
+              {pipelineRuns.items.map((run) => (
+                <TableRow key={`pipeline-run-${run.pipelineRunId}`}>
+                  <TableCell>{run.pipelineRunId}</TableCell>
+                  <TableCell>{run.ticketId}</TableCell>
                   <TableCell>
                     <Stack direction="row" spacing={1} alignItems="center">
-                      {getStepStatusIcon(step.status)}
-                      <Typography variant="body2">{step.status}</Typography>
+                      {getStepStatusIcon(run.status)}
+                      <Typography variant="body2">{run.status}</Typography>
                     </Stack>
                   </TableCell>
-                  <TableCell>{step.stepName}</TableCell>
-                  <TableCell>{formatDateTime(step.startedAt)}</TableCell>
-                  <TableCell>{formatDateTime(step.endedAt)}</TableCell>
+                  <TableCell>{run.currentStepName ?? "-"}</TableCell>
+                  <TableCell>{run.lastCompletedStepName ?? "-"}</TableCell>
+                  <TableCell>{formatDateTime(run.startedAt)}</TableCell>
+                  <TableCell>{formatDateTime(run.endedAt)}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -221,7 +225,7 @@ export const PipelinesView = ({ initialStepExecutions }: PipelinesViewProps) => 
 
           <Stack direction="row" justifyContent="center">
             <Pagination
-              page={stepExecutions.pagination.page}
+              page={pipelineRuns.pagination.page}
               count={totalPages}
               color="primary"
               onChange={(_, page) => void handlePageChange(page)}

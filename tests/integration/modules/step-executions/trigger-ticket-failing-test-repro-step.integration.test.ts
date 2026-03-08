@@ -3,6 +3,7 @@ import { TicketAggregate } from "@/modules/tickets/domain/ticket-aggregate";
 import type { TicketIngestInput } from "@/modules/tickets/contracts/ticket-contracts";
 import { DrizzleTicketRepo } from "@/modules/tickets/infra/drizzle-ticket-repo";
 import { DrizzleStepExecutionRepo } from "@/modules/step-executions/infra/step-execution-repo";
+import { DrizzlePipelineRunRepo } from "@/modules/pipeline-runs/infra/pipeline-run-repo";
 import { FAILING_TEST_REPRO_STEP_NAME } from "@/modules/step-executions/domain/step-execution.types";
 import { triggerTicketFailingTestReproStep } from "@/modules/step-executions/application/trigger-ticket-failing-test-repro-step";
 import { TicketGithubIssueEntity } from "@/modules/tickets/domain/ticket-github-issue.entity";
@@ -10,6 +11,7 @@ import { truncateTestTables } from "../../helpers/pgvector-test-db";
 import { upsertEnvironment } from "@/modules/environments/application/upsert-environment";
 import { DrizzleEnvironmentRepo } from "@/modules/environments/infra/drizzle-environment-repo";
 import { DrizzleTicketGitEnvironmentRepo } from "@/modules/environments/infra/drizzle-ticket-git-environment-repo";
+import { PipelineRunEntity } from "@/modules/pipeline-runs/domain/pipeline-run-entity";
 
 const hoisted = vi.hoisted(() => ({
   requestMock: vi.fn(),
@@ -54,6 +56,7 @@ const makeTicketAggregate = (
 describe("triggerTicketFailingTestReproStep (integration)", () => {
   const ticketRepo = new DrizzleTicketRepo();
   const stepExecutionRepo = new DrizzleStepExecutionRepo();
+  const pipelineRunRepo = new DrizzlePipelineRunRepo();
   const environmentRepo = new DrizzleEnvironmentRepo();
   const ticketGitEnvironmentRepo = new DrizzleTicketGitEnvironmentRepo();
 
@@ -68,6 +71,18 @@ describe("triggerTicketFailingTestReproStep (integration)", () => {
 
   it("creates an in-progress step execution, creates issue, and assigns Copilot using latest healthy environment", async () => {
     await ticketRepo.createMany([makeTicketAggregate()]);
+    const pipelineRun = await pipelineRunRepo.save(
+      new PipelineRunEntity(
+        "pipeline-run-trigger-repro-1",
+        "CV-901",
+        "queued",
+        null,
+        null,
+        null,
+        null,
+        new Date("2026-03-01T12:00:00.000Z").toISOString(),
+      ),
+    );
 
     hoisted.requestMock
       .mockResolvedValueOnce({
@@ -90,7 +105,7 @@ describe("triggerTicketFailingTestReproStep (integration)", () => {
 
     await upsertEnvironment("mem-9", "us-east-1", { environmentRepo });
     const result = await triggerTicketFailingTestReproStep(
-      { ticketId: "CV-901" },
+      { ticketId: "CV-901", pipelineRunId: pipelineRun.id },
       {
         ticketRepo,
         stepExecutionRepo,
@@ -125,7 +140,8 @@ describe("triggerTicketFailingTestReproStep (integration)", () => {
     expect(assignCopilotArgs?.customInstructions).toContain(
       '"const": "CV-901"',
     );
-    expect(assignCopilotArgs?.customInstructions).toContain('"pipelineId":');
+    expect(assignCopilotArgs?.customInstructions).toContain('"pipelineRunId":');
+    expect(assignCopilotArgs?.customInstructions).toContain('"stepExecutionId":');
     expect(assignCopilotArgs?.customInstructions).toContain(
       '"reproduceOperationOutcome"',
     );
@@ -166,6 +182,18 @@ describe("triggerTicketFailingTestReproStep (integration)", () => {
 
   it("reuses an existing GitHub issue mapping by unassigning and reassigning Copilot", async () => {
     await ticketRepo.createMany([makeTicketAggregate()]);
+    const pipelineRun = await pipelineRunRepo.save(
+      new PipelineRunEntity(
+        "pipeline-run-trigger-repro-2",
+        "CV-901",
+        "queued",
+        null,
+        null,
+        null,
+        null,
+        new Date("2026-03-01T12:00:00.000Z").toISOString(),
+      ),
+    );
     await ticketRepo.saveGithubIssue(
       new TicketGithubIssueEntity("CV-901", 801, "I_kwDOFAKE801"),
     );
@@ -191,7 +219,7 @@ describe("triggerTicketFailingTestReproStep (integration)", () => {
     };
 
     const result = await triggerTicketFailingTestReproStep(
-      { ticketId: "CV-901" },
+      { ticketId: "CV-901", pipelineRunId: pipelineRun.id },
       {
         ticketRepo,
         stepExecutionRepo,

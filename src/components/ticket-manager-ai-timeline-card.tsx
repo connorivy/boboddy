@@ -242,7 +242,7 @@ export const TicketManagerAiTimelineCard = ({
                     return null;
                   }
 
-                  const topCandidates = result.candidates.slice(0, 5);
+                  const topCandidates = result.proposed.slice(0, 5);
                   const isExpanded = expandedStepName === step.stepName;
 
                   return (
@@ -276,7 +276,7 @@ export const TicketManagerAiTimelineCard = ({
                                 variant="caption"
                                 color="text.secondary"
                               >
-                                {candidate.candidateTicketId} · score {candidate.score.toFixed(4)} · {candidate.status}
+                                {candidate.candidateTicketId} · score {candidate.score.toFixed(4)}
                               </Typography>
                             ))
                           )}

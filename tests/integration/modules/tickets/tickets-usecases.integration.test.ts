@@ -35,6 +35,8 @@ import {
   truncateTestTables,
 } from "../../helpers/pgvector-test-db";
 import {
+  TicketDuplicateCandidateResultItemEntity,
+  TicketDuplicateCandidatesResultEntity,
   TicketDescriptionQualityStepExecutionEntity,
   TicketDescriptionQualityStepResultEntity,
   TicketDuplicateCandidatesStepResultEntity,
@@ -516,13 +518,11 @@ describe("tickets module use cases (integration)", () => {
         duplicateExecution.ticketId,
         "succeeded",
         duplicateExecution.idempotencyKey,
-        [
-          {
-            candidateTicketId: "CV-402",
-            score: 0.93,
-            status: "proposed",
-          },
-        ],
+        new TicketDuplicateCandidatesResultEntity(
+          [new TicketDuplicateCandidateResultItemEntity("CV-402", 0.93)],
+          [],
+          [],
+        ),
         duplicateExecution.startedAt,
         "2026-02-01T10:07:00.000Z",
         duplicateExecution.createdAt,
@@ -548,13 +548,14 @@ describe("tickets module use cases (integration)", () => {
     expect(duplicateStep?.result).toMatchObject({
       executionId: duplicateExecution.id,
       stepName: TICKET_DUPLICATE_CANDIDATES_STEP_NAME,
-      candidates: [
+      proposed: [
         {
           candidateTicketId: "CV-402",
           score: 0.93,
-          status: "proposed",
         },
       ],
+      dismissed: [],
+      promoted: [],
     });
   });
 

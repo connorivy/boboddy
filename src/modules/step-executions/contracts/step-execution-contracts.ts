@@ -44,13 +44,14 @@ export const ticketDescriptionEnrichmentResultContractSchema = z.object({
 export const duplicateCandidateResultContractSchema = z.object({
   candidateTicketId: z.string().min(1),
   score: z.number().min(0).max(1),
-  status: z.enum(["proposed", "dismissed", "promoted"]),
 });
 
 export const ticketDuplicateCandidatesStepResultContractSchema = z.object({
   executionId: z.number().int().positive(),
   stepName: z.literal(TICKET_DUPLICATE_CANDIDATES_STEP_NAME),
-  candidates: z.array(duplicateCandidateResultContractSchema),
+  proposed: z.array(duplicateCandidateResultContractSchema),
+  dismissed: z.array(duplicateCandidateResultContractSchema),
+  promoted: z.array(duplicateCandidateResultContractSchema),
   createdAt: z.iso.datetime().optional(),
   updatedAt: z.iso.datetime().optional(),
 });
@@ -108,7 +109,7 @@ export const failingTestFixStepResultContractSchema = z.object({
   agentBranch: z.string().nullable(),
   agentSummary: z.string().nullable(),
   fixedTestPath: z.string().nullable(),
-  failingTestCommitSha: z.string().nullable(),
+  failingTestCommitSha: z.string().optional().nullable(),
   fixOperationOutcome: z
     .enum(["fixed", "not_fixed", "agent_error", "cancelled"])
     .nullable(),

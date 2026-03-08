@@ -6,7 +6,6 @@ import {
   TICKET_DESCRIPTION_QUALITY_STEP_NAME,
   TICKET_DUPLICATE_CANDIDATES_STEP_NAME,
 } from "@/modules/step-executions/domain/step-execution.types";
-import { DuplicateCandidateResultItem } from "../infra/step-execution-repo";
 
 export type FailingTestReproFeedbackRequestEntity = {
   requestId: string;
@@ -115,12 +114,27 @@ export class TicketDescriptionQualityStepExecutionEntity extends TicketPipelineS
   }
 }
 
+export class TicketDuplicateCandidateResultItemEntity {
+  constructor(
+    public candidateTicketId: string,
+    public score: number,
+  ) {}
+}
+
+export class TicketDuplicateCandidatesResultEntity {
+  constructor(
+    public proposed: TicketDuplicateCandidateResultItemEntity[],
+    public dismissed: TicketDuplicateCandidateResultItemEntity[],
+    public promoted: TicketDuplicateCandidateResultItemEntity[],
+  ) {}
+}
+
 export class TicketDuplicateCandidatesStepResultEntity extends TicketPipelineStepExecutionEntity {
   constructor(
     ticketId: string,
     status: StepExecutionStatus,
     idempotencyKey: string,
-    public candidates: DuplicateCandidateResultItem[],
+    public result: TicketDuplicateCandidatesResultEntity | null,
     startedAt: string,
     endedAt?: string,
     createdAt?: string,

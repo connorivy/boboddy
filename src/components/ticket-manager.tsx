@@ -83,6 +83,15 @@ export const TicketManager = ({ initialTickets }: TicketManagerProps) => {
   const stepDefinitions = useMemo<AiTimelineStepDefinition[]>(
     () => [
       {
+        stepName: TICKET_DESCRIPTION_QUALITY_STEP_NAME,
+        trigger: async (ticketId) => {
+          await triggerTicketDescriptionQualityStep({
+            ticketId,
+          });
+          return { ok: true, data: { message: `todo` } };
+        },
+      },
+      {
         stepName: TICKET_DESCRIPTION_ENRICHMENT_STEP_NAME,
         trigger: async (ticketId) => {
           const result = await triggerTicketDescriptionEnrichmentStep({
@@ -92,15 +101,6 @@ export const TicketManager = ({ initialTickets }: TicketManagerProps) => {
             ok: true,
             data: { message: `execution ${result.data.stepExecution.id}` },
           };
-        },
-      },
-      {
-        stepName: TICKET_DESCRIPTION_QUALITY_STEP_NAME,
-        trigger: async (ticketId) => {
-          await triggerTicketDescriptionQualityStep({
-            ticketId,
-          });
-          return { ok: true, data: { message: `todo` } };
         },
       },
       {

@@ -14,7 +14,12 @@ import {
 } from "@/modules/step-executions/domain/step-execution.types";
 import { TicketDuplicateSemanticSearchService } from "@/modules/step-executions/infra/ticket-duplicate-semantic-search";
 import { AppContext } from "@/lib/di";
-import { TicketDuplicateCandidatesStepResultEntity, TicketPipelineStepExecutionEntity } from "../domain/step-execution-entity";
+import {
+  TicketDuplicateCandidateResultItemEntity,
+  TicketDuplicateCandidatesResultEntity,
+  TicketDuplicateCandidatesStepResultEntity,
+  TicketPipelineStepExecutionEntity,
+} from "../domain/step-execution-entity";
 
 const DUPLICATE_TOP_K = 5;
 const DUPLICATE_MIN_SCORE = 0.82;
@@ -71,11 +76,17 @@ export const triggerTicketDuplicateCandidatesStep = async (
         savedExecution.ticketId,
         "succeeded",
         savedExecution.idempotencyKey,
-        candidates.map((candidate) => ({
-          candidateTicketId: candidate.candidateTicketId,
-          score: candidate.score,
-          status: "proposed",
-        })),
+        new TicketDuplicateCandidatesResultEntity(
+          candidates.map(
+            (candidate) =>
+              new TicketDuplicateCandidateResultItemEntity(
+                candidate.candidateTicketId,
+                candidate.score,
+              ),
+          ),
+          [],
+          [],
+        ),
         savedExecution.startedAt,
         new Date().toISOString(),
         savedExecution.createdAt,

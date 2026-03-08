@@ -68,7 +68,6 @@ export const truncateTestTables = async () => {
     TRUNCATE TABLE
       failing_test_repro_attempts,
       ticket_description_quality_assessments,
-      ticket_duplicate_candidates,
       ticket_github_issues,
       ticket_git_environments,
       ticket_embeddings,

@@ -1,9 +1,6 @@
 import { desc, eq, inArray, sql } from "drizzle-orm";
 import { getDb } from "@/lib/db";
-import {
-  ticketDuplicateCandidates,
-  ticketStepExecutionsTph,
-} from "@/lib/db/schema";
+import { ticketStepExecutionsTph } from "@/lib/db/schema";
 import {
   FAILING_TEST_FIX_STEP_NAME,
   FAILING_TEST_REPRO_STEP_NAME,
@@ -22,20 +19,16 @@ import {
   FailingTestFixStepResultEntity,
   FailingTestReproStepExecutionEntity,
   FailingTestReproStepResultEntity,
+  TicketDuplicateCandidateResultItemEntity,
+  TicketDuplicateCandidatesResultEntity,
   TicketDescriptionQualityStepResultEntity,
   TicketDuplicateCandidatesStepResultEntity,
   TicketPipelineStepExecutionEntity,
 } from "../domain/step-execution-entity";
+import { DbExecutor } from "@/lib/db/db-executor";
 
 type DbClient = ReturnType<typeof getDb>;
 type DbTransaction = Parameters<Parameters<DbClient["transaction"]>[0]>[0];
-type DbExecutor = DbClient | DbTransaction;
-
-export type DuplicateCandidateResultItem = {
-  candidateTicketId: string;
-  score: number;
-  status: "proposed" | "dismissed" | "promoted";
-};
 
 function requiredField<T>(
   value: T | null | undefined,
@@ -126,7 +119,10 @@ function serializeFailingTestPaths(paths: string[] | undefined): string | null {
     return null;
   }
 
-  return paths.map((path) => path.trim()).filter(Boolean).join(",");
+  return paths
+    .map((path) => path.trim())
+    .filter(Boolean)
+    .join(",");
 }
 
 function parseFeedbackRequest(
@@ -228,7 +224,11 @@ function mapFailingTestFixResultOrNull(
         context,
       ),
       requiredNonEmptyString(row.summaryOfFix, "summaryOfFix", context),
-      requiredTruthyField(row.fixConfidenceLevel, "fixConfidenceLevel", context),
+      requiredTruthyField(
+        row.fixConfidenceLevel,
+        "fixConfidenceLevel",
+        context,
+      ),
       row.fixedTestPath ?? row.failingTestPath ?? undefined,
       row.failureReason ?? undefined,
       row.rawResultJson && typeof row.rawResultJson === "object"
@@ -290,7 +290,8 @@ function parseStringArray(value: unknown): string[] {
   }
 
   return value.filter(
-    (item): item is string => typeof item === "string" && item.trim().length > 0,
+    (item): item is string =>
+      typeof item === "string" && item.trim().length > 0,
   );
 }
 
@@ -353,36 +354,87 @@ function mapDescriptionEnrichmentResultOrNull(
   );
 }
 
-export class DrizzleStepExecutionRepo {
-  private async loadDuplicateCandidatesResult(ticketId: string): Promise<{
-    candidates: DuplicateCandidateResultItem[];
-    createdAt?: string;
-    updatedAt?: string;
-  }> {
-    const db = getDb();
-    const rows = await db
-      .select()
-      .from(ticketDuplicateCandidates)
-      .where(eq(ticketDuplicateCandidates.ticketId, ticketId))
-      .orderBy(
-        desc(ticketDuplicateCandidates.score),
-        desc(ticketDuplicateCandidates.updatedAt),
-      );
-
-    return {
-      candidates: rows.map((row) => ({
-        candidateTicketId: row.candidateTicketId,
-        score: Number(row.score),
-        status: row.status,
-      })),
-      createdAt: rows[0]?.createdAt?.toISOString(),
-      updatedAt: rows[0]?.updatedAt?.toISOString(),
-    };
+function parseDuplicateCandidatesList(
+  value: string | null,
+  fieldName: string,
+  context: string,
+): TicketDuplicateCandidateResultItemEntity[] {
+  if (!value) {
+    return [];
   }
 
-  private async mapRowToExecution(
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(value);
+  } catch {
+    throw new Error(
+      `Invalid JSON in '${fieldName}' for ${context}: ${value.substring(0, 100)}`,
+    );
+  }
+
+  if (!Array.isArray(parsed)) {
+    throw new Error(`Invalid '${fieldName}' for ${context}: expected array`);
+  }
+
+  return parsed
+    .filter((item): item is { candidateTicketId: string; score: number } =>
+      Boolean(
+        item &&
+        typeof item === "object" &&
+        typeof (item as { candidateTicketId?: unknown }).candidateTicketId ===
+          "string" &&
+        (item as { candidateTicketId: string }).candidateTicketId.trim()
+          .length > 0 &&
+        typeof (item as { score?: unknown }).score === "number" &&
+        Number.isFinite((item as { score: number }).score) &&
+        (item as { score: number }).score >= 0 &&
+        (item as { score: number }).score <= 1,
+      ),
+    )
+    .map(
+      (item) =>
+        new TicketDuplicateCandidateResultItemEntity(
+          item.candidateTicketId,
+          item.score,
+        ),
+    );
+}
+
+function mapDuplicateCandidatesResultOrNull(
+  row: typeof ticketStepExecutionsTph.$inferSelect,
+): TicketDuplicateCandidatesResultEntity | null {
+  const hasResult =
+    row.duplicateCandidatesProposed !== null ||
+    row.duplicateCandidatesDismissed !== null ||
+    row.duplicateCandidatesPromoted !== null;
+  if (!hasResult) {
+    return null;
+  }
+
+  const context = `${TICKET_DUPLICATE_CANDIDATES_STEP_NAME} (execution ${row.id})`;
+  return new TicketDuplicateCandidatesResultEntity(
+    parseDuplicateCandidatesList(
+      row.duplicateCandidatesProposed,
+      "duplicateCandidatesProposed",
+      context,
+    ),
+    parseDuplicateCandidatesList(
+      row.duplicateCandidatesDismissed,
+      "duplicateCandidatesDismissed",
+      context,
+    ),
+    parseDuplicateCandidatesList(
+      row.duplicateCandidatesPromoted,
+      "duplicateCandidatesPromoted",
+      context,
+    ),
+  );
+}
+
+export class DrizzleStepExecutionRepo {
+  private mapRowToExecution(
     row: typeof ticketStepExecutionsTph.$inferSelect,
-  ): Promise<TicketPipelineStepExecutionEntity> {
+  ): TicketPipelineStepExecutionEntity {
     if (row.type !== row.stepName) {
       throw new Error(
         `Corrupt step execution row ${row.id}: stepName '${row.stepName}' does not match type '${row.type}'`,
@@ -446,32 +498,21 @@ export class DrizzleStepExecutionRepo {
     }
 
     if (row.type === TICKET_DUPLICATE_CANDIDATES_STEP_NAME) {
-      const { candidates, createdAt, updatedAt } =
-        await this.loadDuplicateCandidatesResult(row.ticketId);
-
       return new TicketDuplicateCandidatesStepResultEntity(
         row.ticketId,
         row.status,
         row.idempotencyKey,
-        candidates,
+        mapDuplicateCandidatesResultOrNull(row),
         row.startedAt.toISOString(),
         row.endedAt?.toISOString(),
-        createdAt ?? row.createdAt.toISOString(),
-        updatedAt ?? row.updatedAt.toISOString(),
+        row.createdAt.toISOString(),
+        row.updatedAt.toISOString(),
         row.id,
       );
     }
 
-    return new TicketPipelineStepExecutionEntity(
-      row.ticketId,
-      row.stepName,
-      row.status,
-      row.idempotencyKey,
-      row.startedAt.toISOString(),
-      row.endedAt?.toISOString(),
-      row.id,
-      row.createdAt.toISOString(),
-      row.updatedAt.toISOString(),
+    throw new Error(
+      `Corrupt step execution row ${row.id}: unknown step type '${row.type}'`,
     );
   }
 
@@ -505,7 +546,7 @@ export class DrizzleStepExecutionRepo {
         desc(ticketStepExecutionsTph.id),
       );
 
-    return Promise.all(rows.map((row) => this.mapRowToExecution(row)));
+    return rows.map((row) => this.mapRowToExecution(row));
   }
 
   async loadPage(
@@ -523,7 +564,7 @@ export class DrizzleStepExecutionRepo {
       .limit(query.pageSize)
       .offset((query.page - 1) * query.pageSize);
 
-    return Promise.all(rows.map((row) => this.mapRowToExecution(row)));
+    return rows.map((row) => this.mapRowToExecution(row));
   }
 
   async count(): Promise<number> {
@@ -536,44 +577,301 @@ export class DrizzleStepExecutionRepo {
     return Number(result?.count ?? 0);
   }
 
-  private async saveDuplicateCandidatesResult(
-    db: DbExecutor,
-    ticketId: string,
-    candidates: DuplicateCandidateResultItem[],
-  ): Promise<void> {
-    const now = new Date();
+  private buildDiscriminatorResetFields() {
+    return {
+      stepsToReproduceScore: null,
+      expectedBehaviorScore: null,
+      observedBehaviorScore: null,
+      reasoning: null,
+      rawResponse: null,
+      outcome: null,
+      githubIssueNumber: null,
+      githubIssueId: null,
+      githubAgentRunId: null,
+      agentStatus: null,
+      githubMergeStatus: null,
+      githubPrTargetBranch: null,
+      agentBranch: null,
+      agentSummary: null,
+      failingTestPath: null,
+      fixedTestPath: null,
+      failingTestCommitSha: null,
+      summaryOfFindings: null,
+      summaryOfFix: null,
+      confidenceLevel: null,
+      fixConfidenceLevel: null,
+      fixOperationOutcome: null,
+      failureReason: null,
+      rawResultJson: null,
+      completedAt: null,
+      lastPolledAt: null,
+      duplicateCandidatesProposed: null,
+      duplicateCandidatesDismissed: null,
+      duplicateCandidatesPromoted: null,
+    };
+  }
 
-    await db
-      .delete(ticketDuplicateCandidates)
-      .where(eq(ticketDuplicateCandidates.ticketId, ticketId));
+  private async upsertStepExecution(
+    tx: DbExecutor,
+    pipeline: TicketPipelineStepExecutionEntity,
+    startedAt: Date,
+    endedAt: Date | null,
+    now: Date,
+    fields: Record<string, unknown>,
+  ): Promise<TicketPipelineStepExecutionEntity> {
+    const [saved] = await tx
+      .insert(ticketStepExecutionsTph)
+      .values({
+        id: pipeline.id,
+        ticketId: pipeline.ticketId,
+        stepName: pipeline.stepName,
+        type: pipeline.stepName,
+        status: pipeline.status,
+        idempotencyKey: pipeline.idempotencyKey,
+        startedAt,
+        endedAt,
+        createdAt: pipeline.createdAt
+          ? parseIsoDateOrThrow(pipeline.createdAt, "createdAt")
+          : now,
+        updatedAt: now,
+        ...fields,
+      })
+      .onConflictDoUpdate({
+        target: ticketStepExecutionsTph.idempotencyKey,
+        set: {
+          stepName: pipeline.stepName,
+          type: pipeline.stepName,
+          status: pipeline.status,
+          startedAt,
+          endedAt,
+          updatedAt: now,
+          ...fields,
+        },
+      })
+      .returning({
+        id: ticketStepExecutionsTph.id,
+        createdAt: ticketStepExecutionsTph.createdAt,
+        updatedAt: ticketStepExecutionsTph.updatedAt,
+      });
 
-    if (candidates.length === 0) {
-      return;
+    pipeline.id = saved.id;
+    pipeline.createdAt = saved.createdAt.toISOString();
+    pipeline.updatedAt = saved.updatedAt.toISOString();
+    return pipeline;
+  }
+
+  private saveDescriptionEnrichmentExecution(
+    tx: DbExecutor,
+    pipeline: TicketDescriptionEnrichmentStepExecutionEntity,
+    startedAt: Date,
+    endedAt: Date | null,
+    now: Date,
+  ): Promise<TicketPipelineStepExecutionEntity> {
+    let fields: Record<string, unknown> = this.buildDiscriminatorResetFields();
+
+    if (pipeline.status === "succeeded") {
+      if (!pipeline.result) {
+        throw new Error(
+          "Missing required description enrichment result payload for succeeded execution",
+        );
+      }
+
+      fields = {
+        ...fields,
+        agentStatus: pipeline.result.agentStatus,
+        agentBranch: pipeline.result.agentBranch,
+        summaryOfFindings: pipeline.result.summaryOfEnrichment,
+        confidenceLevel: pipeline.result.confidenceLevel,
+        rawResultJson: {
+          ...pipeline.result.rawResultJson,
+          datadogQueryTerms: pipeline.result.datadogQueryTerms,
+          datadogTimeRange: pipeline.result.datadogTimeRange,
+          keyIdentifiers: pipeline.result.keyIdentifiers,
+          enrichedTicketDescription: pipeline.result.enrichedTicketDescription,
+          operationOutcome: pipeline.result.operationOutcome,
+        },
+        completedAt: endedAt,
+        lastPolledAt: now,
+      };
     }
 
-    await db
-      .insert(ticketDuplicateCandidates)
-      .values(
-        candidates.map((candidate) => ({
-          ticketId,
-          candidateTicketId: candidate.candidateTicketId,
-          score: candidate.score.toFixed(4),
-          status: candidate.status,
-          createdAt: now,
-          updatedAt: now,
-        })),
-      )
-      .onConflictDoUpdate({
-        target: [
-          ticketDuplicateCandidates.ticketId,
-          ticketDuplicateCandidates.candidateTicketId,
-        ],
-        set: {
-          score: sql`excluded.score`,
-          status: sql`excluded.status`,
-          updatedAt: now,
-        },
-      });
+    return this.upsertStepExecution(
+      tx,
+      pipeline,
+      startedAt,
+      endedAt,
+      now,
+      fields,
+    );
+  }
+
+  private saveDescriptionQualityExecution(
+    tx: DbExecutor,
+    pipeline: TicketDescriptionQualityStepExecutionEntity,
+    startedAt: Date,
+    endedAt: Date | null,
+    now: Date,
+  ): Promise<TicketPipelineStepExecutionEntity> {
+    let fields: Record<string, unknown> = this.buildDiscriminatorResetFields();
+
+    if (pipeline.status === "succeeded") {
+      if (!pipeline.result) {
+        throw new Error(
+          "Missing required description quality result payload for succeeded execution",
+        );
+      }
+
+      fields = {
+        ...fields,
+        stepsToReproduceScore: requiredField(
+          pipeline.result.stepsToReproduceScore,
+          "stepsToReproduceScore",
+          pipeline.stepName,
+        ),
+        expectedBehaviorScore: requiredField(
+          pipeline.result.expectedBehaviorScore,
+          "expectedBehaviorScore",
+          pipeline.stepName,
+        ),
+        observedBehaviorScore: requiredField(
+          pipeline.result.observedBehaviorScore,
+          "observedBehaviorScore",
+          pipeline.stepName,
+        ),
+        reasoning: requiredField(
+          pipeline.result.reasoning,
+          "reasoning",
+          pipeline.stepName,
+        ),
+        rawResponse: requiredField(
+          pipeline.result.rawResponse,
+          "rawResponse",
+          pipeline.stepName,
+        ),
+      };
+    }
+
+    return this.upsertStepExecution(
+      tx,
+      pipeline,
+      startedAt,
+      endedAt,
+      now,
+      fields,
+    );
+  }
+
+  private saveDuplicateCandidatesExecution(
+    tx: DbExecutor,
+    pipeline: TicketDuplicateCandidatesStepResultEntity,
+    startedAt: Date,
+    endedAt: Date | null,
+    now: Date,
+  ): Promise<TicketPipelineStepExecutionEntity> {
+    let fields: Record<string, unknown> = this.buildDiscriminatorResetFields();
+
+    if (pipeline.status === "succeeded") {
+      if (!pipeline.result) {
+        throw new Error(
+          "Missing required duplicate candidates result payload for succeeded execution",
+        );
+      }
+
+      fields = {
+        ...fields,
+        duplicateCandidatesProposed: JSON.stringify(pipeline.result.proposed),
+        duplicateCandidatesDismissed: JSON.stringify(pipeline.result.dismissed),
+        duplicateCandidatesPromoted: JSON.stringify(pipeline.result.promoted),
+      };
+    }
+
+    return this.upsertStepExecution(
+      tx,
+      pipeline,
+      startedAt,
+      endedAt,
+      now,
+      fields,
+    );
+  }
+
+  private saveFailingTestReproExecution(
+    tx: DbExecutor,
+    pipeline: FailingTestReproStepExecutionEntity,
+    startedAt: Date,
+    endedAt: Date | null,
+    now: Date,
+  ): Promise<TicketPipelineStepExecutionEntity> {
+    const reproResult = pipeline.result;
+    const fields = {
+      ...this.buildDiscriminatorResetFields(),
+      githubIssueNumber: reproResult?.githubIssueNumber ?? null,
+      githubIssueId: reproResult?.githubIssueId ?? null,
+      githubAgentRunId: reproResult?.githubAgentRunId ?? null,
+      agentStatus: reproResult?.agentStatus ?? null,
+      githubMergeStatus: reproResult?.githubMergeStatus ?? "draft",
+      githubPrTargetBranch: reproResult?.githubPrTargetBranch ?? null,
+      agentBranch: reproResult?.agentBranch ?? null,
+      failingTestCommitSha: reproResult?.failingTestCommitSha ?? null,
+      failureReason: reproResult?.failureReason ?? null,
+      rawResultJson: reproResult?.rawResultJson ?? null,
+      completedAt: endedAt,
+      lastPolledAt: now,
+      outcome: reproResult?.outcome ?? null,
+      failingTestPath: serializeFailingTestPaths(reproResult?.failingTestPaths),
+      summaryOfFindings: reproResult?.summaryOfFindings ?? null,
+      confidenceLevel: reproResult?.confidenceLevel ?? null,
+    };
+
+    return this.upsertStepExecution(
+      tx,
+      pipeline,
+      startedAt,
+      endedAt,
+      now,
+      fields,
+    );
+  }
+
+  private saveFailingTestFixExecution(
+    tx: DbExecutor,
+    pipeline: FailingTestFixStepExecutionEntity,
+    startedAt: Date,
+    endedAt: Date | null,
+    now: Date,
+  ): Promise<TicketPipelineStepExecutionEntity> {
+    const fixResult = pipeline.result;
+    const completionResult = fixResult?.completionResult;
+    const fields = {
+      ...this.buildDiscriminatorResetFields(),
+      githubIssueNumber: fixResult?.githubIssueNumber ?? null,
+      githubIssueId: fixResult?.githubIssueId ?? null,
+      githubAgentRunId: fixResult?.githubAgentRunId ?? null,
+      agentStatus: completionResult?.agentStatus ?? null,
+      githubMergeStatus: fixResult?.githubMergeStatus ?? "draft",
+      githubPrTargetBranch: fixResult?.githubPrTargetBranch ?? null,
+      agentBranch: completionResult?.agentBranch ?? null,
+      agentSummary: fixResult?.agentSummary ?? null,
+      failingTestCommitSha: fixResult?.failingTestCommitSha ?? null,
+      failureReason: completionResult?.failureReason ?? null,
+      rawResultJson: completionResult?.rawResultJson ?? null,
+      completedAt: endedAt,
+      lastPolledAt: now,
+      fixOperationOutcome: completionResult?.fixOperationOutcome ?? null,
+      fixedTestPath:
+        completionResult?.fixedTestPath ?? fixResult?.failingTestPath ?? null,
+      summaryOfFix: completionResult?.summaryOfFix ?? null,
+      fixConfidenceLevel: completionResult?.fixConfidenceLevel ?? null,
+    };
+
+    return this.upsertStepExecution(
+      tx,
+      pipeline,
+      startedAt,
+      endedAt,
+      now,
+      fields,
+    );
   }
 
   async save(
@@ -581,267 +879,62 @@ export class DrizzleStepExecutionRepo {
   ): Promise<TicketPipelineStepExecutionEntity> {
     const db = getDb();
 
-    return db.transaction(async (tx) => {
-      const now = new Date();
-      const startedAt = parseIsoDateOrThrow(pipeline.startedAt, "startedAt");
-      const endedAt = pipeline.endedAt
-        ? parseIsoDateOrThrow(pipeline.endedAt, "endedAt")
-        : null;
+    const now = new Date();
+    const startedAt = parseIsoDateOrThrow(pipeline.startedAt, "startedAt");
+    const endedAt = pipeline.endedAt
+      ? parseIsoDateOrThrow(pipeline.endedAt, "endedAt")
+      : null;
 
-      let descriptionQualityFields: {
-        stepsToReproduceScore: number | null;
-        expectedBehaviorScore: number | null;
-        observedBehaviorScore: number | null;
-        reasoning: string | null;
-        rawResponse: string | null;
-      } = {
-        stepsToReproduceScore: null,
-        expectedBehaviorScore: null,
-        observedBehaviorScore: null,
-        reasoning: null,
-        rawResponse: null,
-      };
+    let savedExecution: TicketPipelineStepExecutionEntity;
+    if (pipeline instanceof TicketDescriptionEnrichmentStepExecutionEntity) {
+      savedExecution = await this.saveDescriptionEnrichmentExecution(
+        db,
+        pipeline,
+        startedAt,
+        endedAt,
+        now,
+      );
+    } else if (
+      pipeline instanceof TicketDescriptionQualityStepExecutionEntity
+    ) {
+      savedExecution = await this.saveDescriptionQualityExecution(
+        db,
+        pipeline,
+        startedAt,
+        endedAt,
+        now,
+      );
+    } else if (pipeline instanceof TicketDuplicateCandidatesStepResultEntity) {
+      savedExecution = await this.saveDuplicateCandidatesExecution(
+        db,
+        pipeline,
+        startedAt,
+        endedAt,
+        now,
+      );
+    } else if (pipeline instanceof FailingTestReproStepExecutionEntity) {
+      savedExecution = await this.saveFailingTestReproExecution(
+        db,
+        pipeline,
+        startedAt,
+        endedAt,
+        now,
+      );
+    } else if (pipeline instanceof FailingTestFixStepExecutionEntity) {
+      savedExecution = await this.saveFailingTestFixExecution(
+        db,
+        pipeline,
+        startedAt,
+        endedAt,
+        now,
+      );
+    } else {
+      throw new Error(
+        `Unsupported pipeline step execution type: ${pipeline.constructor.name}`,
+      );
+    }
 
-      let failingTestFields: {
-        outcome: FailingTestReproStepResultEntity["outcome"] | null;
-        githubIssueNumber: number | null;
-        githubIssueId: string | null;
-        githubAgentRunId: string | null;
-        agentStatus:
-          | FailingTestReproStepResultEntity["agentStatus"]
-          | FailingTestFixStepCompletionResultEntity["agentStatus"]
-          | null;
-        githubMergeStatus: FailingTestReproStepResultEntity["githubMergeStatus"];
-        githubPrTargetBranch: string | null;
-        agentBranch: string | null;
-        agentSummary: string | null;
-        failingTestPath: string | null;
-        fixedTestPath: string | null;
-        failingTestCommitSha: string | null;
-        summaryOfFindings: string | null;
-        summaryOfFix: string | null;
-        confidenceLevel: number | null;
-        fixConfidenceLevel: number | null;
-        fixOperationOutcome:
-          | FailingTestFixStepCompletionResultEntity["fixOperationOutcome"]
-          | null;
-        failureReason: string | null;
-        rawResultJson: Record<string, unknown> | null;
-        completedAt: Date | null;
-        lastPolledAt: Date | null;
-      } = {
-        outcome: null,
-        githubIssueNumber: null,
-        githubIssueId: null,
-        githubAgentRunId: null,
-        agentStatus: null,
-        githubMergeStatus: "draft",
-        githubPrTargetBranch: null,
-        agentBranch: null,
-        agentSummary: null,
-        failingTestPath: null,
-        fixedTestPath: null,
-        failingTestCommitSha: null,
-        summaryOfFindings: null,
-        summaryOfFix: null,
-        confidenceLevel: null,
-        fixConfidenceLevel: null,
-        fixOperationOutcome: null,
-        failureReason: null,
-        rawResultJson: null,
-        completedAt: null,
-        lastPolledAt: null,
-      };
-
-      if (
-        pipeline.stepName === TICKET_DESCRIPTION_ENRICHMENT_STEP_NAME &&
-        pipeline.status === "succeeded"
-      ) {
-        if (pipeline instanceof TicketDescriptionEnrichmentStepExecutionEntity) {
-          if (!pipeline.result) {
-            throw new Error(
-              "Missing required description enrichment result payload for succeeded execution",
-            );
-          }
-
-          failingTestFields = {
-            ...failingTestFields,
-            agentStatus: pipeline.result.agentStatus,
-            agentBranch: pipeline.result.agentBranch,
-            summaryOfFindings: pipeline.result.summaryOfEnrichment,
-            confidenceLevel: pipeline.result.confidenceLevel,
-            rawResultJson: {
-              ...pipeline.result.rawResultJson,
-              datadogQueryTerms: pipeline.result.datadogQueryTerms,
-              datadogTimeRange: pipeline.result.datadogTimeRange,
-              keyIdentifiers: pipeline.result.keyIdentifiers,
-              enrichedTicketDescription:
-                pipeline.result.enrichedTicketDescription,
-              operationOutcome: pipeline.result.operationOutcome,
-            },
-            completedAt: endedAt,
-            lastPolledAt: now,
-          };
-        }
-      }
-
-      if (
-        pipeline.stepName === TICKET_DESCRIPTION_QUALITY_STEP_NAME &&
-        pipeline.status === "succeeded"
-      ) {
-        if (pipeline instanceof TicketDescriptionQualityStepExecutionEntity) {
-          if (!pipeline.result) {
-            throw new Error(
-              "Missing required description quality result payload for succeeded execution",
-            );
-          }
-          descriptionQualityFields = {
-            stepsToReproduceScore: requiredField(
-              pipeline.result.stepsToReproduceScore,
-              "stepsToReproduceScore",
-              pipeline.stepName,
-            ),
-            expectedBehaviorScore: requiredField(
-              pipeline.result.expectedBehaviorScore,
-              "expectedBehaviorScore",
-              pipeline.stepName,
-            ),
-            observedBehaviorScore: requiredField(
-              pipeline.result.observedBehaviorScore,
-              "observedBehaviorScore",
-              pipeline.stepName,
-            ),
-            reasoning: requiredField(
-              pipeline.result.reasoning,
-              "reasoning",
-              pipeline.stepName,
-            ),
-            rawResponse: requiredField(
-              pipeline.result.rawResponse,
-              "rawResponse",
-              pipeline.stepName,
-            ),
-          };
-        }
-      }
-
-      if (
-        pipeline.stepName === FAILING_TEST_REPRO_STEP_NAME ||
-        pipeline.stepName === FAILING_TEST_FIX_STEP_NAME
-      ) {
-        if (pipeline instanceof FailingTestReproStepExecutionEntity) {
-          const reproResult = pipeline.result;
-          failingTestFields = {
-            githubIssueNumber: reproResult?.githubIssueNumber ?? null,
-            githubIssueId: reproResult?.githubIssueId ?? null,
-            githubAgentRunId: reproResult?.githubAgentRunId ?? null,
-            agentStatus: reproResult?.agentStatus ?? null,
-            githubMergeStatus: reproResult?.githubMergeStatus ?? "draft",
-            githubPrTargetBranch: reproResult?.githubPrTargetBranch ?? null,
-            agentBranch: reproResult?.agentBranch ?? null,
-            agentSummary: null,
-            failingTestCommitSha: reproResult?.failingTestCommitSha ?? null,
-            failureReason: reproResult?.failureReason ?? null,
-            rawResultJson: reproResult?.rawResultJson ?? null,
-            completedAt: endedAt,
-            lastPolledAt: now,
-            outcome: reproResult?.outcome ?? null,
-            failingTestPath: serializeFailingTestPaths(
-              reproResult?.failingTestPaths,
-            ),
-            summaryOfFindings: reproResult?.summaryOfFindings ?? null,
-            confidenceLevel: reproResult?.confidenceLevel ?? null,
-            fixOperationOutcome: null,
-            fixedTestPath: null,
-            summaryOfFix: null,
-            fixConfidenceLevel: null,
-          };
-        }
-
-        if (pipeline instanceof FailingTestFixStepExecutionEntity) {
-          const fixResult = pipeline.result;
-          const completionResult = fixResult?.completionResult;
-          failingTestFields = {
-            githubIssueNumber: fixResult?.githubIssueNumber ?? null,
-            githubIssueId: fixResult?.githubIssueId ?? null,
-            githubAgentRunId: fixResult?.githubAgentRunId ?? null,
-            agentStatus: completionResult?.agentStatus ?? null,
-            githubMergeStatus: fixResult?.githubMergeStatus ?? "draft",
-            githubPrTargetBranch: fixResult?.githubPrTargetBranch ?? null,
-            agentBranch: completionResult?.agentBranch ?? null,
-            agentSummary: fixResult?.agentSummary ?? null,
-            failingTestCommitSha: fixResult?.failingTestCommitSha ?? null,
-            failureReason: completionResult?.failureReason ?? null,
-            rawResultJson: completionResult?.rawResultJson ?? null,
-            completedAt: endedAt,
-            lastPolledAt: now,
-            outcome: null,
-            failingTestPath: null,
-            summaryOfFindings: null,
-            confidenceLevel: null,
-            fixOperationOutcome: completionResult?.fixOperationOutcome ?? null,
-            fixedTestPath:
-              completionResult?.fixedTestPath ?? fixResult?.failingTestPath ?? null,
-            summaryOfFix: completionResult?.summaryOfFix ?? null,
-            fixConfidenceLevel: completionResult?.fixConfidenceLevel ?? null,
-          };
-        }
-      }
-
-      const [saved] = await tx
-        .insert(ticketStepExecutionsTph)
-        .values({
-          id: pipeline.id,
-          ticketId: pipeline.ticketId,
-          stepName: pipeline.stepName,
-          type: pipeline.stepName,
-          status: pipeline.status,
-          idempotencyKey: pipeline.idempotencyKey,
-          startedAt,
-          endedAt,
-          createdAt: pipeline.createdAt
-            ? parseIsoDateOrThrow(pipeline.createdAt, "createdAt")
-            : now,
-          updatedAt: now,
-          ...descriptionQualityFields,
-          ...failingTestFields,
-        })
-        .onConflictDoUpdate({
-          target: ticketStepExecutionsTph.idempotencyKey,
-          set: {
-            stepName: pipeline.stepName,
-            type: pipeline.stepName,
-            status: pipeline.status,
-            startedAt,
-            endedAt,
-            updatedAt: now,
-            ...descriptionQualityFields,
-            ...failingTestFields,
-          },
-        })
-        .returning({
-          id: ticketStepExecutionsTph.id,
-          createdAt: ticketStepExecutionsTph.createdAt,
-          updatedAt: ticketStepExecutionsTph.updatedAt,
-        });
-
-      pipeline.id = saved.id;
-      pipeline.createdAt = saved.createdAt.toISOString();
-      pipeline.updatedAt = saved.updatedAt.toISOString();
-
-      if (
-        pipeline instanceof TicketDuplicateCandidatesStepResultEntity &&
-        pipeline.status === "succeeded"
-      ) {
-        await this.saveDuplicateCandidatesResult(
-          tx,
-          pipeline.ticketId,
-          pipeline.candidates,
-        );
-      }
-
-      return pipeline;
-    });
+    return savedExecution;
   }
 
   async loadByTicketIds(
@@ -863,78 +956,7 @@ export class DrizzleStepExecutionRepo {
     >();
 
     for (const row of rows) {
-      if (row.type !== row.stepName) {
-        throw new Error(
-          `Corrupt step execution row ${row.id}: stepName '${row.stepName}' does not match type '${row.type}'`,
-        );
-      }
-
-      let execution: TicketPipelineStepExecutionEntity;
-      if (row.type === TICKET_DESCRIPTION_QUALITY_STEP_NAME) {
-        execution = new TicketDescriptionQualityStepExecutionEntity(
-          row.ticketId,
-          row.status,
-          row.idempotencyKey,
-          mapDescriptionQualityResultOrNull(row),
-          row.startedAt.toISOString(),
-          row.endedAt?.toISOString(),
-          row.createdAt.toISOString(),
-          row.updatedAt.toISOString(),
-          row.id,
-        );
-      } else if (row.type === TICKET_DESCRIPTION_ENRICHMENT_STEP_NAME) {
-        execution = new TicketDescriptionEnrichmentStepExecutionEntity(
-          row.ticketId,
-          row.status,
-          row.idempotencyKey,
-          mapDescriptionEnrichmentResultOrNull(row),
-          row.startedAt.toISOString(),
-          row.endedAt?.toISOString(),
-          row.createdAt.toISOString(),
-          row.updatedAt.toISOString(),
-          row.id,
-        );
-      } else if (
-        row.type === FAILING_TEST_REPRO_STEP_NAME ||
-        row.type === FAILING_TEST_FIX_STEP_NAME
-      ) {
-        execution =
-          row.type === FAILING_TEST_REPRO_STEP_NAME
-            ? new FailingTestReproStepExecutionEntity(
-                row.ticketId,
-                row.status,
-                row.idempotencyKey,
-                mapFailingTestReproResultOrNull(row),
-                row.startedAt.toISOString(),
-                row.endedAt?.toISOString(),
-                row.createdAt.toISOString(),
-                row.updatedAt.toISOString(),
-                row.id,
-              )
-            : new FailingTestFixStepExecutionEntity(
-                row.ticketId,
-                row.status,
-                row.idempotencyKey,
-                mapFailingTestFixResultOrNull(row),
-                row.startedAt.toISOString(),
-                row.endedAt?.toISOString(),
-                row.createdAt.toISOString(),
-                row.updatedAt.toISOString(),
-                row.id,
-              );
-      } else {
-        execution = new TicketPipelineStepExecutionEntity(
-          row.ticketId,
-          row.stepName,
-          row.status,
-          row.idempotencyKey,
-          row.startedAt.toISOString(),
-          row.endedAt?.toISOString(),
-          row.id,
-          row.createdAt.toISOString(),
-          row.updatedAt.toISOString(),
-        );
-      }
+      const execution = this.mapRowToExecution(row);
 
       const executions = stepExecutionsByTicketId.get(row.ticketId);
       if (executions) {

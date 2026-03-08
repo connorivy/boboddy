@@ -1,6 +1,5 @@
 import {
   type AnyPgColumn,
-  check,
   customType,
   pgEnum,
   pgTable,
@@ -10,11 +9,9 @@ import {
   date,
   integer,
   real,
-  numeric,
   uniqueIndex,
   jsonb,
 } from "drizzle-orm/pg-core";
-import { sql } from "drizzle-orm";
 
 export const ticketStatusEnum = pgEnum("ticket_status", [
   "needs_more_information",
@@ -39,11 +36,6 @@ export const ticketTypeEnum = pgEnum("ticket_type", [
   "enhancement",
   "report request",
 ]);
-
-export const duplicateCandidateStatusEnum = pgEnum(
-  "duplicate_candidate_status",
-  ["proposed", "dismissed", "promoted"],
-);
 
 export const stepExecutionStatusEnum = pgEnum("step_execution_status", [
   "not_started",
@@ -137,39 +129,6 @@ export const tickets = pgTable("tickets", {
     .notNull()
     .defaultNow(),
 });
-
-export const ticketDuplicateCandidates = pgTable(
-  "ticket_duplicate_candidates",
-  {
-    id: serial("id").primaryKey(),
-    ticketId: text("ticket_id")
-      .references(() => tickets.id, { onDelete: "cascade" })
-      .notNull(),
-    candidateTicketId: text("candidate_ticket_id")
-      .references(() => tickets.id, { onDelete: "cascade" })
-      .notNull(),
-    score: numeric("score", { precision: 5, scale: 4 }).notNull(),
-    status: duplicateCandidateStatusEnum("status")
-      .notNull()
-      .default("proposed"),
-    createdAt: timestamp("created_at", { withTimezone: true }).notNull(),
-    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull(),
-  },
-  (table) => [
-    uniqueIndex("ticket_duplicate_candidates_pair_unique").on(
-      table.ticketId,
-      table.candidateTicketId,
-    ),
-    check(
-      "ticket_duplicate_candidates_pair_order",
-      sql`${table.ticketId} <> ${table.candidateTicketId}`,
-    ),
-    check(
-      "ticket_duplicate_candidates_score_range",
-      sql`${table.score} >= 0 and ${table.score} <= 1`,
-    ),
-  ],
-);
 
 export const ticketGithubIssues = pgTable(
   "ticket_github_issues",
@@ -356,6 +315,11 @@ export const ticketStepExecutionsTph = pgTable(
     fixedTestPath: text("fixed_test_path"),
     summaryOfFix: text("summary_of_fix"),
     fixConfidenceLevel: real("fix_confidence_level"),
+
+    // For duplicate candidates step
+    duplicateCandidatesProposed: text("duplicate_candidates_proposed"),
+    duplicateCandidatesDismissed: text("duplicate_candidates_dismissed"),
+    duplicateCandidatesPromoted: text("duplicate_candidates_promoted"),
   },
   (table) => [
     uniqueIndex("ticket_step_executions_tph_idempotency_key_unique").on(
@@ -366,10 +330,6 @@ export const ticketStepExecutionsTph = pgTable(
 
 export type TicketRow = typeof tickets.$inferSelect;
 export type NewTicketRow = typeof tickets.$inferInsert;
-export type TicketDuplicateCandidateRow =
-  typeof ticketDuplicateCandidates.$inferSelect;
-export type NewTicketDuplicateCandidateRow =
-  typeof ticketDuplicateCandidates.$inferInsert;
 export type TicketGithubIssueRow = typeof ticketGithubIssues.$inferSelect;
 export type NewTicketGithubIssueRow = typeof ticketGithubIssues.$inferInsert;
 export type TicketStepExecutionRow = typeof ticketStepExecutions.$inferSelect;

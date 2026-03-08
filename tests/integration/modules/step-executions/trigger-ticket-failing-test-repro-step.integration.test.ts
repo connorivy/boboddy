@@ -100,7 +100,7 @@ describe("triggerTicketFailingTestReproStep (integration)", () => {
     );
 
     expect(result.ok).toBe(true);
-    expect(result.data.stepExecution.ticketId).toBe("CV-901");
+    expect(result.data.stepExecution.pipelineId).toBe("CV-901");
     expect(result.data.stepExecution.stepName).toBe(
       FAILING_TEST_REPRO_STEP_NAME,
     );

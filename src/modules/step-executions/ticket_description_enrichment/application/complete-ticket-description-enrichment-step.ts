@@ -49,7 +49,7 @@ export const completeTicketDescriptionEnrichmentStep = async (
   const input = completeTicketDescriptionEnrichmentStepRequestSchema.parse(rawInput);
 
   const existingExecution = await stepExecutionRepo.load(input.pipelineId);
-  if (!existingExecution || existingExecution.ticketId !== input.ticketId) {
+  if (!existingExecution) {
     throw httpError("Pipeline step execution not found", 404);
   }
 
@@ -71,7 +71,7 @@ export const completeTicketDescriptionEnrichmentStep = async (
 
   const savedExecution = await stepExecutionRepo.save(
     new TicketDescriptionEnrichmentStepExecutionEntity(
-      existingExecution.ticketId,
+      existingExecution.pipelineId,
       resolveStatus(input),
       existingExecution.idempotencyKey,
       new TicketDescriptionEnrichmentStepResultEntity(

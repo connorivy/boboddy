@@ -1,6 +1,6 @@
-import { desc, eq, inArray, sql } from "drizzle-orm";
+import { desc, eq, inArray, or, sql } from "drizzle-orm";
 import { getDb } from "@/lib/db";
-import { ticketStepExecutionsTph } from "@/lib/db/schema";
+import { pipelineRuns, ticketStepExecutionsTph } from "@/lib/db/schema";
 import {
   FAILING_TEST_FIX_STEP_NAME,
   FAILING_TEST_REPRO_STEP_NAME,
@@ -26,6 +26,7 @@ import {
   TicketPipelineStepExecutionEntity,
 } from "../domain/step-execution-entity";
 import { DbExecutor } from "@/lib/db/db-executor";
+import { StepExecutionRepo } from "../application/step-execution-repo";
 
 function requiredField<T>(
   value: T | null | undefined,
@@ -428,7 +429,7 @@ function mapDuplicateCandidatesResultOrNull(
   );
 }
 
-export class DrizzleStepExecutionRepo {
+export class DrizzleStepExecutionRepo implements StepExecutionRepo {
   private mapRowToExecution(
     row: typeof ticketStepExecutionsTph.$inferSelect,
   ): TicketPipelineStepExecutionEntity {
@@ -440,7 +441,7 @@ export class DrizzleStepExecutionRepo {
 
     if (row.type === TICKET_DESCRIPTION_QUALITY_STEP_NAME) {
       return new TicketDescriptionQualityStepExecutionEntity(
-        row.ticketId,
+        row.pipelineId,
         row.status,
         row.idempotencyKey,
         mapDescriptionQualityResultOrNull(row),
@@ -454,7 +455,7 @@ export class DrizzleStepExecutionRepo {
 
     if (row.type === TICKET_DESCRIPTION_ENRICHMENT_STEP_NAME) {
       return new TicketDescriptionEnrichmentStepExecutionEntity(
-        row.ticketId,
+        row.pipelineId,
         row.status,
         row.idempotencyKey,
         mapDescriptionEnrichmentResultOrNull(row),
@@ -468,7 +469,7 @@ export class DrizzleStepExecutionRepo {
 
     if (row.type === FAILING_TEST_REPRO_STEP_NAME) {
       return new FailingTestReproStepExecutionEntity(
-        row.ticketId,
+        row.pipelineId,
         row.status,
         row.idempotencyKey,
         mapFailingTestReproResultOrNull(row),
@@ -482,7 +483,7 @@ export class DrizzleStepExecutionRepo {
 
     if (row.type === FAILING_TEST_FIX_STEP_NAME) {
       return new FailingTestFixStepExecutionEntity(
-        row.ticketId,
+        row.pipelineId,
         row.status,
         row.idempotencyKey,
         mapFailingTestFixResultOrNull(row),
@@ -496,7 +497,7 @@ export class DrizzleStepExecutionRepo {
 
     if (row.type === TICKET_DUPLICATE_CANDIDATES_STEP_NAME) {
       return new TicketDuplicateCandidatesStepResultEntity(
-        row.ticketId,
+        row.pipelineId,
         row.status,
         row.idempotencyKey,
         mapDuplicateCandidatesResultOrNull(row),
@@ -529,21 +530,47 @@ export class DrizzleStepExecutionRepo {
     return this.mapRowToExecution(row);
   }
 
-  async loadByTicketId(
-    ticketId: string,
+  async loadByPipelineId(
+    pipelineId: string,
   ): Promise<TicketPipelineStepExecutionEntity[]> {
     const db = getDb();
 
     const rows = await db
       .select()
       .from(ticketStepExecutionsTph)
-      .where(eq(ticketStepExecutionsTph.ticketId, ticketId))
+      .where(eq(ticketStepExecutionsTph.pipelineId, pipelineId))
       .orderBy(
         desc(ticketStepExecutionsTph.startedAt),
         desc(ticketStepExecutionsTph.id),
       );
 
     return rows.map((row) => this.mapRowToExecution(row));
+  }
+
+  async loadByTicketId(
+    ticketId: string,
+  ): Promise<TicketPipelineStepExecutionEntity[]> {
+    const db = getDb();
+
+    const rows = await db
+      .select({ execution: ticketStepExecutionsTph })
+      .from(ticketStepExecutionsTph)
+      .leftJoin(
+        pipelineRuns,
+        eq(ticketStepExecutionsTph.pipelineId, pipelineRuns.id),
+      )
+      .where(
+        or(
+          eq(pipelineRuns.ticketId, ticketId),
+          eq(ticketStepExecutionsTph.pipelineId, ticketId),
+        ),
+      )
+      .orderBy(
+        desc(ticketStepExecutionsTph.startedAt),
+        desc(ticketStepExecutionsTph.id),
+      );
+
+    return rows.map((row) => this.mapRowToExecution(row.execution));
   }
 
   async loadPage(
@@ -620,7 +647,7 @@ export class DrizzleStepExecutionRepo {
       .insert(ticketStepExecutionsTph)
       .values({
         id: pipeline.id,
-        ticketId: pipeline.ticketId,
+        pipelineId: pipeline.pipelineId,
         stepName: pipeline.stepName,
         type: pipeline.stepName,
         status: pipeline.status,
@@ -943,9 +970,21 @@ export class DrizzleStepExecutionRepo {
 
     const db = getDb();
     const rows = await db
-      .select()
+      .select({
+        execution: ticketStepExecutionsTph,
+        ticketId: pipelineRuns.ticketId,
+      })
       .from(ticketStepExecutionsTph)
-      .where(inArray(ticketStepExecutionsTph.ticketId, ticketIds));
+      .leftJoin(
+        pipelineRuns,
+        eq(ticketStepExecutionsTph.pipelineId, pipelineRuns.id),
+      )
+      .where(
+        or(
+          inArray(pipelineRuns.ticketId, ticketIds),
+          inArray(ticketStepExecutionsTph.pipelineId, ticketIds),
+        ),
+      );
 
     const stepExecutionsByTicketId = new Map<
       string,
@@ -953,13 +992,14 @@ export class DrizzleStepExecutionRepo {
     >();
 
     for (const row of rows) {
-      const execution = this.mapRowToExecution(row);
+      const execution = this.mapRowToExecution(row.execution);
 
-      const executions = stepExecutionsByTicketId.get(row.ticketId);
+      const ticketId = row.ticketId ?? row.execution.pipelineId;
+      const executions = stepExecutionsByTicketId.get(ticketId);
       if (executions) {
         executions.push(execution);
       } else {
-        stepExecutionsByTicketId.set(row.ticketId, [execution]);
+        stepExecutionsByTicketId.set(ticketId, [execution]);
       }
     }
 

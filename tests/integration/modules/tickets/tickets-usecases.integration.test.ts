@@ -489,7 +489,7 @@ describe("tickets module use cases (integration)", () => {
 
     await stepExecutionRepo.save(
       new TicketDescriptionQualityStepExecutionEntity(
-        descriptionExecution.ticketId,
+        descriptionExecution.pipelineId,
         "succeeded",
         descriptionExecution.idempotencyKey,
         new TicketDescriptionQualityStepResultEntity(
@@ -519,7 +519,7 @@ describe("tickets module use cases (integration)", () => {
 
     await stepExecutionRepo.save(
       new TicketDuplicateCandidatesStepResultEntity(
-        duplicateExecution.ticketId,
+        duplicateExecution.pipelineId,
         "succeeded",
         duplicateExecution.idempotencyKey,
         new TicketDuplicateCandidatesResultEntity(

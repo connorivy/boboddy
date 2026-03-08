@@ -49,7 +49,7 @@ export const completeTicketFailingTestFixStep = async (
   const input = completeTicketFailingTestFixStepRequestSchema.parse(rawInput);
 
   const existingExecution = await stepExecutionRepo.load(input.pipelineId);
-  if (!existingExecution || existingExecution.ticketId !== input.ticketId) {
+  if (!existingExecution) {
     throw httpError("Pipeline step execution not found", 404);
   }
 
@@ -77,7 +77,7 @@ export const completeTicketFailingTestFixStep = async (
 
   const savedExecution = await stepExecutionRepo.save(
     new FailingTestFixStepExecutionEntity(
-      existingExecution.ticketId,
+      existingExecution.pipelineId,
       resolveStatus(input),
       existingExecution.idempotencyKey,
       new FailingTestFixStepResultEntity(

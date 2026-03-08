@@ -17,6 +17,6 @@ export function pipelineRunEntityToContract(
     startedAt: pipelineRun.startedAt.toISOString(),
     endedAt: pipelineRun.endedAt?.toISOString() ?? null,
     stepExecutions:
-      pipelineRun.pipelineSteps?.map(stepExecutionEntityToContract) ?? [],
+      pipelineRun.pipelineSteps?.map(stepExecutionEntityToContract) ?? null,
   });
 }

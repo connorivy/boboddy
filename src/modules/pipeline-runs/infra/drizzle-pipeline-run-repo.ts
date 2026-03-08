@@ -2,10 +2,16 @@ import { desc, eq, sql } from "drizzle-orm";
 import { getDb } from "@/lib/db";
 import { pipelineRuns } from "@/lib/db/schema";
 import type { DbExecutor } from "@/lib/db/db-executor";
-import type { PipelineRunRepo } from "@/modules/pipeline-runs/application/pipeline-run-repo";
+import type {
+  LoadPipelineRunByIdOptions,
+  PipelineRunRepo,
+} from "@/modules/pipeline-runs/application/pipeline-run-repo";
 import { PipelineRunEntity } from "@/modules/pipeline-runs/domain/pipeline-run-aggregate";
+import { DrizzleStepExecutionRepo } from "@/modules/step-executions/infra/step-execution-repo";
 
 export class DrizzlePipelineRunRepo implements PipelineRunRepo {
+  private readonly stepExecutionRepo = new DrizzleStepExecutionRepo();
+
   private toEntity(row: typeof pipelineRuns.$inferSelect): PipelineRunEntity {
     return new PipelineRunEntity(
       row.id,
@@ -22,7 +28,10 @@ export class DrizzlePipelineRunRepo implements PipelineRunRepo {
     );
   }
 
-  async loadById(pipelineRunId: string): Promise<PipelineRunEntity | null> {
+  async loadById(
+    pipelineRunId: string,
+    options?: LoadPipelineRunByIdOptions,
+  ): Promise<PipelineRunEntity | null> {
     const db = getDb();
     const [row] = await db
       .select()
@@ -30,7 +39,33 @@ export class DrizzlePipelineRunRepo implements PipelineRunRepo {
       .where(eq(pipelineRuns.id, pipelineRunId))
       .limit(1);
 
-    return row ? this.toEntity(row) : null;
+    if (!row) {
+      return null;
+    }
+
+    const pipelineRun = this.toEntity(row);
+    if (!options?.includePipelineSteps) {
+      return pipelineRun;
+    }
+
+    const stepExecutions = await this.stepExecutionRepo.loadByPipelineId(
+      pipelineRun.id,
+    );
+
+    return new PipelineRunEntity(
+      pipelineRun.id,
+      pipelineRun.ticketId,
+      pipelineRun.status,
+      pipelineRun.currentStepName,
+      pipelineRun.currentStepExecutionId,
+      pipelineRun.lastCompletedStepName,
+      pipelineRun.haltReason,
+      pipelineRun.startedAt,
+      pipelineRun.endedAt,
+      pipelineRun.createdAt,
+      pipelineRun.updatedAt,
+      stepExecutions,
+    );
   }
 
   async loadByTicketId(ticketId: string): Promise<PipelineRunEntity[]> {

@@ -54,7 +54,7 @@ export const triggerTicketDescriptionQualityStep = async (
 
     savedExecution = await stepExecutionRepo.save(
       new TicketDescriptionQualityStepExecutionEntity(
-        savedExecution.ticketId,
+        savedExecution.pipelineId,
         "succeeded",
         savedExecution.idempotencyKey,
         new TicketDescriptionQualityStepResultEntity(
@@ -75,7 +75,7 @@ export const triggerTicketDescriptionQualityStep = async (
     if (!TERMINAL_STEP_EXECUTION_STATUSES.has(savedExecution.status)) {
       await stepExecutionRepo.save(
         new TicketDescriptionQualityStepExecutionEntity(
-          savedExecution.ticketId,
+          savedExecution.pipelineId,
           "failed",
           savedExecution.idempotencyKey,
           null,

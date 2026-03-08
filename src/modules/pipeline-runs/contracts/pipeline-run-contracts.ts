@@ -14,7 +14,7 @@ export const pipelineRunSchema = z.object({
   haltReason: z.string().min(1).nullable(),
   startedAt: z.iso.datetime(),
   endedAt: z.iso.datetime().nullable(),
-  stepExecutions: z.array(stepExecutionContractSchema),
+  stepExecutions: z.array(stepExecutionContractSchema).nullable(),
 });
 
 export const advancePipelineStepRequestSchema = z.object({

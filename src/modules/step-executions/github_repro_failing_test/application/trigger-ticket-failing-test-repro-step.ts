@@ -211,7 +211,7 @@ export const triggerTicketFailingTestReproStep = async (
 
     savedExecution = await stepExecutionRepo.save(
       new FailingTestReproStepExecutionEntity(
-        savedExecution.ticketId,
+        savedExecution.pipelineId,
         savedExecution.status,
         savedExecution.idempotencyKey,
         null,
@@ -226,7 +226,7 @@ export const triggerTicketFailingTestReproStep = async (
     if (!TERMINAL_STEP_EXECUTION_STATUSES.has(savedExecution.status)) {
       await stepExecutionRepo.save(
         new FailingTestReproStepExecutionEntity(
-          savedExecution.ticketId,
+          savedExecution.pipelineId,
           "failed",
           savedExecution.idempotencyKey,
           null,

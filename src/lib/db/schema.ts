@@ -183,9 +183,7 @@ export const ticketStepExecutions = pgTable(
   "ticket_step_executions",
   {
     id: serial("id").primaryKey(),
-    ticketId: text("ticket_id")
-      .references(() => tickets.id, { onDelete: "cascade" })
-      .notNull(),
+    pipelineId: text("pipeline_id").notNull(),
     stepName: text("step_name").notNull(),
     status: stepExecutionStatusEnum("status").notNull(),
     idempotencyKey: text("idempotency_key").notNull(),
@@ -303,9 +301,7 @@ export const ticketStepExecutionsTph = pgTable(
   "ticket_step_executions_tph",
   {
     id: serial("id").primaryKey(),
-    ticketId: text("ticket_id")
-      .references(() => tickets.id, { onDelete: "cascade" })
-      .notNull(),
+    pipelineId: text("pipeline_id").notNull(),
     stepName: text("step_name").notNull(),
     type: text("type").notNull(),
     status: stepExecutionStatusEnum("status").notNull(),

@@ -60,7 +60,7 @@ export const completeTicketFailingTestReproStep = async (
   const input = completeTicketFailingTestReproStepRequestSchema.parse(rawInput);
 
   const existingExecution = await stepExecutionRepo.load(input.pipelineId);
-  if (!existingExecution || existingExecution.ticketId !== input.ticketId) {
+  if (!existingExecution) {
     throw httpError("Pipeline step execution not found", 404);
   }
 
@@ -97,7 +97,7 @@ export const completeTicketFailingTestReproStep = async (
 
   const savedExecution = await stepExecutionRepo.save(
     new FailingTestReproStepExecutionEntity(
-      existingExecution.ticketId,
+      existingExecution.pipelineId,
       nextStatus,
       existingExecution.idempotencyKey,
       new FailingTestReproStepResultEntity(

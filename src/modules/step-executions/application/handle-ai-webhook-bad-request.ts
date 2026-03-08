@@ -191,12 +191,8 @@ export const handleAiWebhookBadRequest = async (
     return;
   }
 
-  const ticketId = parsedEnvelope.data.ticketId ?? existingExecution.ticketId;
+  const ticketId = parsedEnvelope.data.ticketId;
   if (!ticketId) {
-    return;
-  }
-
-  if (existingExecution.ticketId !== ticketId) {
     return;
   }
 

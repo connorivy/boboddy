@@ -3,6 +3,9 @@ import { TicketPipelineStepExecutionEntity } from "../domain/step-execution-enti
 
 export interface StepExecutionRepo {
   load(id: number): Promise<TicketPipelineStepExecutionEntity | null>;
+  loadByPipelineId(
+    pipelineId: string,
+  ): Promise<TicketPipelineStepExecutionEntity[]>;
   loadByTicketId(
     ticketId: string,
   ): Promise<TicketPipelineStepExecutionEntity[]>;

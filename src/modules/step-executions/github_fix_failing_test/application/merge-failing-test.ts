@@ -54,12 +54,6 @@ export async function mergeFailingTest(
     );
   }
 
-  if (stepExecution.ticketId !== ticketId) {
-    throw new Error(
-      `Step execution with ID ${stepId} does not belong to ticket ${ticketId}`,
-    );
-  }
-
   if (stepExecution.status !== "succeeded") {
     throw new Error(
       `Step execution with ID ${stepId} has status '${stepExecution.status}' and cannot be merged`,

@@ -194,7 +194,7 @@ export const PipelinesView = ({ initialStepExecutions }: PipelinesViewProps) => 
           <Table size="small">
             <TableHead>
               <TableRow>
-                <TableCell>Ticket</TableCell>
+                <TableCell>Pipeline</TableCell>
                 <TableCell>Status</TableCell>
                 <TableCell>Step</TableCell>
                 <TableCell>Started</TableCell>
@@ -204,7 +204,7 @@ export const PipelinesView = ({ initialStepExecutions }: PipelinesViewProps) => 
             <TableBody>
               {stepExecutions.items.map((step) => (
                 <TableRow key={`pipeline-step-${step.id}`}>
-                  <TableCell>{step.ticketId}</TableCell>
+                  <TableCell>{step.pipelineId}</TableCell>
                   <TableCell>
                     <Stack direction="row" spacing={1} alignItems="center">
                       {getStepStatusIcon(step.status)}

@@ -206,7 +206,7 @@ export const triggerTicketFailingTestFixStep = async (
 
     savedExecution = await stepExecutionRepo.save(
       new FailingTestFixStepExecutionEntity(
-        savedExecution.ticketId,
+        savedExecution.pipelineId,
         savedExecution.status,
         savedExecution.idempotencyKey,
         new FailingTestFixStepResultEntity(

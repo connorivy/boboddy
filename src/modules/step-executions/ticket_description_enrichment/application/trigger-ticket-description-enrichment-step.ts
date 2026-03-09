@@ -26,8 +26,7 @@ import z from "zod";
 
 const WEBHOOK_PAYLOAD_PATH =
   "tmp/copilot-ticket-description-enrichment-webhook-payload.json";
-const TICKET_DESCRIPTION_ENRICHMENT_CUSTOM_AGENT =
-  "ticket-description-enrichment-agent";
+const TICKET_INVESTIGATION_AGENT = "ticket-investigation-agent";
 
 function buildCustomInstructions(ticketId: string, pipelineId: string): string {
   const hardcodedTicketIdAndPipelineIdSchema =
@@ -201,7 +200,7 @@ export const triggerTicketDescriptionEnrichmentStep = async (
     await githubService.assignCopilot({
       issueNumber: githubIssue.githubIssueNumber,
       baseBranch: ticketGitEnvironment.devBranch,
-      customAgent: TICKET_DESCRIPTION_ENRICHMENT_CUSTOM_AGENT,
+      customAgent: TICKET_INVESTIGATION_AGENT,
       customInstructions: buildCustomInstructions(
         input.ticketId,
         savedExecution.id,

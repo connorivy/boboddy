@@ -9,7 +9,7 @@ import { stepExecutionEntityToContract } from "@/modules/step-executions/applica
 import {
   FAILING_TEST_REPRO_STEP_NAME,
   TERMINAL_STEP_EXECUTION_STATUSES,
-  TICKET_DESCRIPTION_ENRICHMENT_STEP_NAME,
+  TICKET_INVESTIGATION_STEP_NAME,
 } from "@/modules/step-executions/domain/step-execution.types";
 import type { GithubApiService } from "@/modules/step-executions/infra/github-copilot-coding-agent";
 import { TicketGithubIssueEntity } from "@/modules/tickets/domain/ticket-github-issue.entity";
@@ -171,7 +171,7 @@ export const triggerTicketFailingTestReproStep = async (
 
     const baseBranch = ticketGitEnvironment.devBranch;
     const latestEnrichmentStep = ticket.getLatestPipelineStep(
-      TICKET_DESCRIPTION_ENRICHMENT_STEP_NAME,
+      TICKET_INVESTIGATION_STEP_NAME,
     );
     let enrichmentContext: string | null = null;
     if (

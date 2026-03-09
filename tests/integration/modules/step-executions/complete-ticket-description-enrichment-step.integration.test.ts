@@ -3,14 +3,10 @@ import { TicketAggregate } from "@/modules/tickets/domain/ticket-aggregate";
 import type { TicketIngestInput } from "@/modules/tickets/contracts/ticket-contracts";
 import { DrizzleTicketRepo } from "@/modules/tickets/infra/drizzle-ticket-repo";
 import { DrizzleStepExecutionRepo } from "@/modules/step-executions/infra/step-execution-repo";
-import { TICKET_DESCRIPTION_ENRICHMENT_STEP_NAME } from "@/modules/step-executions/domain/step-execution.types";
+import { TICKET_INVESTIGATION_STEP_NAME } from "@/modules/step-executions/domain/step-execution.types";
 import { completeTicketDescriptionEnrichmentStep } from "@/modules/step-executions/ticket_description_enrichment/application/complete-ticket-description-enrichment-step";
-import {
-  truncateTestTables,
-} from "../../helpers/pgvector-test-db";
-import {
-  TicketDescriptionEnrichmentStepExecutionEntity,
-} from "@/modules/step-executions/domain/step-execution-entity";
+import { truncateTestTables } from "../../helpers/pgvector-test-db";
+import { TicketDescriptionEnrichmentStepExecutionEntity } from "@/modules/step-executions/domain/step-execution-entity";
 
 const makeTicketAggregate = (
   overrides: Partial<TicketIngestInput> = {},
@@ -66,9 +62,17 @@ describe("completeTicketDescriptionEnrichmentStep (integration)", () => {
         whatHappened:
           "Acme users hit /api/auth/refresh and received 401 responses during token refresh attempts.",
         confidenceLevel: 0.88,
-        datadogQueryTerms: ["service:api", "route:/api/auth/refresh", "status:error"],
+        datadogQueryTerms: [
+          "service:api",
+          "route:/api/auth/refresh",
+          "status:error",
+        ],
         datadogTimeRange: "last_60m",
-        keyIdentifiers: ["company:Acme", "request_id:req-123", "trace_id:trace-456"],
+        keyIdentifiers: [
+          "company:Acme",
+          "request_id:req-123",
+          "trace_id:trace-456",
+        ],
         exactEventTimes: ["2026-03-01T12:03:12.000Z"],
         codeUnitsInvolved: [
           {
@@ -83,7 +87,8 @@ describe("completeTicketDescriptionEnrichmentStep (integration)", () => {
           {
             kind: "frontend_component",
             name: "RefreshSessionBoundary",
-            filePath: "frontend-web/src/components/auth/refresh-session-boundary.tsx",
+            filePath:
+              "frontend-web/src/components/auth/refresh-session-boundary.tsx",
             symbol: "RefreshSessionBoundary",
             relevance: "Initiates the client-side refresh flow.",
             evidence: ["user reported refresh failure after app action"],
@@ -95,7 +100,9 @@ describe("completeTicketDescriptionEnrichmentStep (integration)", () => {
             entityType: "auth_session",
             relationToTicket: "Session used by the affected refresh flow",
             identifiers: ["request_id:req-123"],
-            records: [{ sessionId: "sess_123", updatedAt: "2026-03-01T12:03:10.000Z" }],
+            records: [
+              { sessionId: "sess_123", updatedAt: "2026-03-01T12:03:10.000Z" },
+            ],
             comparisonNotes: [],
             notes: [],
           },
@@ -104,7 +111,8 @@ describe("completeTicketDescriptionEnrichmentStep (integration)", () => {
           {
             source: "application_log",
             routeOrCodePath: "/api/auth/refresh",
-            queryOrFilter: "service:api route:/api/auth/refresh request_id:req-123",
+            queryOrFilter:
+              "service:api route:/api/auth/refresh request_id:req-123",
             timestamp: "2026-03-01T12:03:12.000Z",
             message: "refresh failed with 401",
             identifiers: ["request_id:req-123"],
@@ -144,7 +152,7 @@ describe("completeTicketDescriptionEnrichmentStep (integration)", () => {
     expect(result.data.stepExecution.id).toBe(runningExecution.id);
     expect(result.data.stepExecution.status).toBe("succeeded");
     expect(result.data.stepExecution.result).toMatchObject({
-      stepName: TICKET_DESCRIPTION_ENRICHMENT_STEP_NAME,
+      stepName: TICKET_INVESTIGATION_STEP_NAME,
       operationOutcome: "findings_recorded",
       agentBranch: "ephemeral-MEM9-dev1",
     });

@@ -11,7 +11,7 @@ import {
 import {
   FAILING_TEST_FIX_STEP_NAME,
   FAILING_TEST_REPRO_STEP_NAME,
-  TICKET_DESCRIPTION_ENRICHMENT_STEP_NAME,
+  TICKET_INVESTIGATION_STEP_NAME,
 } from "@/modules/step-executions/domain/step-execution.types";
 
 const now = new Date("2026-03-01T12:00:00.000Z").toISOString();
@@ -81,7 +81,9 @@ describe("handleAiWebhookBadRequest", () => {
 
     const customInstructions =
       githubService.commentOnPrByBranches.mock.calls[0]?.[2];
-    expect(customInstructions).toContain("tmp/copilot-repro-webhook-payload.json");
+    expect(customInstructions).toContain(
+      "tmp/copilot-repro-webhook-payload.json",
+    );
     expect(customInstructions).toContain("reproduceOperationOutcome");
   });
 
@@ -144,7 +146,9 @@ describe("handleAiWebhookBadRequest", () => {
 
     const customInstructions =
       githubService.commentOnPrByBranches.mock.calls[0]?.[2];
-    expect(customInstructions).toContain("tmp/copilot-fix-webhook-payload.json");
+    expect(customInstructions).toContain(
+      "tmp/copilot-fix-webhook-payload.json",
+    );
   });
 
   it("does nothing when step execution cannot be resolved", async () => {
@@ -224,7 +228,7 @@ describe("handleAiWebhookBadRequest", () => {
     };
 
     await handleAiWebhookBadRequest(
-      TICKET_DESCRIPTION_ENRICHMENT_STEP_NAME,
+      TICKET_INVESTIGATION_STEP_NAME,
       {
         ticketId: "CV-102",
         stepExecutionId,

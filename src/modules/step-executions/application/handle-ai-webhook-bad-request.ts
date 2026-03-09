@@ -15,7 +15,7 @@ import {
 import {
   FAILING_TEST_FIX_STEP_NAME,
   FAILING_TEST_REPRO_STEP_NAME,
-  TICKET_DESCRIPTION_ENRICHMENT_STEP_NAME,
+  TICKET_INVESTIGATION_STEP_NAME,
 } from "@/modules/step-executions/domain/step-execution.types";
 import { StepExecutionRepo } from "@/modules/step-executions/application/step-execution-repo";
 import { TicketRepo } from "@/modules/tickets/application/jira-ticket-repo";
@@ -30,7 +30,7 @@ const webhookRepairEnvelopeSchema = z
   .loose();
 
 type SupportedWebhookStepName =
-  | typeof TICKET_DESCRIPTION_ENRICHMENT_STEP_NAME
+  | typeof TICKET_INVESTIGATION_STEP_NAME
   | typeof FAILING_TEST_REPRO_STEP_NAME
   | typeof FAILING_TEST_FIX_STEP_NAME;
 
@@ -63,14 +63,14 @@ const buildCorrectionInstructions = (
   stepName: SupportedWebhookStepName,
 ): string => {
   const webhookPayloadPath =
-    stepName === TICKET_DESCRIPTION_ENRICHMENT_STEP_NAME
+    stepName === TICKET_INVESTIGATION_STEP_NAME
       ? "tmp/copilot-ticket-description-enrichment-webhook-payload.json"
       : stepName === FAILING_TEST_REPRO_STEP_NAME
         ? "tmp/copilot-repro-webhook-payload.json"
         : "tmp/copilot-fix-webhook-payload.json";
 
   const hardcodedTicketIdAndPipelineIdSchema =
-    stepName === TICKET_DESCRIPTION_ENRICHMENT_STEP_NAME
+    stepName === TICKET_INVESTIGATION_STEP_NAME
       ? completeTicketDescriptionEnrichmentStepRequestBodySchema
       : stepName === FAILING_TEST_REPRO_STEP_NAME
         ? completeTicketFailingTestReproStepRequestBodySchema
@@ -107,7 +107,7 @@ export const handleAiWebhookBadRequest = async (
   } = AppContext,
 ): Promise<void> => {
   if (
-    stepName !== TICKET_DESCRIPTION_ENRICHMENT_STEP_NAME &&
+    stepName !== TICKET_INVESTIGATION_STEP_NAME &&
     stepName !== FAILING_TEST_REPRO_STEP_NAME &&
     stepName !== FAILING_TEST_FIX_STEP_NAME
   ) {

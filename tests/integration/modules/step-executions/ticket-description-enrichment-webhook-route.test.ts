@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { TICKET_DESCRIPTION_ENRICHMENT_STEP_NAME } from "@/modules/step-executions/domain/step-execution.types";
+import { TICKET_INVESTIGATION_STEP_NAME } from "@/modules/step-executions/domain/step-execution.types";
 
 const hoisted = vi.hoisted(() => ({
   completeTicketDescriptionEnrichmentStep: vi.fn(),
@@ -21,7 +21,7 @@ vi.mock(
   }),
 );
 
-import { PUT } from "@/app/api/webhooks/ticket-description-enrichment-step-output/route";
+import { PUT } from "@/app/api/webhooks/ticket-investigation-step-output/route";
 
 describe("ticket description enrichment webhook route", () => {
   it("invokes bad-request handler when zod validation fails", async () => {
@@ -53,7 +53,7 @@ describe("ticket description enrichment webhook route", () => {
     ).not.toHaveBeenCalled();
     expect(hoisted.handleAiWebhookBadRequest).toHaveBeenCalledTimes(1);
     expect(hoisted.handleAiWebhookBadRequest).toHaveBeenCalledWith(
-      TICKET_DESCRIPTION_ENRICHMENT_STEP_NAME,
+      TICKET_INVESTIGATION_STEP_NAME,
       expect.objectContaining({
         ticketId: "CV-100",
         pipelineId: "018f47ac-7f5a-7cc1-b54a-6f91d5b8e017",

@@ -2,18 +2,18 @@ import { z } from "zod";
 import {
   FAILING_TEST_FIX_STEP_NAME,
   FAILING_TEST_REPRO_STEP_NAME,
-  TICKET_DESCRIPTION_ENRICHMENT_STEP_NAME,
+  TICKET_INVESTIGATION_STEP_NAME,
   TICKET_DESCRIPTION_QUALITY_STEP_NAME,
   TICKET_DUPLICATE_CANDIDATES_STEP_NAME,
 } from "@/modules/step-executions/domain/step-execution.types";
-import {
-  ticketDescriptionEnrichmentEvidenceFieldsSchema,
-} from "@/modules/step-executions/ticket_description_enrichment/shared/ticket-description-enrichment-result";
+import { ticketDescriptionEnrichmentEvidenceFieldsSchema } from "@/modules/step-executions/ticket_description_enrichment/shared/ticket-description-enrichment-result";
 
 const uuidV7Schema = z
   .string()
   .uuid()
-  .regex(/^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i);
+  .regex(
+    /^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i,
+  );
 
 export const ticketDescriptionQualityResultContractSchema = z.object({
   executionId: uuidV7Schema,
@@ -30,7 +30,7 @@ export const ticketDescriptionQualityResultContractSchema = z.object({
 export const ticketDescriptionEnrichmentResultContractSchema =
   ticketDescriptionEnrichmentEvidenceFieldsSchema.extend({
     executionId: uuidV7Schema,
-    stepName: z.literal(TICKET_DESCRIPTION_ENRICHMENT_STEP_NAME),
+    stepName: z.literal(TICKET_INVESTIGATION_STEP_NAME),
     summaryOfInvestigation: z.string().min(1),
     investigationReport: z.string().min(1),
     confidenceLevel: z.number().min(0).max(1).nullable(),

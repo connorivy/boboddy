@@ -6,7 +6,7 @@ import { httpError } from "@/lib/api/http";
 import {
   FAILING_TEST_FIX_STEP_NAME,
   FAILING_TEST_REPRO_STEP_NAME,
-  TICKET_DESCRIPTION_ENRICHMENT_STEP_NAME,
+  TICKET_INVESTIGATION_STEP_NAME,
   TICKET_DESCRIPTION_QUALITY_STEP_NAME,
   TICKET_DUPLICATE_CANDIDATES_STEP_NAME,
   type StepExecutionStepName,
@@ -23,7 +23,7 @@ import type { StepExecutionRepo } from "@/modules/step-executions/application/st
 
 const PIPELINE_STEP_SEQUENCE: StepExecutionStepName[] = [
   TICKET_DESCRIPTION_QUALITY_STEP_NAME,
-  TICKET_DESCRIPTION_ENRICHMENT_STEP_NAME,
+  TICKET_INVESTIGATION_STEP_NAME,
   TICKET_DUPLICATE_CANDIDATES_STEP_NAME,
   FAILING_TEST_REPRO_STEP_NAME,
   FAILING_TEST_FIX_STEP_NAME,
@@ -45,7 +45,7 @@ function buildQueuedStepExecution(
         null,
         now,
       );
-    case TICKET_DESCRIPTION_ENRICHMENT_STEP_NAME:
+    case TICKET_INVESTIGATION_STEP_NAME:
       return new TicketDescriptionEnrichmentStepExecutionEntity(
         pipelineId,
         ticketId,
@@ -142,7 +142,11 @@ export async function advancePipeline(
   }
 
   await stepExecutionRepo.save(
-    buildQueuedStepExecution(pipelineRun.id, pipelineRun.ticketId, nextStepName),
+    buildQueuedStepExecution(
+      pipelineRun.id,
+      pipelineRun.ticketId,
+      nextStepName,
+    ),
   );
   const refreshedPipelineRun = await pipelineRunRepo.loadById(pipelineRun.id, {
     includePipelineSteps: true,

@@ -10,7 +10,7 @@ import { sortStepExecutionsNewestFirst } from "@/modules/step-executions/applica
 import {
   FAILING_TEST_FIX_STEP_NAME,
   FAILING_TEST_REPRO_STEP_NAME,
-  TICKET_DESCRIPTION_ENRICHMENT_STEP_NAME,
+  TICKET_INVESTIGATION_STEP_NAME,
   TICKET_DESCRIPTION_QUALITY_STEP_NAME,
   TICKET_DUPLICATE_CANDIDATES_STEP_NAME,
   type StepExecutionStepName,
@@ -20,7 +20,7 @@ import { type TimelineStepStatus, getStepStatusIcon } from "@/components/ticket-
 
 export type AiTimelineStepName =
   | typeof TICKET_DESCRIPTION_QUALITY_STEP_NAME
-  | typeof TICKET_DESCRIPTION_ENRICHMENT_STEP_NAME
+  | typeof TICKET_INVESTIGATION_STEP_NAME
   | typeof TICKET_DUPLICATE_CANDIDATES_STEP_NAME
   | typeof FAILING_TEST_REPRO_STEP_NAME
   | typeof FAILING_TEST_FIX_STEP_NAME
@@ -153,239 +153,239 @@ export const TicketManagerAiTimelineCard = ({
 
               return (
                 <Box key={`timeline-step-${step.stepName}`}>
-                <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
-                  {getStepStatusIcon(step.status)}
-                  <Box sx={{ flex: 1 }}>
-                    <Typography variant="body2">{step.stepName}</Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      {step.status}
-                    </Typography>
+                  <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
+                    {getStepStatusIcon(step.status)}
+                    <Box sx={{ flex: 1 }}>
+                      <Typography variant="body2">{step.stepName}</Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        {step.status}
+                      </Typography>
+                    </Box>
+                    <Button
+                      variant="outlined"
+                      size="small"
+                      onClick={() => void onTriggerStep(step.definition)}
+                      disabled={
+                        actionLoading || detailLoading || isMergedFailingTestStep
+                      }
+                    >
+                      Trigger
+                    </Button>
                   </Box>
-                  <Button
-                    variant="outlined"
-                    size="small"
-                    onClick={() => void onTriggerStep(step.definition)}
-                    disabled={
-                      actionLoading || detailLoading || isMergedFailingTestStep
+                  {(step.status === "failed" || step.status === "failed_timeout") &&
+                    step.latestExecution?.failureReason ? (
+                    <Typography variant="caption" color="text.secondary" sx={{ ml: 4, mt: 0.5, display: "block" }}>
+                      Failure reason: {step.latestExecution.failureReason}
+                    </Typography>
+                  ) : null}
+                  {step.stepName === TICKET_DESCRIPTION_QUALITY_STEP_NAME ? (() => {
+                    const result = step.latestExecution?.result;
+                    if (
+                      !result ||
+                      result.stepName !== TICKET_DESCRIPTION_QUALITY_STEP_NAME
+                    ) {
+                      return null;
                     }
-                  >
-                    Trigger
-                  </Button>
-                </Box>
-                {(step.status === "failed" || step.status === "failed_timeout") &&
-                step.latestExecution?.failureReason ? (
-                  <Typography variant="caption" color="text.secondary" sx={{ ml: 4, mt: 0.5, display: "block" }}>
-                    Failure reason: {step.latestExecution.failureReason}
-                  </Typography>
-                ) : null}
-                {step.stepName === TICKET_DESCRIPTION_QUALITY_STEP_NAME ? (() => {
-                  const result = step.latestExecution?.result;
-                  if (
-                    !result ||
-                    result.stepName !== TICKET_DESCRIPTION_QUALITY_STEP_NAME
-                  ) {
-                    return null;
-                  }
 
-                  const averageScore =
-                    (result.stepsToReproduceScore +
-                      result.expectedBehaviorScore +
-                      result.observedBehaviorScore) /
-                    3;
-                  const isExpanded = expandedStepName === step.stepName;
+                    const averageScore =
+                      (result.stepsToReproduceScore +
+                        result.expectedBehaviorScore +
+                        result.observedBehaviorScore) /
+                      3;
+                    const isExpanded = expandedStepName === step.stepName;
 
-                  return (
-                    <Stack spacing={1} sx={{ mt: 1, ml: 4 }}>
-                      <Button
-                        variant="contained"
-                        size="small"
-                        color="primary"
-                        startIcon={getScoreRangeIcon(averageScore)}
-                        endIcon={isExpanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
-                        sx={{ justifyContent: "space-between", width: "fit-content", textTransform: "none" }}
-                        onClick={() =>
-                          setExpandedStepName(
-                            isExpanded ? null : step.stepName,
-                          )
-                        }
-                      >
-                        Score: {formatScore(averageScore)} / 1
-                      </Button>
-                      <Collapse in={isExpanded}>
-                        <Stack spacing={0.75}>
-                          <Box sx={{ display: "flex", gap: 0.75, alignItems: "center" }}>
-                            {getScoreRangeIcon(result.stepsToReproduceScore)}
-                            <Typography variant="caption" color="text.secondary">
-                              Steps to reproduce: {formatScore(result.stepsToReproduceScore)} / 1
-                            </Typography>
-                          </Box>
-                          <Box sx={{ display: "flex", gap: 0.75, alignItems: "center" }}>
-                            {getScoreRangeIcon(result.expectedBehaviorScore)}
-                            <Typography variant="caption" color="text.secondary">
-                              Expected behavior: {formatScore(result.expectedBehaviorScore)} / 1
-                            </Typography>
-                          </Box>
-                          <Box sx={{ display: "flex", gap: 0.75, alignItems: "center" }}>
-                            {getScoreRangeIcon(result.observedBehaviorScore)}
-                            <Typography variant="caption" color="text.secondary">
-                              Observed behavior: {formatScore(result.observedBehaviorScore)} / 1
-                            </Typography>
-                          </Box>
-                          <Typography variant="caption" color="text.secondary">
-                            Explanation: {result.reasoning}
-                          </Typography>
-                        </Stack>
-                      </Collapse>
-                    </Stack>
-                  );
-                })() : null}
-                {step.stepName === TICKET_DUPLICATE_CANDIDATES_STEP_NAME ? (() => {
-                  const result = step.latestExecution?.result;
-                  if (
-                    !result ||
-                    result.stepName !== TICKET_DUPLICATE_CANDIDATES_STEP_NAME
-                  ) {
-                    return null;
-                  }
-
-                  const topCandidates = result.proposed.slice(0, 5);
-                  const isExpanded = expandedStepName === step.stepName;
-
-                  return (
-                    <Stack spacing={1} sx={{ mt: 1, ml: 4 }}>
-                      <Button
-                        variant="contained"
-                        size="small"
-                        color="secondary"
-                        endIcon={isExpanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
-                        sx={{ justifyContent: "space-between", width: "fit-content", textTransform: "none" }}
-                        onClick={() =>
-                          setExpandedStepName(
-                            isExpanded ? null : step.stepName,
-                          )
-                        }
-                      >
-                        {topCandidates.length === 0
-                          ? "No candidates found"
-                          : `${topCandidates.length} candidate${topCandidates.length === 1 ? "" : "s"}`}
-                      </Button>
-                      <Collapse in={isExpanded}>
-                        <Stack spacing={0.75}>
-                          {topCandidates.length === 0 ? (
-                            <Typography variant="caption" color="text.secondary">
-                              No duplicate candidates found for this ticket.
-                            </Typography>
-                          ) : (
-                            topCandidates.map((candidate) => (
-                              <Typography
-                                key={`${step.stepName}-${candidate.candidateTicketId}`}
-                                variant="caption"
-                                color="text.secondary"
-                              >
-                                {candidate.candidateTicketId} · score {candidate.score.toFixed(4)}
-                              </Typography>
-                            ))
-                          )}
-                        </Stack>
-                      </Collapse>
-                    </Stack>
-                  );
-                })() : null}
-                {(step.stepName === FAILING_TEST_REPRO_STEP_NAME ||
-                  step.stepName === FAILING_TEST_FIX_STEP_NAME) ? (() => {
-                  const result = step.latestExecution?.result;
-                  if (
-                    !result ||
-                    (result.stepName !== FAILING_TEST_REPRO_STEP_NAME &&
-                      result.stepName !== FAILING_TEST_FIX_STEP_NAME)
-                  ) {
-                    return null;
-                  }
-
-                  const isExpanded = expandedStepName === step.stepName;
-                  const summary =
-                    result.stepName === FAILING_TEST_REPRO_STEP_NAME
-                      ? (result.summaryOfFindings?.trim() ?? null)
-                      : result.summaryOfFix?.trim() ||
-                        result.agentSummary?.trim() ||
-                        null;
-                  const outcomeLabel =
-                    result.stepName === FAILING_TEST_REPRO_STEP_NAME
-                      ? (result.outcome?.replaceAll("_", " ") ?? "pending")
-                      : (result.fixOperationOutcome?.replaceAll("_", " ") ??
-                        "pending");
-                  const canMerge =
-                    result.stepName === FAILING_TEST_REPRO_STEP_NAME &&
-                    (result.githubMergeStatus === "draft" ||
-                      result.githubMergeStatus === "open") &&
-                    typeof step.latestExecution?.id === "string";
-                  const mergeStepId = step.latestExecution?.id;
-
-                  return (
-                    <Stack spacing={1} sx={{ mt: 1, ml: 4 }}>
-                      <Button
-                        variant="contained"
-                        size="small"
-                        color="success"
-                        endIcon={isExpanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
-                        sx={{ justifyContent: "space-between", width: "fit-content", textTransform: "none" }}
-                        onClick={() =>
-                          setExpandedStepName(
-                            isExpanded ? null : step.stepName,
-                          )
-                        }
-                      >
-                        Outcome: {outcomeLabel}
-                      </Button>
-                      {canMerge && typeof mergeStepId === "string" ? (
+                    return (
+                      <Stack spacing={1} sx={{ mt: 1, ml: 4 }}>
                         <Button
-                          variant="outlined"
+                          variant="contained"
                           size="small"
-                          color="success"
-                          onClick={() => void onMergeFailingTest(mergeStepId)}
-                          disabled={actionLoading || detailLoading}
+                          color="primary"
+                          startIcon={getScoreRangeIcon(averageScore)}
+                          endIcon={isExpanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+                          sx={{ justifyContent: "space-between", width: "fit-content", textTransform: "none" }}
+                          onClick={() =>
+                            setExpandedStepName(
+                              isExpanded ? null : step.stepName,
+                            )
+                          }
                         >
-                          Merge
+                          Score: {formatScore(averageScore)} / 1
                         </Button>
-                      ) : null}
-                      <Collapse in={isExpanded}>
-                        <Stack spacing={0.75}>
-                          <Typography variant="caption" color="text.secondary">
-                            Summary: {summary ?? "No summary of findings provided for this run."}
-                          </Typography>
-                          <Typography variant="caption" color="text.secondary">
-                            Merge status: {result.githubMergeStatus}
-                          </Typography>
-                          {(result.stepName === FAILING_TEST_REPRO_STEP_NAME
-                            ? result.outcome
-                            : result.fixOperationOutcome) ? (
+                        <Collapse in={isExpanded}>
+                          <Stack spacing={0.75}>
+                            <Box sx={{ display: "flex", gap: 0.75, alignItems: "center" }}>
+                              {getScoreRangeIcon(result.stepsToReproduceScore)}
+                              <Typography variant="caption" color="text.secondary">
+                                Steps to reproduce: {formatScore(result.stepsToReproduceScore)} / 1
+                              </Typography>
+                            </Box>
+                            <Box sx={{ display: "flex", gap: 0.75, alignItems: "center" }}>
+                              {getScoreRangeIcon(result.expectedBehaviorScore)}
+                              <Typography variant="caption" color="text.secondary">
+                                Expected behavior: {formatScore(result.expectedBehaviorScore)} / 1
+                              </Typography>
+                            </Box>
+                            <Box sx={{ display: "flex", gap: 0.75, alignItems: "center" }}>
+                              {getScoreRangeIcon(result.observedBehaviorScore)}
+                              <Typography variant="caption" color="text.secondary">
+                                Observed behavior: {formatScore(result.observedBehaviorScore)} / 1
+                              </Typography>
+                            </Box>
                             <Typography variant="caption" color="text.secondary">
-                              Outcome: {result.stepName === FAILING_TEST_REPRO_STEP_NAME
+                              Explanation: {result.reasoning}
+                            </Typography>
+                          </Stack>
+                        </Collapse>
+                      </Stack>
+                    );
+                  })() : null}
+                  {step.stepName === TICKET_DUPLICATE_CANDIDATES_STEP_NAME ? (() => {
+                    const result = step.latestExecution?.result;
+                    if (
+                      !result ||
+                      result.stepName !== TICKET_DUPLICATE_CANDIDATES_STEP_NAME
+                    ) {
+                      return null;
+                    }
+
+                    const topCandidates = result.proposed.slice(0, 5);
+                    const isExpanded = expandedStepName === step.stepName;
+
+                    return (
+                      <Stack spacing={1} sx={{ mt: 1, ml: 4 }}>
+                        <Button
+                          variant="contained"
+                          size="small"
+                          color="secondary"
+                          endIcon={isExpanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+                          sx={{ justifyContent: "space-between", width: "fit-content", textTransform: "none" }}
+                          onClick={() =>
+                            setExpandedStepName(
+                              isExpanded ? null : step.stepName,
+                            )
+                          }
+                        >
+                          {topCandidates.length === 0
+                            ? "No candidates found"
+                            : `${topCandidates.length} candidate${topCandidates.length === 1 ? "" : "s"}`}
+                        </Button>
+                        <Collapse in={isExpanded}>
+                          <Stack spacing={0.75}>
+                            {topCandidates.length === 0 ? (
+                              <Typography variant="caption" color="text.secondary">
+                                No duplicate candidates found for this ticket.
+                              </Typography>
+                            ) : (
+                              topCandidates.map((candidate) => (
+                                <Typography
+                                  key={`${step.stepName}-${candidate.candidateTicketId}`}
+                                  variant="caption"
+                                  color="text.secondary"
+                                >
+                                  {candidate.candidateTicketId} · score {candidate.score.toFixed(4)}
+                                </Typography>
+                              ))
+                            )}
+                          </Stack>
+                        </Collapse>
+                      </Stack>
+                    );
+                  })() : null}
+                  {(step.stepName === FAILING_TEST_REPRO_STEP_NAME ||
+                    step.stepName === FAILING_TEST_FIX_STEP_NAME) ? (() => {
+                      const result = step.latestExecution?.result;
+                      if (
+                        !result ||
+                        (result.stepName !== FAILING_TEST_REPRO_STEP_NAME &&
+                          result.stepName !== FAILING_TEST_FIX_STEP_NAME)
+                      ) {
+                        return null;
+                      }
+
+                      const isExpanded = expandedStepName === step.stepName;
+                      const summary =
+                        result.stepName === FAILING_TEST_REPRO_STEP_NAME
+                          ? (result.summaryOfFindings?.trim() ?? null)
+                          : result.summaryOfFix?.trim() ||
+                          result.agentSummary?.trim() ||
+                          null;
+                      const outcomeLabel =
+                        result.stepName === FAILING_TEST_REPRO_STEP_NAME
+                          ? (result.outcome?.replaceAll("_", " ") ?? "pending")
+                          : (result.fixOperationOutcome?.replaceAll("_", " ") ??
+                            "pending");
+                      const canMerge =
+                        result.stepName === FAILING_TEST_REPRO_STEP_NAME &&
+                        (result.githubMergeStatus === "draft" ||
+                          result.githubMergeStatus === "open") &&
+                        typeof step.latestExecution?.id === "string";
+                      const mergeStepId = step.latestExecution?.id;
+
+                      return (
+                        <Stack spacing={1} sx={{ mt: 1, ml: 4 }}>
+                          <Button
+                            variant="contained"
+                            size="small"
+                            color="success"
+                            endIcon={isExpanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+                            sx={{ justifyContent: "space-between", width: "fit-content", textTransform: "none" }}
+                            onClick={() =>
+                              setExpandedStepName(
+                                isExpanded ? null : step.stepName,
+                              )
+                            }
+                          >
+                            Outcome: {outcomeLabel}
+                          </Button>
+                          {canMerge && typeof mergeStepId === "string" ? (
+                            <Button
+                              variant="outlined"
+                              size="small"
+                              color="success"
+                              onClick={() => void onMergeFailingTest(mergeStepId)}
+                              disabled={actionLoading || detailLoading}
+                            >
+                              Merge
+                            </Button>
+                          ) : null}
+                          <Collapse in={isExpanded}>
+                            <Stack spacing={0.75}>
+                              <Typography variant="caption" color="text.secondary">
+                                Summary: {summary ?? "No summary of findings provided for this run."}
+                              </Typography>
+                              <Typography variant="caption" color="text.secondary">
+                                Merge status: {result.githubMergeStatus}
+                              </Typography>
+                              {(result.stepName === FAILING_TEST_REPRO_STEP_NAME
                                 ? result.outcome
-                                : result.fixOperationOutcome}
-                            </Typography>
-                          ) : null}
-                          {typeof (result.stepName === FAILING_TEST_REPRO_STEP_NAME
-                            ? result.confidenceLevel
-                            : result.fixConfidenceLevel) === "number" ? (
-                            <Typography variant="caption" color="text.secondary">
-                              Confidence: {(result.stepName === FAILING_TEST_REPRO_STEP_NAME
+                                : result.fixOperationOutcome) ? (
+                                <Typography variant="caption" color="text.secondary">
+                                  Outcome: {result.stepName === FAILING_TEST_REPRO_STEP_NAME
+                                    ? result.outcome
+                                    : result.fixOperationOutcome}
+                                </Typography>
+                              ) : null}
+                              {typeof (result.stepName === FAILING_TEST_REPRO_STEP_NAME
                                 ? result.confidenceLevel
-                                : result.fixConfidenceLevel
-                              )?.toFixed(2)}
-                            </Typography>
-                          ) : null}
-                          {result.failureReason ? (
-                            <Typography variant="caption" color="text.secondary">
-                              Failure reason: {result.failureReason}
-                            </Typography>
-                          ) : null}
+                                : result.fixConfidenceLevel) === "number" ? (
+                                <Typography variant="caption" color="text.secondary">
+                                  Confidence: {(result.stepName === FAILING_TEST_REPRO_STEP_NAME
+                                    ? result.confidenceLevel
+                                    : result.fixConfidenceLevel
+                                  )?.toFixed(2)}
+                                </Typography>
+                              ) : null}
+                              {result.failureReason ? (
+                                <Typography variant="caption" color="text.secondary">
+                                  Failure reason: {result.failureReason}
+                                </Typography>
+                              ) : null}
+                            </Stack>
+                          </Collapse>
                         </Stack>
-                      </Collapse>
-                    </Stack>
-                  );
-                })() : null}
-                {index < timelineSteps.length - 1 ? <Divider sx={{ mt: 1 }} /> : null}
+                      );
+                    })() : null}
+                  {index < timelineSteps.length - 1 ? <Divider sx={{ mt: 1 }} /> : null}
                 </Box>
               );
             })}

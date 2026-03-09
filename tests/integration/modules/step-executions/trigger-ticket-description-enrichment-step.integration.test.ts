@@ -3,9 +3,7 @@ import { TicketAggregate } from "@/modules/tickets/domain/ticket-aggregate";
 import type { TicketIngestInput } from "@/modules/tickets/contracts/ticket-contracts";
 import { DrizzleTicketRepo } from "@/modules/tickets/infra/drizzle-ticket-repo";
 import { DrizzleStepExecutionRepo } from "@/modules/step-executions/infra/step-execution-repo";
-import {
-  TICKET_DESCRIPTION_ENRICHMENT_STEP_NAME,
-} from "@/modules/step-executions/domain/step-execution.types";
+import { TICKET_INVESTIGATION_STEP_NAME } from "@/modules/step-executions/domain/step-execution.types";
 import { triggerTicketDescriptionEnrichmentStep } from "@/modules/step-executions/ticket_description_enrichment/application/trigger-ticket-description-enrichment-step";
 import { TicketGithubIssueEntity } from "@/modules/tickets/domain/ticket-github-issue.entity";
 import { truncateTestTables } from "../../helpers/pgvector-test-db";
@@ -91,12 +89,9 @@ describe("triggerTicketDescriptionEnrichmentStep (integration)", () => {
       assignCopilot: vi.fn().mockResolvedValue(undefined),
     };
 
-    await upsertEnvironment(
-      "mem-9",
-      "us-east-1",
-      "https://mem-9-db.internal",
-      { environmentRepo },
-    );
+    await upsertEnvironment("mem-9", "us-east-1", "https://mem-9-db.internal", {
+      environmentRepo,
+    });
 
     const result = await triggerTicketDescriptionEnrichmentStep(
       { ticketId: "CV-951" },
@@ -114,7 +109,7 @@ describe("triggerTicketDescriptionEnrichmentStep (integration)", () => {
       /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i,
     );
     expect(result.data.stepExecution.stepName).toBe(
-      TICKET_DESCRIPTION_ENRICHMENT_STEP_NAME,
+      TICKET_INVESTIGATION_STEP_NAME,
     );
     expect(result.data.stepExecution.status).toBe("running");
     expect(result.data.stepExecution.endedAt).toBeNull();
@@ -154,10 +149,11 @@ describe("triggerTicketDescriptionEnrichmentStep (integration)", () => {
 
     expect(hoisted.requestMock).toHaveBeenCalledTimes(2);
 
-    const persistedExecutions = await stepExecutionRepo.loadByTicketId("CV-951");
+    const persistedExecutions =
+      await stepExecutionRepo.loadByTicketId("CV-951");
     expect(persistedExecutions).toHaveLength(1);
     expect(persistedExecutions[0].stepName).toBe(
-      TICKET_DESCRIPTION_ENRICHMENT_STEP_NAME,
+      TICKET_INVESTIGATION_STEP_NAME,
     );
     expect(persistedExecutions[0].status).toBe("running");
 
@@ -175,12 +171,9 @@ describe("triggerTicketDescriptionEnrichmentStep (integration)", () => {
       new TicketGithubIssueEntity("CV-951", 801, "I_kwDOFAKE801"),
     );
 
-    await upsertEnvironment(
-      "mem-9",
-      "us-east-1",
-      "https://mem-9-db.internal",
-      { environmentRepo },
-    );
+    await upsertEnvironment("mem-9", "us-east-1", "https://mem-9-db.internal", {
+      environmentRepo,
+    });
     hoisted.requestMock
       .mockResolvedValueOnce({
         data: {
@@ -227,7 +220,7 @@ describe("triggerTicketDescriptionEnrichmentStep (integration)", () => {
 
     const [savedExecution] = await stepExecutionRepo.loadByTicketId("CV-951");
     expect(savedExecution).toBeDefined();
-    expect(savedExecution.stepName).toBe(TICKET_DESCRIPTION_ENRICHMENT_STEP_NAME);
+    expect(savedExecution.stepName).toBe(TICKET_INVESTIGATION_STEP_NAME);
     expect(savedExecution.status).toBe("running");
   });
 });

@@ -57,7 +57,7 @@ export const completeTicketFailingTestReproStep = async (
 ): Promise<CompleteTicketFailingTestReproStepResponse> => {
   const input = completeTicketFailingTestReproStepRequestSchema.parse(rawInput);
 
-  const existingExecution = await stepExecutionRepo.load(input.pipelineId);
+  const existingExecution = await stepExecutionRepo.load(input.stepExecutionId);
   if (!existingExecution) {
     throw httpError("Pipeline step execution not found", 404);
   }
@@ -75,7 +75,7 @@ export const completeTicketFailingTestReproStep = async (
     );
   }
 
-  const ticket = await ticketRepo.loadById(input.ticketId, {
+  const ticket = await ticketRepo.loadById(existingExecution.ticketId, {
     loadGithubIssue: true,
   });
   if (!ticket?.githubIssue) {

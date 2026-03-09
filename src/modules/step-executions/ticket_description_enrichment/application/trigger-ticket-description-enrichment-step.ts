@@ -8,7 +8,7 @@ import {
 import { completeTicketDescriptionEnrichmentStepRequestBodySchema } from "@/modules/step-executions/ticket_description_enrichment/contracts/complete-ticket-description-enrichment-step-contracts";
 import { stepExecutionEntityToContract } from "@/modules/step-executions/application/step-execution-entity-to-contract";
 import {
-  TICKET_DESCRIPTION_ENRICHMENT_STEP_NAME,
+  TICKET_INVESTIGATION_STEP_NAME,
   TERMINAL_STEP_EXECUTION_STATUSES,
 } from "@/modules/step-executions/domain/step-execution.types";
 import type { GithubApiService } from "@/modules/step-executions/infra/github-copilot-coding-agent";
@@ -25,7 +25,7 @@ import { EnvironmentRepo } from "@/modules/environments/application/environment-
 import z from "zod";
 
 const WEBHOOK_PAYLOAD_PATH =
-  "tmp/copilot-ticket-description-enrichment-webhook-payload.json";
+  "tmp/copilot-ticket-investigation-webhook-payload.json";
 const TICKET_INVESTIGATION_AGENT = "ticket-investigation-agent";
 
 function buildCustomInstructions(ticketId: string, pipelineId: string): string {
@@ -191,7 +191,7 @@ export const triggerTicketDescriptionEnrichmentStep = async (
       `
 {
   "stepExecutionId": "${savedExecution.id}",
-  "stepName": "${TICKET_DESCRIPTION_ENRICHMENT_STEP_NAME}",
+  "stepName": "${TICKET_INVESTIGATION_STEP_NAME}",
   "dbHost": "${baseEnvironment.databaseHostUrl}"
 }
       `,

@@ -8,7 +8,7 @@ import {
   completeTicketDescriptionEnrichmentStepRequestQuerySchema,
   completeTicketDescriptionEnrichmentStepRequestSchema,
 } from "@/modules/step-executions/ticket_description_enrichment/contracts/complete-ticket-description-enrichment-step-contracts";
-import { TICKET_DESCRIPTION_ENRICHMENT_STEP_NAME } from "@/modules/step-executions/domain/step-execution.types";
+import { TICKET_INVESTIGATION_STEP_NAME } from "@/modules/step-executions/domain/step-execution.types";
 
 const hasValidApiKey = (request: Request): boolean => {
   const apiKey = request.headers.get("x-api-key");
@@ -40,9 +40,11 @@ export async function PUT(request: Request) {
   let rawQuery: {
     agentStatus: string | null;
     agentBranch: string | null;
+    stepExecutionId: string | null;
   } = {
     agentStatus: null,
     agentBranch: null,
+    stepExecutionId: null,
   };
 
   try {
@@ -50,6 +52,7 @@ export async function PUT(request: Request) {
     rawQuery = {
       agentStatus: url.searchParams.get("agentStatus"),
       agentBranch: url.searchParams.get("agentBranch"),
+      stepExecutionId: url.searchParams.get("stepExecutionId"),
     };
 
     const rawBodyText = await request.text();
@@ -76,7 +79,7 @@ export async function PUT(request: Request) {
           : rawQuery;
 
       await handleAiWebhookBadRequest(
-        TICKET_DESCRIPTION_ENRICHMENT_STEP_NAME,
+        TICKET_INVESTIGATION_STEP_NAME,
         recoveryPayload,
       );
     }

@@ -3,7 +3,7 @@ import { TicketPipelineStepExecutionEntity } from "@/modules/step-executions/dom
 import {
   type StepExecutionStepName,
   TICKET_DESCRIPTION_QUALITY_STEP_NAME,
-  TICKET_DESCRIPTION_ENRICHMENT_STEP_NAME,
+  TICKET_INVESTIGATION_STEP_NAME,
   TICKET_DUPLICATE_CANDIDATES_STEP_NAME,
   FAILING_TEST_REPRO_STEP_NAME,
   FAILING_TEST_FIX_STEP_NAME,
@@ -40,7 +40,7 @@ export async function processClaimedStepExecution(
         },
       );
       return;
-    case TICKET_DESCRIPTION_ENRICHMENT_STEP_NAME:
+    case TICKET_INVESTIGATION_STEP_NAME:
       await triggerTicketDescriptionEnrichmentStep(
         { ticketId },
         {

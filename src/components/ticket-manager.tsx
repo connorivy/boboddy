@@ -26,7 +26,7 @@ import { mergeFailingTest } from "@/modules/step-executions/github_fix_failing_t
 import {
   FAILING_TEST_FIX_STEP_NAME,
   FAILING_TEST_REPRO_STEP_NAME,
-  TICKET_DESCRIPTION_ENRICHMENT_STEP_NAME,
+  TICKET_INVESTIGATION_STEP_NAME,
   TICKET_DESCRIPTION_QUALITY_STEP_NAME,
   TICKET_DUPLICATE_CANDIDATES_STEP_NAME,
 } from "@/modules/step-executions/domain/step-execution.types";
@@ -88,7 +88,7 @@ export const TicketManager = ({ initialTickets }: TicketManagerProps) => {
         },
       },
       {
-        stepName: TICKET_DESCRIPTION_ENRICHMENT_STEP_NAME,
+        stepName: TICKET_INVESTIGATION_STEP_NAME,
         trigger: async (ticketId) => {
           const result = await queueTicketDescriptionEnrichmentStep({
             ticketId,

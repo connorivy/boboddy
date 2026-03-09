@@ -4,7 +4,7 @@ import { pipelineRuns, ticketStepExecutionsTph } from "@/lib/db/schema";
 import {
   FAILING_TEST_FIX_STEP_NAME,
   FAILING_TEST_REPRO_STEP_NAME,
-  TICKET_DESCRIPTION_ENRICHMENT_STEP_NAME,
+  TICKET_INVESTIGATION_STEP_NAME,
   TICKET_DESCRIPTION_QUALITY_STEP_NAME,
   TICKET_DUPLICATE_CANDIDATES_STEP_NAME,
 } from "@/modules/step-executions/domain/step-execution.types";
@@ -27,9 +27,7 @@ import {
 } from "../domain/step-execution-entity";
 import { DbExecutor } from "@/lib/db/db-executor";
 import { StepExecutionRepo } from "../application/step-execution-repo";
-import {
-  ticketDescriptionEnrichmentEvidenceFieldsSchema,
-} from "@/modules/step-executions/ticket_description_enrichment/shared/ticket-description-enrichment-result";
+import { ticketDescriptionEnrichmentEvidenceFieldsSchema } from "@/modules/step-executions/ticket_description_enrichment/shared/ticket-description-enrichment-result";
 
 function requiredField<T>(
   value: T | null | undefined,
@@ -265,21 +263,9 @@ function mapDescriptionQualityResultOrNull(
   }
 
   return new TicketDescriptionQualityStepResultEntity(
-    requiredField(
-      row.stepsToReproduceScore,
-      "stepsToReproduceScore",
-      context,
-    ),
-    requiredField(
-      row.expectedBehaviorScore,
-      "expectedBehaviorScore",
-      context,
-    ),
-    requiredField(
-      row.observedBehaviorScore,
-      "observedBehaviorScore",
-      context,
-    ),
+    requiredField(row.stepsToReproduceScore, "stepsToReproduceScore", context),
+    requiredField(row.expectedBehaviorScore, "expectedBehaviorScore", context),
+    requiredField(row.observedBehaviorScore, "observedBehaviorScore", context),
     requiredNonEmptyString(row.reasoning, "reasoning", context),
     requiredNonEmptyString(row.rawResponse, "rawResponse", context),
   );
@@ -299,7 +285,7 @@ function parseStringArray(value: unknown): string[] {
 function mapDescriptionEnrichmentResultOrNull(
   row: typeof ticketStepExecutionsTph.$inferSelect,
 ): TicketDescriptionEnrichmentStepResultEntity | null {
-  const context = `${TICKET_DESCRIPTION_ENRICHMENT_STEP_NAME} (execution ${row.id})`;
+  const context = `${TICKET_INVESTIGATION_STEP_NAME} (execution ${row.id})`;
   const hasResult = Boolean(row.summaryOfFindings && row.rawResultJson);
   if (!hasResult) {
     return null;
@@ -470,7 +456,7 @@ export class DrizzleStepExecutionRepo implements StepExecutionRepo {
       );
     }
 
-    if (row.type === TICKET_DESCRIPTION_ENRICHMENT_STEP_NAME) {
+    if (row.type === TICKET_INVESTIGATION_STEP_NAME) {
       return new TicketDescriptionEnrichmentStepExecutionEntity(
         row.pipelineId,
         ticketId,

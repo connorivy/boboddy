@@ -5,7 +5,7 @@ import {
   type CompleteTicketDescriptionEnrichmentStepRequest,
   type CompleteTicketDescriptionEnrichmentStepResponse,
 } from "@/modules/step-executions/ticket_description_enrichment/contracts/complete-ticket-description-enrichment-step-contracts";
-import { TICKET_DESCRIPTION_ENRICHMENT_STEP_NAME } from "@/modules/step-executions/domain/step-execution.types";
+import { TICKET_INVESTIGATION_STEP_NAME } from "@/modules/step-executions/domain/step-execution.types";
 import type { StepExecutionStatus } from "@/modules/tickets/contracts/ticket-contracts";
 import { httpError } from "@/lib/api/http";
 import { AppContext } from "@/lib/di";
@@ -44,21 +44,27 @@ export const completeTicketDescriptionEnrichmentStep = async (
   rawInput: CompleteTicketDescriptionEnrichmentStepRequest,
   { stepExecutionRepo }: { stepExecutionRepo: StepExecutionRepo } = AppContext,
 ): Promise<CompleteTicketDescriptionEnrichmentStepResponse> => {
-  const input = completeTicketDescriptionEnrichmentStepRequestSchema.parse(rawInput);
+  const input =
+    completeTicketDescriptionEnrichmentStepRequestSchema.parse(rawInput);
 
   const existingExecution = await stepExecutionRepo.load(input.pipelineId);
   if (!existingExecution) {
     throw httpError("Pipeline step execution not found", 404);
   }
 
-  if (existingExecution.stepName !== TICKET_DESCRIPTION_ENRICHMENT_STEP_NAME) {
+  if (existingExecution.stepName !== TICKET_INVESTIGATION_STEP_NAME) {
     throw httpError(
       "Pipeline step execution is not a ticket-description enrichment step",
       409,
     );
   }
 
-  if (!(existingExecution instanceof TicketDescriptionEnrichmentStepExecutionEntity)) {
+  if (
+    !(
+      existingExecution instanceof
+      TicketDescriptionEnrichmentStepExecutionEntity
+    )
+  ) {
     throw httpError(
       "Pipeline step execution payload is not a ticket-description enrichment result",
       409,

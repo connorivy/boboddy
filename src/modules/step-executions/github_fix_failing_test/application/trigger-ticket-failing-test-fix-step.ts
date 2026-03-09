@@ -23,26 +23,13 @@ import {
 import { TicketRepo } from "@/modules/tickets/application/jira-ticket-repo";
 import { StepExecutionRepo } from "@/modules/step-executions/application/step-execution-repo";
 import { TicketGitEnvironmentRepo } from "@/modules/environments/application/ticket-git-environment-repo";
-import z from "zod";
+import { EnvironmentRepo } from "@/modules/environments/application/environment-repo";
 
 const WEBHOOK_PAYLOAD_PATH = "tmp/copilot-fix-webhook-payload.json";
 
-function buildCustomInstructions(
-  ticketId: string,
-  pipelineId: string,
-  failingTestPaths: string[],
-): string {
-  const hardcodedTicketIdAndPipelineIdSchema =
-    completeTicketFailingTestFixStepRequestBodySchema
-      .omit({
-        ticketId: true,
-        pipelineId: true,
-      })
-      .extend({
-        ticketId: z.literal(ticketId),
-        pipelineId: z.literal(pipelineId),
-      });
-  const jsonSchema = hardcodedTicketIdAndPipelineIdSchema.toJSONSchema();
+function buildCustomInstructions(failingTestPaths: string[]): string {
+  const jsonSchema =
+    completeTicketFailingTestFixStepRequestBodySchema.toJSONSchema();
   const jsonSchemaText = JSON.stringify(jsonSchema, null, 2);
 
   return `You are fixing a bug described in the linked GitHub issue.
@@ -80,11 +67,13 @@ export const triggerTicketFailingTestFixStep = async (
   {
     ticketRepo,
     stepExecutionRepo,
+    environmentRepo,
     ticketGitEnvironmentRepo,
     githubService,
   }: {
     ticketRepo: TicketRepo;
     stepExecutionRepo: StepExecutionRepo;
+    environmentRepo: EnvironmentRepo;
     ticketGitEnvironmentRepo: TicketGitEnvironmentRepo;
     githubService: GithubApiService;
   } = AppContext,
@@ -160,8 +149,6 @@ export const triggerTicketFailingTestFixStep = async (
   let savedExecution = await stepExecutionRepo.save(execution);
 
   try {
-    const pipelineId = savedExecution.id;
-
     let githubIssue = ticket.githubIssue;
     if (githubIssue === undefined) {
       throw new Error(
@@ -186,13 +173,23 @@ export const triggerTicketFailingTestFixStep = async (
       await githubService.unassignCopilot(githubIssue.githubIssueNumber);
     }
 
+    const baseEnvironment = await environmentRepo.loadById(
+      ticketGitEnvironment.baseEnvironmentId,
+    );
+    if (!baseEnvironment) {
+      throw new Error(
+        `Base environment ${ticketGitEnvironment.baseEnvironmentId} not found`,
+      );
+    }
+
     await githubService.upsertFile(
       "boboddy-state.json",
       ticketGitEnvironment.devBranch,
       `
 {
-  "pipelineId": "${savedExecution.pipelineId}",
+  "stepExecutionId": "${savedExecution.id}",
   "stepName": "${FAILING_TEST_FIX_STEP_NAME}",
+  "dbHost": "${baseEnvironment.databaseHostUrl}"
 }
       `,
     );
@@ -200,11 +197,7 @@ export const triggerTicketFailingTestFixStep = async (
     await githubService.assignCopilot({
       issueNumber: githubIssue.githubIssueNumber,
       baseBranch: ticketGitEnvironment.devBranch,
-      customInstructions: buildCustomInstructions(
-        ticket.id,
-        pipelineId,
-        failingTestPaths,
-      ),
+      customInstructions: buildCustomInstructions(failingTestPaths),
     });
 
     savedExecution = await stepExecutionRepo.save(

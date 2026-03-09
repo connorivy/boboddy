@@ -91,13 +91,19 @@ describe("triggerTicketDescriptionEnrichmentStep (integration)", () => {
       assignCopilot: vi.fn().mockResolvedValue(undefined),
     };
 
-    await upsertEnvironment("mem-9", "us-east-1", { environmentRepo });
+    await upsertEnvironment(
+      "mem-9",
+      "us-east-1",
+      "https://mem-9-db.internal",
+      { environmentRepo },
+    );
 
     const result = await triggerTicketDescriptionEnrichmentStep(
       { ticketId: "CV-951" },
       {
         ticketRepo,
         stepExecutionRepo,
+        environmentRepo,
         ticketGitEnvironmentRepo,
         githubService: githubService as never,
       },
@@ -124,14 +130,13 @@ describe("triggerTicketDescriptionEnrichmentStep (integration)", () => {
     expect(githubService.upsertFile).toHaveBeenCalledWith(
       "boboddy-state.json",
       expect.stringMatching(/^ephemeral-MEM9-dev\d+$/),
-      expect.stringContaining(
-        `"stepName": "${TICKET_DESCRIPTION_ENRICHMENT_STEP_NAME}"`,
-      ),
+      expect.stringContaining('"dbHost": "https://mem-9-db.internal"'),
     );
     expect(githubService.assignCopilot).toHaveBeenCalledTimes(1);
     expect(githubService.assignCopilot).toHaveBeenCalledWith({
       issueNumber: 951,
       baseBranch: expect.stringMatching(/^ephemeral-MEM9-dev\d+$/),
+      customAgent: "ticket-description-enrichment-agent",
       customInstructions: expect.any(String),
     });
 
@@ -170,7 +175,12 @@ describe("triggerTicketDescriptionEnrichmentStep (integration)", () => {
       new TicketGithubIssueEntity("CV-951", 801, "I_kwDOFAKE801"),
     );
 
-    await upsertEnvironment("mem-9", "us-east-1", { environmentRepo });
+    await upsertEnvironment(
+      "mem-9",
+      "us-east-1",
+      "https://mem-9-db.internal",
+      { environmentRepo },
+    );
     hoisted.requestMock
       .mockResolvedValueOnce({
         data: {
@@ -196,6 +206,7 @@ describe("triggerTicketDescriptionEnrichmentStep (integration)", () => {
       {
         ticketRepo,
         stepExecutionRepo,
+        environmentRepo,
         ticketGitEnvironmentRepo,
         githubService: githubService as never,
       },
@@ -210,6 +221,7 @@ describe("triggerTicketDescriptionEnrichmentStep (integration)", () => {
     expect(githubService.assignCopilot).toHaveBeenCalledWith({
       issueNumber: 801,
       baseBranch: expect.stringMatching(/^ephemeral-MEM9-dev\d+$/),
+      customAgent: "ticket-description-enrichment-agent",
       customInstructions: expect.any(String),
     });
 

@@ -7,6 +7,7 @@ export class EnvironmentAggregate {
     public readonly area: EnvironmentArea,
     public readonly number: number,
     public readonly region: string,
+    public readonly databaseHostUrl: string,
     public numConsecutiveFailures: number = 0,
     public readonly lastChecked?: Date,
   ) {}

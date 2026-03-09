@@ -37,6 +37,7 @@ export const environmentResponseSchema = z.object({
   area: z.enum(ENVIRONMENT_AREAS),
   number: z.number().int().nonnegative(),
   region: z.string().min(1),
+  databaseHostUrl: z.url(),
   numConsecutiveFailures: z.number().int().nonnegative(),
   lastChecked: z.iso.datetime(),
 });
@@ -63,6 +64,12 @@ export const assignEnvironmentRequestSchema = z.object({
   ticketGitEnvironmentId: z.number().int().positive(),
 });
 
+export const upsertEnvironmentRequestSchema = z.object({
+  environmentId: environmentIdSchema,
+  region: z.string().trim().min(1),
+  databaseHostUrl: z.url(),
+});
+
 export type EnvironmentResponse = z.infer<typeof environmentResponseSchema>;
 export type TicketGitEnvironmentResponse = z.infer<
   typeof ticketGitEnvironmentResponseSchema
@@ -72,4 +79,7 @@ export type CreateEnvironmentRequest = z.infer<
 >;
 export type AssignEnvironmentRequest = z.infer<
   typeof assignEnvironmentRequestSchema
+>;
+export type UpsertEnvironmentRequest = z.infer<
+  typeof upsertEnvironmentRequestSchema
 >;

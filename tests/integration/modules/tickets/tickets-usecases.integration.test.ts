@@ -571,7 +571,15 @@ describe("tickets module use cases (integration)", () => {
       }),
     ]);
     await environmentRepo.save(
-      new EnvironmentAggregate("mem-2", "mem", 2, "us-east-1", 0, new Date()),
+      new EnvironmentAggregate(
+        "mem-2",
+        "mem",
+        2,
+        "us-east-1",
+        "https://mem-2-db.internal",
+        0,
+        new Date(),
+      ),
     );
 
     const savedEnvironment = await ticketGitEnvironmentRepo.save(
@@ -635,10 +643,26 @@ describe("tickets module use cases (integration)", () => {
       }),
     ]);
     await environmentRepo.save(
-      new EnvironmentAggregate("mem-3", "mem", 3, "us-east-1", 0, new Date()),
+      new EnvironmentAggregate(
+        "mem-3",
+        "mem",
+        3,
+        "us-east-1",
+        "https://mem-3-db.internal",
+        0,
+        new Date(),
+      ),
     );
     await environmentRepo.save(
-      new EnvironmentAggregate("mem-4", "mem", 4, "us-east-1", 0, new Date()),
+      new EnvironmentAggregate(
+        "mem-4",
+        "mem",
+        4,
+        "us-east-1",
+        "https://mem-4-db.internal",
+        0,
+        new Date(),
+      ),
     );
 
     const targetEnvironment = await ticketGitEnvironmentRepo.save(

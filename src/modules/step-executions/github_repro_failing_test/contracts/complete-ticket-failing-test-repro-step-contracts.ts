@@ -17,8 +17,6 @@ export const failingTestReproFeedbackRequestSchema = z.object({
 });
 
 export const completeTicketFailingTestReproStepRequestBodySchema = z.object({
-  ticketId: z.string().trim().min(1),
-  pipelineId: z.string().uuid(),
   reproduceOperationOutcome: z.enum([
     "reproduced",
     "not_reproducible",

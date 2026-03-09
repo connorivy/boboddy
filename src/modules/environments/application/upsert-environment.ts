@@ -11,6 +11,7 @@ export async function upsertEnvironment2(
   area: EnvironmentArea,
   number: number,
   region: string,
+  databaseHostUrl: string,
   { environmentRepo } = AppContext,
 ) {
   const environment = new EnvironmentAggregate(
@@ -18,6 +19,9 @@ export async function upsertEnvironment2(
     area,
     number,
     region,
+    databaseHostUrl,
+    0,
+    undefined,
   );
   await environmentRepo.save(environment);
 }
@@ -25,6 +29,7 @@ export async function upsertEnvironment2(
 export async function upsertEnvironment(
   environmentId: string,
   region: string,
+  databaseHostUrl: string,
   { environmentRepo }: { environmentRepo: EnvironmentRepo } = AppContext,
 ) {
   const { normalizedEnvironmentId, area, number } =
@@ -35,6 +40,9 @@ export async function upsertEnvironment(
     area,
     number,
     region,
+    databaseHostUrl,
+    0,
+    undefined,
   );
   await environmentRepo.save(environment);
 }

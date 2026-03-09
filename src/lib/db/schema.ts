@@ -169,6 +169,7 @@ export const environments = pgTable("environments", {
   area: environmentAreaEnum("area").notNull(),
   number: integer("number").notNull(),
   region: text("region").notNull().default("unknown"),
+  databaseHostUrl: text("database_host_url").notNull(),
   consecutiveFailures: integer("consecutive_failures").notNull().default(0),
   updatedAt: timestamp("updated_at", { withTimezone: true })
     .notNull()

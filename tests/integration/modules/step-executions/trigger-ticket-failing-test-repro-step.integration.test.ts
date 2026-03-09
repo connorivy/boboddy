@@ -89,12 +89,18 @@ describe("triggerTicketFailingTestReproStep (integration)", () => {
       assignCopilot: vi.fn().mockResolvedValue(undefined),
     };
 
-    await upsertEnvironment("mem-9", "us-east-1", { environmentRepo });
+    await upsertEnvironment(
+      "mem-9",
+      "us-east-1",
+      "https://mem-9-db.internal",
+      { environmentRepo },
+    );
     const result = await triggerTicketFailingTestReproStep(
       { ticketId: "CV-901" },
       {
         ticketRepo,
         stepExecutionRepo,
+        environmentRepo,
         ticketGitEnvironmentRepo,
         githubService: githubService as never,
       },
@@ -121,7 +127,7 @@ describe("triggerTicketFailingTestReproStep (integration)", () => {
     expect(githubService.upsertFile).toHaveBeenCalledWith(
       "boboddy-state.json",
       expect.stringMatching(/^ephemeral-MEM9-dev\d+$/),
-      expect.stringContaining(`"stepName": "${FAILING_TEST_REPRO_STEP_NAME}"`),
+      expect.stringContaining('"dbHost": "https://mem-9-db.internal"'),
     );
     expect(githubService.assignCopilot).toHaveBeenCalledTimes(1);
     expect(githubService.assignCopilot).toHaveBeenCalledWith({
@@ -179,7 +185,12 @@ describe("triggerTicketFailingTestReproStep (integration)", () => {
       new TicketGithubIssueEntity("CV-901", 801, "I_kwDOFAKE801"),
     );
 
-    await upsertEnvironment("mem-9", "us-east-1", { environmentRepo });
+    await upsertEnvironment(
+      "mem-9",
+      "us-east-1",
+      "https://mem-9-db.internal",
+      { environmentRepo },
+    );
     hoisted.requestMock
       .mockResolvedValueOnce({
         data: {
@@ -205,6 +216,7 @@ describe("triggerTicketFailingTestReproStep (integration)", () => {
       {
         ticketRepo,
         stepExecutionRepo,
+        environmentRepo,
         ticketGitEnvironmentRepo,
         githubService: githubService as never,
       },
@@ -220,7 +232,7 @@ describe("triggerTicketFailingTestReproStep (integration)", () => {
     expect(githubService.upsertFile).toHaveBeenCalledWith(
       "boboddy-state.json",
       expect.stringMatching(/^ephemeral-MEM9-dev\d+$/),
-      expect.stringContaining(`"stepName": "${FAILING_TEST_REPRO_STEP_NAME}"`),
+      expect.stringContaining('"dbHost": "https://mem-9-db.internal"'),
     );
     expect(githubService.assignCopilot).toHaveBeenCalledTimes(1);
     expect(githubService.assignCopilot).toHaveBeenCalledWith({

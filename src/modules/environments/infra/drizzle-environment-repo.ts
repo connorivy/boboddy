@@ -22,6 +22,7 @@ const rowToAggregate = (
     row.area,
     row.number,
     row.region,
+    row.databaseHostUrl,
     row.consecutiveFailures,
     row.updatedAt,
   );
@@ -50,12 +51,16 @@ export class DrizzleEnvironmentRepo implements EnvironmentRepo {
         area: environment.area,
         number: environment.number,
         region: environment.region,
+        databaseHostUrl: environment.databaseHostUrl,
         consecutiveFailures: environment.numConsecutiveFailures,
         updatedAt: environment.lastChecked,
       })
       .onConflictDoUpdate({
         target: environments.environmentKey,
         set: {
+          region: environment.region,
+          databaseHostUrl: environment.databaseHostUrl,
+          consecutiveFailures: environment.numConsecutiveFailures,
           updatedAt: environment.lastChecked ?? new Date(),
         },
       })

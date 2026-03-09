@@ -13,9 +13,7 @@ import {
 } from "@/modules/step-executions/domain/step-execution.types";
 import type { GithubApiService } from "@/modules/step-executions/infra/github-copilot-coding-agent";
 import { AppContext } from "@/lib/di";
-import {
-  TicketDescriptionEnrichmentStepExecutionEntity,
-} from "@/modules/step-executions/domain/step-execution-entity";
+import { TicketDescriptionEnrichmentStepExecutionEntity } from "@/modules/step-executions/domain/step-execution-entity";
 import { TicketGithubIssueEntity } from "@/modules/tickets/domain/ticket-github-issue.entity";
 import { assignDefaultEnvironment } from "@/modules/environments/application/assign-environment";
 import { TicketRepo } from "@/modules/tickets/application/jira-ticket-repo";
@@ -23,10 +21,13 @@ import { StepExecutionRepo } from "@/modules/step-executions/application/step-ex
 import { TicketGitEnvironmentAggregate } from "@/modules/environments/domain/ticket-git-environment-aggregate";
 import { TicketGitEnvironmentRepo } from "@/modules/environments/application/ticket-git-environment-repo";
 import { createTicketGitEnvironment } from "@/modules/environments/application/create-ticket-git-environment";
+import { EnvironmentRepo } from "@/modules/environments/application/environment-repo";
 import z from "zod";
 
 const WEBHOOK_PAYLOAD_PATH =
   "tmp/copilot-ticket-description-enrichment-webhook-payload.json";
+const TICKET_DESCRIPTION_ENRICHMENT_CUSTOM_AGENT =
+  "ticket-description-enrichment-agent";
 
 function buildCustomInstructions(ticketId: string, pipelineId: string): string {
   const hardcodedTicketIdAndPipelineIdSchema =
@@ -46,6 +47,8 @@ function buildCustomInstructions(ticketId: string, pipelineId: string): string {
   );
 
   return `You are investigating a support ticket to determine what actually happened.
+
+The repository custom agent assigned to this issue is responsible for Datadog and Postgres MCP access. Use those tools directly when they are available in the environment.
 
 Goal:
 1. Determine what happened using concrete evidence from code, logs, traces, Datadog sessions, and the database when available.
@@ -88,11 +91,13 @@ export const triggerTicketDescriptionEnrichmentStep = async (
   {
     ticketRepo,
     stepExecutionRepo,
+    environmentRepo,
     ticketGitEnvironmentRepo,
     githubService,
   }: {
     ticketRepo: TicketRepo;
     stepExecutionRepo: StepExecutionRepo;
+    environmentRepo: EnvironmentRepo;
     ticketGitEnvironmentRepo: TicketGitEnvironmentRepo;
     githubService: GithubApiService;
   } = AppContext,
@@ -172,13 +177,23 @@ export const triggerTicketDescriptionEnrichmentStep = async (
       );
     }
 
+    const baseEnvironment = await environmentRepo.loadById(
+      ticketGitEnvironment.baseEnvironmentId,
+    );
+    if (!baseEnvironment) {
+      throw new Error(
+        `Base environment ${ticketGitEnvironment.baseEnvironmentId} not found`,
+      );
+    }
+
     await githubService.upsertFile(
       "boboddy-state.json",
       ticketGitEnvironment.devBranch,
       `
 {
-  "pipelineId": "${savedExecution.pipelineId}",
-  "stepName": "${TICKET_DESCRIPTION_ENRICHMENT_STEP_NAME}"
+  "stepExecutionId": "${savedExecution.id}",
+  "stepName": "${TICKET_DESCRIPTION_ENRICHMENT_STEP_NAME}",
+  "dbHost": "${baseEnvironment.databaseHostUrl}"
 }
       `,
     );
@@ -186,6 +201,7 @@ export const triggerTicketDescriptionEnrichmentStep = async (
     await githubService.assignCopilot({
       issueNumber: githubIssue.githubIssueNumber,
       baseBranch: ticketGitEnvironment.devBranch,
+      customAgent: TICKET_DESCRIPTION_ENRICHMENT_CUSTOM_AGENT,
       customInstructions: buildCustomInstructions(
         input.ticketId,
         savedExecution.id,

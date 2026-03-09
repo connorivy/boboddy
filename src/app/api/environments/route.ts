@@ -1,13 +1,7 @@
 import { NextResponse } from "next/server";
-import { z } from "zod";
 import { handleRouteError, ok } from "@/lib/api/http";
 import { upsertEnvironment } from "@/modules/environments/application/upsert-environment";
-import { environmentIdSchema } from "@/modules/environments/contracts/environment-contracts";
-
-const upsertEnvironmentRequestSchema = z.object({
-  environmentId: environmentIdSchema,
-  region: z.string().trim().min(1),
-});
+import { upsertEnvironmentRequestSchema } from "@/modules/environments/contracts/environment-contracts";
 
 const hasValidApiKey = (request: Request): boolean => {
   const apiKey = request.headers.get("x-api-key");
@@ -22,7 +16,11 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
     const parsedBody = upsertEnvironmentRequestSchema.parse(body);
-    await upsertEnvironment(parsedBody.environmentId, parsedBody.region);
+    await upsertEnvironment(
+      parsedBody.environmentId,
+      parsedBody.region,
+      parsedBody.databaseHostUrl,
+    );
 
     return ok({ success: true, environmentId: parsedBody.environmentId });
   } catch (error) {

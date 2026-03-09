@@ -19,6 +19,7 @@ export type AssignCopilotInput = {
   issueNumber: number;
   baseBranch: string;
   customInstructions: string;
+  customAgent?: string;
 };
 
 const COPILOT_MODEL = "gpt-5.3-codex";
@@ -112,6 +113,9 @@ export class GithubApiService {
           base_branch: input.baseBranch,
           model: COPILOT_MODEL,
           custom_instructions: input.customInstructions,
+          ...(input.customAgent
+            ? { custom_agent: input.customAgent }
+            : {}),
         },
         headers: {
           accept: "application/vnd.github+json",

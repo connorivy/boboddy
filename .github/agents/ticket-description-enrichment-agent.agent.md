@@ -15,31 +15,35 @@ mcp-servers:
     command: npx
     args:
       - -y
-      - '@winor30/mcp-server-datadog'
+      - "@winor30/mcp-server-datadog"
     tools:
-      - '*'
+      - "*"
     env:
       DATADOG_API_KEY: ${{ secrets.COPILOT_MCP_DATADOG_API_KEY }}
       DATADOG_APP_KEY: ${{ secrets.COPILOT_MCP_DATADOG_APP_KEY }}
-      DATADOG_SITE: ${{ secrets.COPILOT_MCP_DATADOG_SITE }}
-      DATADOG_SUBDOMAIN: ${{ secrets.COPILOT_MCP_DATADOG_SUBDOMAIN }}
-      DATADOG_STORAGE_TIER: ${{ secrets.COPILOT_MCP_DATADOG_STORAGE_TIER }}
+      DATADOG_SITE: ${{ vars.COPILOT_MCP_DATADOG_SITE }}
+      DATADOG_SUBDOMAIN: ${{ vars.COPILOT_MCP_DATADOG_SUBDOMAIN }}
   pg_local:
     type: local
-    command: npx
+    command: node
     args:
-      - -y
-      - '@modelcontextprotocol/server-postgres'
+      - scripts/run-ticket-postgres-mcp.js
     tools:
-      - '*'
+      - "*"
     env:
-      DATABASE_URL: ${{ secrets.COPILOT_MCP_POSTGRES_CONNECTION_STRING }}
+      POSTGRES_USERNAME: ${{ vars.COPILOT_MCP_POSTGRES_USERNAME }}
+      POSTGRES_PASSWORD: ${{ secrets.COPILOT_MCP_POSTGRES_PASSWORD }}
+      POSTGRES_DATABASE: ${{ vars.COPILOT_MCP_POSTGRES_DATABASE }}
+      POSTGRES_PORT: ${{ vars.COPILOT_MCP_POSTGRES_PORT }}
 ---
 
 You are a ticket description enrichment specialist.
 
 Your responsibilities:
 - Investigate code, database state, and Datadog telemetry to determine what actually happened.
+- Use the bundled MCP servers directly:
+  - `datadog` for logs, traces, and RUM/session data.
+  - `pg_local` for Postgres queries against the application database.
 - Focus on user IDs, company IDs/names, routes/endpoints, request IDs, trace IDs, exception messages, and concrete code units involved.
 - Identify and record API routes, frontend routes, methods, classes, modules, and frontend components that are likely part of the failing flow.
 - Use the Postgres MCP server when relevant to inspect entities directly and include pertinent row fields such as IDs, state, created/updated timestamps, ownership, and linkage fields.

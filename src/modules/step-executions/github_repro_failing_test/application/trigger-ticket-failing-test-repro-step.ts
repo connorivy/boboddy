@@ -26,25 +26,13 @@ import { TicketRepo } from "@/modules/tickets/application/jira-ticket-repo";
 import { StepExecutionRepo } from "@/modules/step-executions/application/step-execution-repo";
 import { TicketGitEnvironmentRepo } from "@/modules/environments/application/ticket-git-environment-repo";
 import { createTicketGitEnvironment } from "@/modules/environments/application/create-ticket-git-environment";
+import { EnvironmentRepo } from "@/modules/environments/application/environment-repo";
 
 const WEBHOOK_PAYLOAD_PATH = "tmp/copilot-repro-webhook-payload.json";
 
-function buildCustomInstructions(
-  ticketId: string,
-  pipelineId: string,
-  enrichmentContext: string | null,
-): string {
-  const hardcodedTicketIdAndPipelineIdSchema =
-    completeTicketFailingTestReproStepRequestBodySchema
-      .omit({
-        ticketId: true,
-        pipelineId: true,
-      })
-      .extend({
-        ticketId: z.literal(ticketId),
-        pipelineId: z.literal(pipelineId),
-      });
-  const jsonSchema = hardcodedTicketIdAndPipelineIdSchema.toJSONSchema();
+function buildCustomInstructions(enrichmentContext: string | null): string {
+  const jsonSchema =
+    completeTicketFailingTestReproStepRequestBodySchema.toJSONSchema();
   const jsonSchemaText = JSON.stringify(jsonSchema, null, 2);
   return `You are reproducing a bug from the linked GitHub issue.
 
@@ -86,11 +74,13 @@ export const triggerTicketFailingTestReproStep = async (
   {
     ticketRepo,
     stepExecutionRepo,
+    environmentRepo,
     ticketGitEnvironmentRepo,
     githubService,
   }: {
     ticketRepo: TicketRepo;
     stepExecutionRepo: StepExecutionRepo;
+    environmentRepo: EnvironmentRepo;
     ticketGitEnvironmentRepo: TicketGitEnvironmentRepo;
     githubService: GithubApiService;
   } = AppContext,
@@ -170,6 +160,15 @@ export const triggerTicketFailingTestReproStep = async (
       );
     }
 
+    const baseEnvironment = await environmentRepo.loadById(
+      ticketGitEnvironment.baseEnvironmentId,
+    );
+    if (!baseEnvironment) {
+      throw new Error(
+        `Base environment ${ticketGitEnvironment.baseEnvironmentId} not found`,
+      );
+    }
+
     const baseBranch = ticketGitEnvironment.devBranch;
     const latestEnrichmentStep = ticket.getLatestPipelineStep(
       TICKET_DESCRIPTION_ENRICHMENT_STEP_NAME,
@@ -197,8 +196,9 @@ export const triggerTicketFailingTestReproStep = async (
       baseBranch,
       `
 {
-  "pipelineId": "${savedExecution.pipelineId}",
+  "stepExecutionId": "${savedExecution.id}",
   "stepName": "${FAILING_TEST_REPRO_STEP_NAME}",
+  "dbHost": "${baseEnvironment.databaseHostUrl}"
 }
       `,
     );
@@ -206,11 +206,7 @@ export const triggerTicketFailingTestReproStep = async (
     await githubService.assignCopilot({
       issueNumber: githubIssue.githubIssueNumber,
       baseBranch,
-      customInstructions: buildCustomInstructions(
-        input.ticketId,
-        savedExecution.id,
-        enrichmentContext,
-      ),
+      customInstructions: buildCustomInstructions(enrichmentContext),
     });
 
     savedExecution = await stepExecutionRepo.save(

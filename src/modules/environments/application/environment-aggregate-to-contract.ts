@@ -13,6 +13,7 @@ export const environmentAggregateToContract = (
     area: environment.area,
     number: environment.number,
     region: environment.region,
+    databaseHostUrl: environment.databaseHostUrl,
     numConsecutiveFailures: environment.numConsecutiveFailures,
     lastChecked: environment.lastChecked.toISOString(),
   };

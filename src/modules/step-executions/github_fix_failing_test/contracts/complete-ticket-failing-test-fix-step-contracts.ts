@@ -3,8 +3,6 @@ import { stepExecutionContractSchema } from "@/modules/step-executions/contracts
 import { agentStatusEnum } from "@/modules/step-executions/github_repro_failing_test/contracts/complete-ticket-failing-test-repro-step-contracts";
 
 export const completeTicketFailingTestFixStepRequestBodySchema = z.object({
-  ticketId: z.string().trim().min(1),
-  pipelineId: z.string().uuid(),
   fixOperationOutcome: z.enum([
     "fixed",
     "not_fixed",

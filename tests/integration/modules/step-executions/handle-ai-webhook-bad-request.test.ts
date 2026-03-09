@@ -22,7 +22,6 @@ describe("handleAiWebhookBadRequest", () => {
       "CV-100",
       "CV-100",
       "running",
-      "repro:CV-100:1",
       new FailingTestReproStepResultEntity(
         "draft",
         123,
@@ -100,7 +99,6 @@ describe("handleAiWebhookBadRequest", () => {
       "CV-101",
       "CV-101",
       "running",
-      "fix:CV-101:1",
       new FailingTestFixStepResultEntity(
         "open",
         991,
@@ -191,7 +189,6 @@ describe("handleAiWebhookBadRequest", () => {
       "CV-102",
       "CV-102",
       "running",
-      "enrich:CV-102:1",
       new TicketDescriptionEnrichmentStepResultEntity(
         "Need corrected payload",
         "enriched description",

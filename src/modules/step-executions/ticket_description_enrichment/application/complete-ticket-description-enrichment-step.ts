@@ -72,7 +72,6 @@ export const completeTicketDescriptionEnrichmentStep = async (
       existingExecution.pipelineId,
       existingExecution.ticketId,
       resolveStatus(input),
-      existingExecution.idempotencyKey,
       new TicketDescriptionEnrichmentStepResultEntity(
         input.summaryOfEnrichment,
         input.enrichedTicketDescription,

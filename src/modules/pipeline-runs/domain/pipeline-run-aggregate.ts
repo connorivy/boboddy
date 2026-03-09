@@ -1,11 +1,7 @@
-import { randomUUID } from "node:crypto";
 import {
   TicketDescriptionQualityStepExecutionEntity,
   TicketPipelineStepExecutionEntity,
 } from "@/modules/step-executions/domain/step-execution-entity";
-import {
-  TICKET_DESCRIPTION_QUALITY_STEP_NAME,
-} from "@/modules/step-executions/domain/step-execution.types";
 
 export class PipelineRunEntity {
   constructor(
@@ -27,7 +23,6 @@ export class PipelineRunEntity {
       id,
       ticketId,
       "queued",
-      `${TICKET_DESCRIPTION_QUALITY_STEP_NAME}:${id}:${randomUUID()}`,
       null,
       queuedAt.toISOString(),
     );

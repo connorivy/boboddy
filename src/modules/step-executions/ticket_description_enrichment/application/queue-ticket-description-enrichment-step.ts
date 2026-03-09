@@ -1,19 +1,19 @@
 "use server";
 
 import {
-  queueTicketDescriptionQualityStepRequestSchema,
-  queueTicketDescriptionQualityStepResponseSchema,
-  type QueueTicketDescriptionQualityStepRequest,
-  type QueueTicketDescriptionQualityStepResponse,
-} from "@/modules/step-executions/ticket_description_quality_rank/contracts/queue-ticket-description-quality-step-contracts";
+  queueTicketDescriptionEnrichmentStepRequestSchema,
+  queueTicketDescriptionEnrichmentStepResponseSchema,
+  type QueueTicketDescriptionEnrichmentStepRequest,
+  type QueueTicketDescriptionEnrichmentStepResponse,
+} from "@/modules/step-executions/ticket_description_enrichment/contracts/queue-ticket-description-enrichment-step-contracts";
 import { stepExecutionEntityToContract } from "@/modules/step-executions/application/step-execution-entity-to-contract";
 import { AppContext } from "@/lib/di";
-import { TicketDescriptionQualityStepExecutionEntity } from "@/modules/step-executions/domain/step-execution-entity";
+import { TicketDescriptionEnrichmentStepExecutionEntity } from "@/modules/step-executions/domain/step-execution-entity";
 import type { TicketRepo } from "@/modules/tickets/application/jira-ticket-repo";
 import type { StepExecutionRepo } from "@/modules/step-executions/application/step-execution-repo";
 
-export const queueTicketDescriptionQualityStep = async (
-  rawInput: QueueTicketDescriptionQualityStepRequest,
+export const queueTicketDescriptionEnrichmentStep = async (
+  rawInput: QueueTicketDescriptionEnrichmentStepRequest,
   {
     ticketRepo,
     stepExecutionRepo,
@@ -21,8 +21,9 @@ export const queueTicketDescriptionQualityStep = async (
     ticketRepo: Pick<TicketRepo, "loadById">;
     stepExecutionRepo: StepExecutionRepo;
   } = AppContext,
-): Promise<QueueTicketDescriptionQualityStepResponse> => {
-  const input = queueTicketDescriptionQualityStepRequestSchema.parse(rawInput);
+): Promise<QueueTicketDescriptionEnrichmentStepResponse> => {
+  const input =
+    queueTicketDescriptionEnrichmentStepRequestSchema.parse(rawInput);
 
   const ticket = await ticketRepo.loadById(input.ticketId);
   if (!ticket) {
@@ -30,7 +31,7 @@ export const queueTicketDescriptionQualityStep = async (
   }
 
   const queuedAt = new Date().toISOString();
-  const execution = new TicketDescriptionQualityStepExecutionEntity(
+  const execution = new TicketDescriptionEnrichmentStepExecutionEntity(
     null,
     input.ticketId,
     "queued",
@@ -40,7 +41,7 @@ export const queueTicketDescriptionQualityStep = async (
 
   const savedExecution = await stepExecutionRepo.save(execution);
 
-  return queueTicketDescriptionQualityStepResponseSchema.parse({
+  return queueTicketDescriptionEnrichmentStepResponseSchema.parse({
     ok: true,
     data: {
       stepExecution: stepExecutionEntityToContract(savedExecution),

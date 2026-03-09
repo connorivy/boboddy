@@ -283,7 +283,6 @@ describe("tickets module use cases (integration)", () => {
         "CV-321",
         "CV-321",
         "succeeded",
-        "desc-quality:CV-321:1",
         new TicketDescriptionQualityStepResultEntity(
           5,
           5,
@@ -300,7 +299,6 @@ describe("tickets module use cases (integration)", () => {
         "CV-322",
         "CV-322",
         "succeeded",
-        "desc-quality:CV-322:1",
         new TicketDescriptionQualityStepResultEntity(
           3,
           3,
@@ -317,7 +315,6 @@ describe("tickets module use cases (integration)", () => {
         "CV-323",
         "CV-323",
         "succeeded",
-        "desc-quality:CV-323:1",
         new TicketDescriptionQualityStepResultEntity(
           4,
           4,
@@ -382,7 +379,6 @@ describe("tickets module use cases (integration)", () => {
         "CV-311",
         "CV-311",
         "queued",
-        "desc-quality:CV-311:1",
         null,
         "2026-02-01T10:00:00.000Z",
       ),
@@ -394,7 +390,6 @@ describe("tickets module use cases (integration)", () => {
         "CV-311",
         "CV-311",
         "running",
-        "desc-quality:CV-311:2",
         null,
         "2026-02-01T10:05:00.000Z",
       ),
@@ -406,7 +401,6 @@ describe("tickets module use cases (integration)", () => {
         "CV-312",
         "CV-312",
         "succeeded",
-        "desc-quality:CV-312:1",
         new TicketDescriptionQualityStepResultEntity(
           4,
           4,
@@ -423,7 +417,6 @@ describe("tickets module use cases (integration)", () => {
         "CV-314",
         "CV-314",
         "running",
-        "dupe-search:CV-314:1",
         null,
         "2026-02-01T10:15:00.000Z",
       ),
@@ -489,7 +482,6 @@ describe("tickets module use cases (integration)", () => {
         "CV-401",
         "CV-401",
         "queued",
-        "desc-quality:CV-401:1",
         null,
         "2026-02-01T10:00:00.000Z",
       ),
@@ -500,7 +492,6 @@ describe("tickets module use cases (integration)", () => {
         descriptionExecution.pipelineId,
         descriptionExecution.ticketId,
         "succeeded",
-        descriptionExecution.idempotencyKey,
         new TicketDescriptionQualityStepResultEntity(
           4,
           5,
@@ -521,7 +512,6 @@ describe("tickets module use cases (integration)", () => {
         "CV-401",
         "CV-401",
         "queued",
-        "dupe-search:CV-401:1",
         null,
         "2026-02-01T10:05:00.000Z",
       ),
@@ -532,7 +522,6 @@ describe("tickets module use cases (integration)", () => {
         duplicateExecution.pipelineId,
         duplicateExecution.ticketId,
         "succeeded",
-        duplicateExecution.idempotencyKey,
         new TicketDuplicateCandidatesResultEntity(
           [new TicketDuplicateCandidateResultItemEntity("CV-402", 0.93)],
           [],

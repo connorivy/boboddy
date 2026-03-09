@@ -150,7 +150,6 @@ export const stepExecutionContractSchema = z.object({
   pipelineId: z.string().min(1),
   stepName: z.string().min(1),
   status: stepExecutionStatusEnumSchema,
-  idempotencyKey: z.string().min(1),
   startedAt: z.iso.datetime(),
   endedAt: z.iso.datetime().nullable(),
   createdAt: z.iso.datetime(),

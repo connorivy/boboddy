@@ -226,7 +226,6 @@ export const stepExecutionEntityToContract = (
     pipelineId: stepExecution.pipelineId ?? stepExecution.ticketId,
     stepName: stepExecution.stepName,
     status: stepExecution.status,
-    idempotencyKey: stepExecution.idempotencyKey,
     startedAt: stepExecution.startedAt,
     endedAt: stepExecution.endedAt ?? null,
     createdAt: stepExecution.createdAt,

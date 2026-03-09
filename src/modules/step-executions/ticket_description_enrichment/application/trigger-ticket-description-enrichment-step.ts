@@ -1,6 +1,4 @@
 "use server";
-
-import { randomUUID } from "node:crypto";
 import {
   triggerTicketDescriptionEnrichmentStepRequestSchema,
   triggerTicketDescriptionEnrichmentStepResponseSchema,
@@ -10,7 +8,6 @@ import {
 import { stepExecutionEntityToContract } from "@/modules/step-executions/application/step-execution-entity-to-contract";
 import {
   TERMINAL_STEP_EXECUTION_STATUSES,
-  TICKET_DESCRIPTION_ENRICHMENT_STEP_NAME,
 } from "@/modules/step-executions/domain/step-execution.types";
 import { CodexCliTicketDescriptionEnrichmentAi } from "@/modules/step-executions/ticket_description_enrichment/infra/ticket-description-enrichment-ai";
 import { AppContext } from "@/lib/di";
@@ -52,7 +49,6 @@ export const triggerTicketDescriptionEnrichmentStep = async (
     input.ticketId,
     input.ticketId,
     "running",
-    `${TICKET_DESCRIPTION_ENRICHMENT_STEP_NAME}:${input.ticketId}:${randomUUID()}`,
     null,
     now,
   );
@@ -78,7 +74,6 @@ export const triggerTicketDescriptionEnrichmentStep = async (
         savedExecution.pipelineId,
         savedExecution.ticketId,
         "succeeded",
-        savedExecution.idempotencyKey,
         new TicketDescriptionEnrichmentStepResultEntity(
           aiResult.summaryOfEnrichment,
           aiResult.enrichedTicketDescription,
@@ -108,7 +103,6 @@ export const triggerTicketDescriptionEnrichmentStep = async (
           savedExecution.pipelineId,
           savedExecution.ticketId,
           "failed",
-          savedExecution.idempotencyKey,
           null,
           savedExecution.startedAt,
           new Date().toISOString(),

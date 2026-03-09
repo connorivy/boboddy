@@ -18,10 +18,10 @@ import type {
 } from "@/modules/tickets/contracts/ticket-contracts";
 import { loadTicketDetail as loadTicketDetailAction, searchTickets } from "@/modules/tickets/application/get-tickets";
 import { queueTicketDescriptionQualityStep } from "@/modules/step-executions/ticket_description_quality_rank/application/queue-ticket-description-quality-step";
-import { triggerTicketDescriptionEnrichmentStep } from "@/modules/step-executions/ticket_description_enrichment/application/trigger-ticket-description-enrichment-step";
-import { triggerTicketDuplicateCandidatesStep } from "@/modules/step-executions/ticket_duplicate_candidates/application/trigger-ticket-duplicate-candidates-step";
-import { triggerTicketFailingTestReproStep } from "@/modules/step-executions/github_repro_failing_test/application/trigger-ticket-failing-test-repro-step";
-import { triggerTicketFailingTestFixStep } from "@/modules/step-executions/github_fix_failing_test/application/trigger-ticket-failing-test-fix-step";
+import { queueTicketDescriptionEnrichmentStep } from "@/modules/step-executions/ticket_description_enrichment/application/queue-ticket-description-enrichment-step";
+import { queueTicketDuplicateCandidatesStep } from "@/modules/step-executions/ticket_duplicate_candidates/application/queue-ticket-duplicate-candidates-step";
+import { queueTicketFailingTestReproStep } from "@/modules/step-executions/github_repro_failing_test/application/queue-ticket-failing-test-repro-step";
+import { queueTicketFailingTestFixStep } from "@/modules/step-executions/github_fix_failing_test/application/queue-ticket-failing-test-fix-step";
 import { mergeFailingTest } from "@/modules/step-executions/github_fix_failing_test/application/merge-failing-test";
 import {
   FAILING_TEST_FIX_STEP_NAME,
@@ -90,7 +90,7 @@ export const TicketManager = ({ initialTickets }: TicketManagerProps) => {
       {
         stepName: TICKET_DESCRIPTION_ENRICHMENT_STEP_NAME,
         trigger: async (ticketId) => {
-          const result = await triggerTicketDescriptionEnrichmentStep({
+          const result = await queueTicketDescriptionEnrichmentStep({
             ticketId,
           });
           return {
@@ -102,7 +102,7 @@ export const TicketManager = ({ initialTickets }: TicketManagerProps) => {
       {
         stepName: TICKET_DUPLICATE_CANDIDATES_STEP_NAME,
         trigger: async (ticketId) => {
-          const result = await triggerTicketDuplicateCandidatesStep({
+          const result = await queueTicketDuplicateCandidatesStep({
             ticketId,
           });
           return {
@@ -114,7 +114,7 @@ export const TicketManager = ({ initialTickets }: TicketManagerProps) => {
       {
         stepName: FAILING_TEST_REPRO_STEP_NAME,
         trigger: async (ticketId) => {
-          const result = await triggerTicketFailingTestReproStep({
+          const result = await queueTicketFailingTestReproStep({
             ticketId,
           });
           return {
@@ -125,23 +125,17 @@ export const TicketManager = ({ initialTickets }: TicketManagerProps) => {
       },
       {
         stepName: FAILING_TEST_FIX_STEP_NAME,
-        trigger: async () => {
-          const ticketNumber = ticketDetail?.ticket.ticketNumber;
-          if (!ticketNumber) {
-            throw new Error("Ticket number is required to run this step");
-          }
-
+        trigger: async (ticketId) => {
           const ticketGitEnvironmentId =
             ticketDetail?.ticket.defaultGitEnvironmentId;
           if (!ticketGitEnvironmentId) {
             throw new Error(
-              "Set a default Git environment before triggering this step",
+              "Set a default Git environment before queueing this step",
             );
           }
 
-          const result = await triggerTicketFailingTestFixStep({
-            ticketNumber,
-            ticketGitEnvironmentId,
+          const result = await queueTicketFailingTestFixStep({
+            ticketId,
           });
           return {
             ok: true,
@@ -250,10 +244,10 @@ export const TicketManager = ({ initialTickets }: TicketManagerProps) => {
 
       const result = await stepDefinition.trigger(selectedTicketId);
       if (!result.ok) {
-        throw new Error(result.error ?? `Could not trigger step ${stepDefinition.stepName}`);
+        throw new Error(result.error ?? `Could not queue step ${stepDefinition.stepName}`);
       }
 
-      setOperationMessage(`Triggered ${stepDefinition.stepName}: ${result.data.message}`);
+      setOperationMessage(`Queued ${stepDefinition.stepName}: ${result.data.message}`);
       await loadTicketDetail(selectedTicketId);
     } catch (runError) {
       setDetailError(runError instanceof Error ? runError.message : "Unexpected error");

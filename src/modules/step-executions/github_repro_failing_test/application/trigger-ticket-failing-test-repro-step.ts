@@ -1,6 +1,4 @@
 "use server";
-
-import { randomUUID } from "node:crypto";
 import {
   triggerTicketFailingTestReproStepRequestSchema,
   triggerTicketFailingTestReproStepResponseSchema,
@@ -9,7 +7,6 @@ import {
 } from "@/modules/step-executions/github_repro_failing_test/contracts/trigger-ticket-failing-test-repro-step-contracts";
 import { stepExecutionEntityToContract } from "@/modules/step-executions/application/step-execution-entity-to-contract";
 import {
-  FAILING_TEST_REPRO_STEP_NAME,
   TERMINAL_STEP_EXECUTION_STATUSES,
   TICKET_DESCRIPTION_ENRICHMENT_STEP_NAME,
 } from "@/modules/step-executions/domain/step-execution.types";
@@ -76,7 +73,7 @@ Rules for fields:
 - ticketId and pipelineId must match exactly.
 
 Required final action:
-- Overwrite ${WEBHOOK_PAYLOAD_PATH} with valid JSON matching this schema exactly:
+- Create ${WEBHOOK_PAYLOAD_PATH} with valid JSON matching this schema exactly:
 ${jsonSchemaText}
 - No markdown, no comments, no trailing commas.
 - Ensure the file is present even on failure paths.
@@ -116,7 +113,6 @@ export const triggerTicketFailingTestReproStep = async (
     input.ticketId,
     input.ticketId,
     "running",
-    `${FAILING_TEST_REPRO_STEP_NAME}:${input.ticketId}:${randomUUID()}`,
     null,
     now,
   );
@@ -177,11 +173,13 @@ export const triggerTicketFailingTestReproStep = async (
     }
 
     const baseBranch = ticketGitEnvironment.devBranch;
-    const latestEnrichmentStep = ticket
-      .getLatestPipelineStep(TICKET_DESCRIPTION_ENRICHMENT_STEP_NAME);
+    const latestEnrichmentStep = ticket.getLatestPipelineStep(
+      TICKET_DESCRIPTION_ENRICHMENT_STEP_NAME,
+    );
     let enrichmentContext: string | null = null;
     if (
-      latestEnrichmentStep instanceof TicketDescriptionEnrichmentStepExecutionEntity &&
+      latestEnrichmentStep instanceof
+        TicketDescriptionEnrichmentStepExecutionEntity &&
       latestEnrichmentStep.status === "succeeded" &&
       latestEnrichmentStep.result
     ) {
@@ -211,7 +209,6 @@ export const triggerTicketFailingTestReproStep = async (
         savedExecution.pipelineId,
         savedExecution.ticketId,
         savedExecution.status,
-        savedExecution.idempotencyKey,
         null,
         savedExecution.startedAt,
         savedExecution.endedAt,
@@ -227,7 +224,6 @@ export const triggerTicketFailingTestReproStep = async (
           savedExecution.pipelineId,
           savedExecution.ticketId,
           "failed",
-          savedExecution.idempotencyKey,
           null,
           savedExecution.startedAt,
           new Date().toISOString(),

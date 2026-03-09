@@ -5,7 +5,6 @@ import {
   type TriggerTicketDescriptionQualityStepResponse,
 } from "@/modules/step-executions/ticket_description_quality_rank/contracts/trigger-ticket-description-quality-step-contracts";
 import { stepExecutionEntityToContract } from "@/modules/step-executions/application/step-execution-entity-to-contract";
-import { TICKET_DESCRIPTION_QUALITY_STEP_NAME } from "@/modules/step-executions/domain/step-execution.types";
 import { CodexCliTicketDescriptionQualityAi } from "@/modules/step-executions/ticket_description_quality_rank/infra/ticket-description-quality-ai";
 import { AppContext } from "@/lib/di";
 import {
@@ -38,7 +37,6 @@ export const triggerTicketDescriptionQualityStep = async (
     null,
     input.ticketId,
     "running",
-    `${TICKET_DESCRIPTION_QUALITY_STEP_NAME}:${input.ticketId}`,
     null,
     now,
   );

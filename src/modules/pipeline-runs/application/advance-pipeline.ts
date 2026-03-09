@@ -1,4 +1,3 @@
-import { randomUUID } from "node:crypto";
 import { AppContext } from "@/lib/di";
 import { type PipelineRunContract } from "@/modules/pipeline-runs/contracts/pipeline-run-contracts";
 import { pipelineRunEntityToContract } from "./pipeline-run-entity-to-contract";
@@ -36,7 +35,6 @@ function buildQueuedStepExecution(
   stepName: StepExecutionStepName,
 ): TicketPipelineStepExecutionEntity {
   const now = new Date().toISOString();
-  const idempotencyKey = `${stepName}:${pipelineId}:${randomUUID()}`;
 
   switch (stepName) {
     case TICKET_DESCRIPTION_QUALITY_STEP_NAME:
@@ -44,7 +42,6 @@ function buildQueuedStepExecution(
         pipelineId,
         ticketId,
         "queued",
-        idempotencyKey,
         null,
         now,
       );
@@ -53,7 +50,6 @@ function buildQueuedStepExecution(
         pipelineId,
         ticketId,
         "queued",
-        idempotencyKey,
         null,
         now,
       );
@@ -62,7 +58,6 @@ function buildQueuedStepExecution(
         pipelineId,
         ticketId,
         "queued",
-        idempotencyKey,
         null,
         now,
       );
@@ -71,7 +66,6 @@ function buildQueuedStepExecution(
         pipelineId,
         ticketId,
         "queued",
-        idempotencyKey,
         null,
         now,
       );
@@ -80,7 +74,6 @@ function buildQueuedStepExecution(
         pipelineId,
         ticketId,
         "queued",
-        idempotencyKey,
         null,
         now,
       );

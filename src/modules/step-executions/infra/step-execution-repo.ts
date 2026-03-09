@@ -445,7 +445,6 @@ export class DrizzleStepExecutionRepo implements StepExecutionRepo {
         row.pipelineId,
         ticketId,
         row.status,
-        row.idempotencyKey,
         mapDescriptionQualityResultOrNull(row),
         row.startedAt.toISOString(),
         row.endedAt?.toISOString(),
@@ -461,7 +460,6 @@ export class DrizzleStepExecutionRepo implements StepExecutionRepo {
         row.pipelineId,
         ticketId,
         row.status,
-        row.idempotencyKey,
         mapDescriptionEnrichmentResultOrNull(row),
         row.startedAt.toISOString(),
         row.endedAt?.toISOString(),
@@ -477,7 +475,6 @@ export class DrizzleStepExecutionRepo implements StepExecutionRepo {
         row.pipelineId,
         ticketId,
         row.status,
-        row.idempotencyKey,
         mapFailingTestReproResultOrNull(row),
         row.startedAt.toISOString(),
         row.endedAt?.toISOString(),
@@ -493,7 +490,6 @@ export class DrizzleStepExecutionRepo implements StepExecutionRepo {
         row.pipelineId,
         ticketId,
         row.status,
-        row.idempotencyKey,
         mapFailingTestFixResultOrNull(row),
         row.startedAt.toISOString(),
         row.endedAt?.toISOString(),
@@ -509,7 +505,6 @@ export class DrizzleStepExecutionRepo implements StepExecutionRepo {
         row.pipelineId,
         ticketId,
         row.status,
-        row.idempotencyKey,
         mapDuplicateCandidatesResultOrNull(row),
         row.startedAt.toISOString(),
         row.endedAt?.toISOString(),
@@ -733,7 +728,7 @@ export class DrizzleStepExecutionRepo implements StepExecutionRepo {
     };
   }
 
-  private async upsertStepExecution(
+  private async saveStepExecution(
     tx: DbExecutor,
     pipeline: TicketPipelineStepExecutionEntity,
     startedAt: Date,
@@ -741,7 +736,34 @@ export class DrizzleStepExecutionRepo implements StepExecutionRepo {
     now: Date,
     fields: Record<string, unknown>,
   ): Promise<TicketPipelineStepExecutionEntity> {
-    const [saved] = await tx
+    const [updated] = await tx
+      .update(ticketStepExecutionsTph)
+      .set({
+        pipelineId: pipeline.pipelineId ?? pipeline.ticketId,
+        stepName: pipeline.stepName,
+        type: pipeline.stepName,
+        status: pipeline.status,
+        startedAt,
+        endedAt,
+        updatedAt: now,
+        failureReason: pipeline.failureReason,
+        ...fields,
+      })
+      .where(eq(ticketStepExecutionsTph.id, pipeline.id))
+      .returning({
+        id: ticketStepExecutionsTph.id,
+        createdAt: ticketStepExecutionsTph.createdAt,
+        updatedAt: ticketStepExecutionsTph.updatedAt,
+      });
+
+    if (updated) {
+      pipeline.id = updated.id;
+      pipeline.createdAt = updated.createdAt.toISOString();
+      pipeline.updatedAt = updated.updatedAt.toISOString();
+      return pipeline;
+    }
+
+    const [inserted] = await tx
       .insert(ticketStepExecutionsTph)
       .values({
         id: pipeline.id,
@@ -749,7 +771,8 @@ export class DrizzleStepExecutionRepo implements StepExecutionRepo {
         stepName: pipeline.stepName,
         type: pipeline.stepName,
         status: pipeline.status,
-        idempotencyKey: pipeline.idempotencyKey,
+        // This column remains in the DB schema; use execution id as a stable unique value.
+        idempotencyKey: pipeline.id,
         startedAt,
         endedAt,
         createdAt: pipeline.createdAt
@@ -759,29 +782,15 @@ export class DrizzleStepExecutionRepo implements StepExecutionRepo {
         failureReason: pipeline.failureReason,
         ...fields,
       })
-      .onConflictDoUpdate({
-        target: ticketStepExecutionsTph.idempotencyKey,
-        set: {
-          pipelineId: pipeline.pipelineId ?? pipeline.ticketId,
-          stepName: pipeline.stepName,
-          type: pipeline.stepName,
-          status: pipeline.status,
-          startedAt,
-          endedAt,
-          updatedAt: now,
-          failureReason: pipeline.failureReason,
-          ...fields,
-        },
-      })
       .returning({
         id: ticketStepExecutionsTph.id,
         createdAt: ticketStepExecutionsTph.createdAt,
         updatedAt: ticketStepExecutionsTph.updatedAt,
       });
 
-    pipeline.id = saved.id;
-    pipeline.createdAt = saved.createdAt.toISOString();
-    pipeline.updatedAt = saved.updatedAt.toISOString();
+    pipeline.id = inserted.id;
+    pipeline.createdAt = inserted.createdAt.toISOString();
+    pipeline.updatedAt = inserted.updatedAt.toISOString();
     return pipeline;
   }
 
@@ -820,7 +829,7 @@ export class DrizzleStepExecutionRepo implements StepExecutionRepo {
       };
     }
 
-    return this.upsertStepExecution(
+    return this.saveStepExecution(
       tx,
       pipeline,
       startedAt,
@@ -876,7 +885,7 @@ export class DrizzleStepExecutionRepo implements StepExecutionRepo {
       };
     }
 
-    return this.upsertStepExecution(
+    return this.saveStepExecution(
       tx,
       pipeline,
       startedAt,
@@ -910,7 +919,7 @@ export class DrizzleStepExecutionRepo implements StepExecutionRepo {
       };
     }
 
-    return this.upsertStepExecution(
+    return this.saveStepExecution(
       tx,
       pipeline,
       startedAt,
@@ -948,7 +957,7 @@ export class DrizzleStepExecutionRepo implements StepExecutionRepo {
       confidenceLevel: reproResult?.confidenceLevel ?? null,
     };
 
-    return this.upsertStepExecution(
+    return this.saveStepExecution(
       tx,
       pipeline,
       startedAt,
@@ -989,7 +998,7 @@ export class DrizzleStepExecutionRepo implements StepExecutionRepo {
       fixConfidenceLevel: completionResult?.fixConfidenceLevel ?? null,
     };
 
-    return this.upsertStepExecution(
+    return this.saveStepExecution(
       tx,
       pipeline,
       startedAt,

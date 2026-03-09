@@ -23,7 +23,6 @@ export class ClaimedExecutionStepRepo implements StepExecutionRepo {
     stepExecution.id = this.claimedExecution.id;
     stepExecution.pipelineId = this.claimedExecution.pipelineId;
     stepExecution.ticketId = this.claimedExecution.ticketId;
-    stepExecution.idempotencyKey = this.claimedExecution.idempotencyKey;
     stepExecution.createdAt = this.claimedExecution.createdAt;
     stepExecution.updatedAt = this.claimedExecution.updatedAt;
   }

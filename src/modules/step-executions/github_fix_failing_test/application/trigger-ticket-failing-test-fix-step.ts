@@ -1,6 +1,4 @@
 "use server";
-
-import { randomUUID } from "node:crypto";
 import {
   triggerTicketFailingTestFixStepRequestSchema,
   triggerTicketFailingTestFixStepResponseSchema,
@@ -10,7 +8,6 @@ import {
 import { completeTicketFailingTestFixStepRequestBodySchema } from "@/modules/step-executions/github_fix_failing_test/contracts/complete-ticket-failing-test-fix-step-contracts";
 import { stepExecutionEntityToContract } from "@/modules/step-executions/application/step-execution-entity-to-contract";
 import {
-  FAILING_TEST_FIX_STEP_NAME,
   FAILING_TEST_REPRO_STEP_NAME,
   TERMINAL_STEP_EXECUTION_STATUSES,
 } from "@/modules/step-executions/domain/step-execution.types";
@@ -71,7 +68,7 @@ Rules for fields:
 - ticketId and pipelineId must match exactly.
 
 Required final action:
-- Overwrite ${WEBHOOK_PAYLOAD_PATH} with valid JSON matching this schema exactly:
+- Create ${WEBHOOK_PAYLOAD_PATH} with valid JSON matching this schema exactly:
 ${jsonSchemaText}
 - No markdown, no comments, no trailing commas.
 - Ensure the file is present even on failure paths.`;
@@ -159,7 +156,6 @@ export const triggerTicketFailingTestFixStep = async (
     ticket.id,
     ticket.id,
     "running",
-    `${FAILING_TEST_FIX_STEP_NAME}:${ticket.id}:${ticketGitEnvironment.id ?? input.ticketGitEnvironmentId}:${randomUUID()}`,
     null,
     now,
   );
@@ -207,7 +203,6 @@ export const triggerTicketFailingTestFixStep = async (
         savedExecution.pipelineId,
         savedExecution.ticketId,
         savedExecution.status,
-        savedExecution.idempotencyKey,
         new FailingTestFixStepResultEntity(
           "draft",
           githubIssue.githubIssueNumber,

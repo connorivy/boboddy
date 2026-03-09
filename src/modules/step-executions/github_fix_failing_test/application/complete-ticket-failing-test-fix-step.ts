@@ -78,7 +78,6 @@ export const completeTicketFailingTestFixStep = async (
       existingExecution.pipelineId,
       existingExecution.ticketId,
       resolveStatus(input),
-      existingExecution.idempotencyKey,
       new FailingTestFixStepResultEntity(
         existingExecution.result.githubMergeStatus,
         existingExecution.result.githubIssueNumber,

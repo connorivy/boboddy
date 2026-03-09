@@ -98,7 +98,6 @@ export const completeTicketFailingTestReproStep = async (
       existingExecution.pipelineId,
       existingExecution.ticketId,
       nextStatus,
-      existingExecution.idempotencyKey,
       new FailingTestReproStepResultEntity(
         existingExecution.result?.githubMergeStatus ?? "draft",
         ticket.githubIssue.githubIssueNumber,

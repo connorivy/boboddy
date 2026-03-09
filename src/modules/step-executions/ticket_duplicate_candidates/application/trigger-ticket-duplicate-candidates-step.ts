@@ -1,6 +1,4 @@
 "use server";
-
-import { randomUUID } from "node:crypto";
 import {
   triggerTicketDuplicateCandidatesStepRequestSchema,
   triggerTicketDuplicateCandidatesStepResponseSchema,
@@ -10,7 +8,6 @@ import {
 import { stepExecutionEntityToContract } from "@/modules/step-executions/application/step-execution-entity-to-contract";
 import {
   TERMINAL_STEP_EXECUTION_STATUSES,
-  TICKET_DUPLICATE_CANDIDATES_STEP_NAME,
 } from "@/modules/step-executions/domain/step-execution.types";
 import { TicketDuplicateSemanticSearchService } from "@/modules/step-executions/ticket_duplicate_candidates/infra/ticket-duplicate-semantic-search";
 import { AppContext } from "@/lib/di";
@@ -54,7 +51,6 @@ export const triggerTicketDuplicateCandidatesStep = async (
     input.ticketId,
     input.ticketId,
     "running",
-    `${TICKET_DUPLICATE_CANDIDATES_STEP_NAME}:${input.ticketId}:${randomUUID()}`,
     null,
     now,
   );
@@ -86,7 +82,6 @@ export const triggerTicketDuplicateCandidatesStep = async (
         savedExecution.pipelineId,
         savedExecution.ticketId,
         "succeeded",
-        savedExecution.idempotencyKey,
         new TicketDuplicateCandidatesResultEntity(
           candidates.map(
             (candidate) =>
@@ -112,7 +107,6 @@ export const triggerTicketDuplicateCandidatesStep = async (
           savedExecution.pipelineId,
           savedExecution.ticketId,
           "failed",
-          savedExecution.idempotencyKey,
           null,
           savedExecution.startedAt,
           new Date().toISOString(),

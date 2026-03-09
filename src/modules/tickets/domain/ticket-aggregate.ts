@@ -46,7 +46,6 @@ const mapPipelineStepToContract = (
     pipelineId: step.pipelineId ?? step.ticketId,
     stepName: step.stepName,
     status: step.status,
-    idempotencyKey: step.idempotencyKey,
     startedAt: step.startedAt,
     endedAt: step.endedAt ?? null,
     createdAt: step.createdAt,

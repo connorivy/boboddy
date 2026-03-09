@@ -53,7 +53,11 @@ const normalizePayload = (
     }
   }
 
-  if (rawPayload && typeof rawPayload === "object" && !Array.isArray(rawPayload)) {
+  if (
+    rawPayload &&
+    typeof rawPayload === "object" &&
+    !Array.isArray(rawPayload)
+  ) {
     return rawPayload as Record<string, unknown>;
   }
 
@@ -70,8 +74,8 @@ const buildCorrectionInstructions = (
     stepName === TICKET_DESCRIPTION_ENRICHMENT_STEP_NAME
       ? "tmp/copilot-ticket-description-enrichment-webhook-payload.json"
       : stepName === FAILING_TEST_REPRO_STEP_NAME
-      ? "tmp/copilot-repro-webhook-payload.json"
-      : "tmp/copilot-fix-webhook-payload.json";
+        ? "tmp/copilot-repro-webhook-payload.json"
+        : "tmp/copilot-fix-webhook-payload.json";
   const hardcodedTicketIdAndPipelineIdSchema =
     stepName === TICKET_DESCRIPTION_ENRICHMENT_STEP_NAME
       ? completeTicketDescriptionEnrichmentStepRequestBodySchema
@@ -84,24 +88,24 @@ const buildCorrectionInstructions = (
             pipelineId: z.literal(pipelineId),
           })
       : stepName === FAILING_TEST_REPRO_STEP_NAME
-      ? completeTicketFailingTestReproStepRequestBodySchema
-          .omit({
-            ticketId: true,
-            pipelineId: true,
-          })
-          .extend({
-            ticketId: z.literal(ticketId),
-            pipelineId: z.literal(pipelineId),
-          })
-      : completeTicketFailingTestFixStepRequestBodySchema
-          .omit({
-            ticketId: true,
-            pipelineId: true,
-          })
-          .extend({
-            ticketId: z.literal(ticketId),
-            pipelineId: z.literal(pipelineId),
-          });
+        ? completeTicketFailingTestReproStepRequestBodySchema
+            .omit({
+              ticketId: true,
+              pipelineId: true,
+            })
+            .extend({
+              ticketId: z.literal(ticketId),
+              pipelineId: z.literal(pipelineId),
+            })
+        : completeTicketFailingTestFixStepRequestBodySchema
+            .omit({
+              ticketId: true,
+              pipelineId: true,
+            })
+            .extend({
+              ticketId: z.literal(ticketId),
+              pipelineId: z.literal(pipelineId),
+            });
 
   const jsonSchemaText = JSON.stringify(
     hardcodedTicketIdAndPipelineIdSchema.toJSONSchema(),
@@ -116,7 +120,7 @@ const buildCorrectionInstructions = (
 Goal:
 - Produce a corrected JSON payload with the same intent as the previous output.
 - Keep ticketId and pipelineId unchanged.
-- Overwrite ${webhookPayloadPath} with valid JSON matching this schema exactly.
+- Create ${webhookPayloadPath} with valid JSON matching this schema exactly.
 
 Rejected payload:
 ${rawPayloadText}
@@ -130,9 +134,7 @@ Rules:
 - Do not change unrelated repository files for this correction task.`;
 };
 
-const getExecutionBranch = (
-  pipeline: unknown,
-): string | undefined => {
+const getExecutionBranch = (pipeline: unknown): string | undefined => {
   if (pipeline instanceof TicketDescriptionEnrichmentStepExecutionEntity) {
     return pipeline.result?.agentBranch?.trim() || undefined;
   }
@@ -174,7 +176,8 @@ export const handleAiWebhookBadRequest = async (
     return;
   }
 
-  const parsedEnvelope = webhookRepairEnvelopeSchema.safeParse(normalizedPayload);
+  const parsedEnvelope =
+    webhookRepairEnvelopeSchema.safeParse(normalizedPayload);
   if (!parsedEnvelope.success) {
     return;
   }
@@ -205,7 +208,9 @@ export const handleAiWebhookBadRequest = async (
   if (existingExecution instanceof FailingTestReproStepExecutionEntity) {
     branchFromExecution = getExecutionBranch(existingExecution);
   }
-  if (existingExecution instanceof TicketDescriptionEnrichmentStepExecutionEntity) {
+  if (
+    existingExecution instanceof TicketDescriptionEnrichmentStepExecutionEntity
+  ) {
     branchFromExecution = getExecutionBranch(existingExecution);
   }
   if (existingExecution instanceof FailingTestFixStepExecutionEntity) {

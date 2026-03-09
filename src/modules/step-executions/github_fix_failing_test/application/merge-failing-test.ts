@@ -67,7 +67,7 @@ export async function mergeFailingTest(
   }
 
   if (
-    stepExecution.result.githubPrTargetBranch?.trim() !==
+    stepExecution.githubPrTargetBranch?.trim() !==
     gitEnvironment.devBranch.trim()
   ) {
     throw new Error(
@@ -75,13 +75,10 @@ export async function mergeFailingTest(
     );
   }
 
-  if (!stepExecution.result.githubIssueNumber) {
-    throw new Error(
-      `Failing test repro step does not have an associated GitHub issue number`,
-    );
-  }
-
-  await githubService.mergePullRequest(stepExecution.result.githubIssueNumber);
+  await githubService.mergePullRequest(
+    stepExecution.githubPrTargetBranch,
+    stepExecution.result.agentBranch,
+  );
   stepExecution.result.githubMergeStatus = "merged";
   await stepExecutionRepo.save(stepExecution);
 }

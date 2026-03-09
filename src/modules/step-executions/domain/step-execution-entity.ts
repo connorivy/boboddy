@@ -216,7 +216,6 @@ export class FailingTestReproStepResultEntity {
       | "abort"
       | "timeout"
       | "user_exit",
-    public githubPrTargetBranch: string,
     public agentBranch: string,
     public outcome:
       | "reproduced"
@@ -241,6 +240,7 @@ export class FailingTestReproStepExecutionEntity extends TicketPipelineStepExecu
     ticketId: string,
     status: StepExecutionStatus,
     public result: FailingTestReproStepResultEntity | null,
+    public githubPrTargetBranch: string | null,
     startedAt: string,
     endedAt?: string,
     createdAt?: string,

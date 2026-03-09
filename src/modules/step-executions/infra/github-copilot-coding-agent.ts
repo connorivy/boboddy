@@ -125,13 +125,48 @@ export class GithubApiService {
     );
   }
 
-  async mergePullRequest(prNumber: number): Promise<void> {
+  private async findOpenPullRequestByBranches(
+    base: string,
+    target: string,
+  ) {
+    const head = `${this.repo.owner}:${target}`;
+    const response = await this.octokit.request(
+      "GET /repos/{owner}/{repo}/pulls",
+      {
+        owner: this.repo.owner,
+        repo: this.repo.repo,
+        state: "open",
+        base,
+        head,
+        per_page: 1,
+        headers: {
+          accept: "application/vnd.github+json",
+          "x-github-api-version": "2022-11-28",
+        },
+      },
+    );
+
+    return response.data.find(
+      (candidate) =>
+        candidate.base.ref === base && candidate.head.ref === target,
+    );
+  }
+
+  async mergePullRequest(base: string, target: string): Promise<void> {
+    const pull = await this.findOpenPullRequestByBranches(base, target);
+
+    if (!pull) {
+      throw new Error(
+        `No open PR found for base branch "${base}" and target branch "${target}"`,
+      );
+    }
+
     await this.octokit.request(
       "PUT /repos/{owner}/{repo}/pulls/{pull_number}/merge",
       {
         owner: this.repo.owner,
         repo: this.repo.repo,
-        pull_number: prNumber,
+        pull_number: pull.number,
         headers: {
           accept: "application/vnd.github+json",
           "x-github-api-version": "2022-11-28",
@@ -161,27 +196,7 @@ export class GithubApiService {
     target: string,
     message: string,
   ): Promise<void> {
-    const head = `${this.repo.owner}:${target}`;
-    const response = await this.octokit.request(
-      "GET /repos/{owner}/{repo}/pulls",
-      {
-        owner: this.repo.owner,
-        repo: this.repo.repo,
-        state: "open",
-        base,
-        head,
-        per_page: 1,
-        headers: {
-          accept: "application/vnd.github+json",
-          "x-github-api-version": "2022-11-28",
-        },
-      },
-    );
-
-    const pull = response.data.find(
-      (candidate) =>
-        candidate.base.ref === base && candidate.head.ref === target,
-    );
+    const pull = await this.findOpenPullRequestByBranches(base, target);
 
     if (!pull) {
       throw new Error(

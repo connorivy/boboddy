@@ -20,6 +20,7 @@ import { TicketGitEnvironmentAggregate } from "@/modules/environments/domain/tic
 import {
   TicketDescriptionEnrichmentStepExecutionEntity,
   FailingTestReproStepExecutionEntity,
+  TicketPipelineStepExecutionEntity,
 } from "@/modules/step-executions/domain/step-execution-entity";
 import { assignDefaultEnvironment } from "@/modules/environments/application/assign-environment";
 import { TicketRepo } from "@/modules/tickets/application/jira-ticket-repo";
@@ -27,6 +28,7 @@ import { StepExecutionRepo } from "@/modules/step-executions/application/step-ex
 import { TicketGitEnvironmentRepo } from "@/modules/environments/application/ticket-git-environment-repo";
 import { createTicketGitEnvironment } from "@/modules/environments/application/create-ticket-git-environment";
 import { EnvironmentRepo } from "@/modules/environments/application/environment-repo";
+import { v7 as uuidv7 } from "uuid";
 
 const WEBHOOK_PAYLOAD_PATH = "tmp/copilot-repro-webhook-payload.json";
 
@@ -97,15 +99,8 @@ export const triggerTicketFailingTestReproStep = async (
   }
 
   const now = new Date().toISOString();
-  const execution = new FailingTestReproStepExecutionEntity(
-    null,
-    input.ticketId,
-    "running",
-    null,
-    now,
-  );
-
-  let savedExecution = await stepExecutionRepo.save(execution);
+  let savedExecution: TicketPipelineStepExecutionEntity;
+  let baseBranch: string | null = null;
 
   try {
     let githubIssue = ticket.githubIssue;
@@ -169,7 +164,7 @@ export const triggerTicketFailingTestReproStep = async (
       );
     }
 
-    const baseBranch = ticketGitEnvironment.devBranch;
+    baseBranch = ticketGitEnvironment.devBranch;
     const latestEnrichmentStep = ticket.getLatestPipelineStep(
       TICKET_INVESTIGATION_STEP_NAME,
     );
@@ -191,12 +186,13 @@ export const triggerTicketFailingTestReproStep = async (
       ].join("\n");
     }
 
+    const executionId = uuidv7();
     await githubService.upsertFile(
       "boboddy-state.json",
       baseBranch,
       `
 {
-  "stepExecutionId": "${savedExecution.id}",
+  "stepExecutionId": "${executionId}",
   "stepName": "${FAILING_TEST_REPRO_STEP_NAME}",
   "dbHost": "${baseEnvironment.databaseHostUrl}"
 }
@@ -211,33 +207,29 @@ export const triggerTicketFailingTestReproStep = async (
 
     savedExecution = await stepExecutionRepo.save(
       new FailingTestReproStepExecutionEntity(
-        savedExecution.pipelineId,
-        savedExecution.ticketId,
-        savedExecution.status,
         null,
-        savedExecution.startedAt,
-        savedExecution.endedAt,
-        savedExecution.createdAt,
-        savedExecution.updatedAt,
-        savedExecution.id,
+        input.ticketId,
+        "running",
+        null,
+        baseBranch,
+        now,
+        undefined,
+        undefined,
+        undefined,
+        executionId,
       ),
     );
   } catch (error) {
-    if (!TERMINAL_STEP_EXECUTION_STATUSES.has(savedExecution.status)) {
-      await stepExecutionRepo.save(
-        new FailingTestReproStepExecutionEntity(
-          savedExecution.pipelineId,
-          savedExecution.ticketId,
-          "failed",
-          null,
-          savedExecution.startedAt,
-          new Date().toISOString(),
-          savedExecution.createdAt,
-          savedExecution.updatedAt,
-          savedExecution.id,
-        ),
-      );
-    }
+    savedExecution = await stepExecutionRepo.save(
+      new FailingTestReproStepExecutionEntity(
+        null,
+        input.ticketId,
+        "failed",
+        null,
+        baseBranch,
+        now,
+      ),
+    );
 
     throw error;
   }

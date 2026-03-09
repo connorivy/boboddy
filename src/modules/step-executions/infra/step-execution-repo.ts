@@ -169,7 +169,7 @@ function mapFailingTestReproResultOrNull(
   row: typeof ticketStepExecutionsTph.$inferSelect,
 ): FailingTestReproStepResultEntity | null {
   const context = `${FAILING_TEST_REPRO_STEP_NAME} (execution ${row.id})`;
-  const hasResult = Boolean(row.githubPrTargetBranch);
+  const hasResult = Boolean(row.agentBranch);
   if (!hasResult) {
     return null;
   }
@@ -184,11 +184,6 @@ function mapFailingTestReproResultOrNull(
     requiredTruthyField(row.githubIssueNumber, "githubIssueNumber", context),
     requiredNonEmptyString(row.githubIssueId, "githubIssueId", context),
     requiredTruthyField(row.agentStatus, "agentStatus", context),
-    requiredNonEmptyString(
-      row.githubPrTargetBranch,
-      "githubPrTargetBranch",
-      context,
-    ),
     requiredNonEmptyString(row.agentBranch, "agentBranch", context),
     requiredTruthyField(row.outcome, "outcome", context),
     requiredNonEmptyString(row.summaryOfFindings, "summaryOfFindings", context),
@@ -477,6 +472,7 @@ export class DrizzleStepExecutionRepo implements StepExecutionRepo {
         ticketId,
         row.status,
         mapFailingTestReproResultOrNull(row),
+        row.githubPrTargetBranch ?? null,
         row.startedAt.toISOString(),
         row.endedAt?.toISOString(),
         row.createdAt.toISOString(),
@@ -951,7 +947,7 @@ export class DrizzleStepExecutionRepo implements StepExecutionRepo {
       githubAgentRunId: reproResult?.githubAgentRunId ?? null,
       agentStatus: reproResult?.agentStatus ?? null,
       githubMergeStatus: reproResult?.githubMergeStatus ?? "draft",
-      githubPrTargetBranch: reproResult?.githubPrTargetBranch ?? null,
+      githubPrTargetBranch: pipeline.githubPrTargetBranch,
       agentBranch: reproResult?.agentBranch ?? null,
       failingTestCommitSha: reproResult?.failingTestCommitSha ?? null,
       failureReason: reproResult?.failureReason ?? null,

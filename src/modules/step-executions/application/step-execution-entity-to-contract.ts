@@ -123,7 +123,7 @@ function mapFailingTestReproResult(
     githubIssueId: result.githubIssueId ?? null,
     githubAgentRunId: result.githubAgentRunId ?? null,
     githubMergeStatus: result.githubMergeStatus,
-    githubPrTargetBranch: result.githubPrTargetBranch ?? null,
+    githubPrTargetBranch: stepExecution.githubPrTargetBranch,
     agentStatus: result.agentStatus ?? null,
     agentBranch: result.agentBranch ?? null,
     failingTestPaths: result.failingTestPaths ?? null,

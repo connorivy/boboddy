@@ -57,6 +57,7 @@ describe("completeTicketFailingTestReproStep (integration)", () => {
         "CV-902",
         "running",
         null,
+        null,
         new Date("2026-03-01T12:00:00.000Z").toISOString(),
       ),
     );
@@ -99,9 +100,7 @@ describe("completeTicketFailingTestReproStep (integration)", () => {
     expect(typedExecution.result?.outcome).toBe("reproduced");
     expect(typedExecution.result?.agentStatus).toBe("complete");
     expect(typedExecution.result?.githubMergeStatus).toBe("draft");
-    expect(typedExecution.result?.githubPrTargetBranch).toBe(
-      "ephemeral-ADM01",
-    );
+    expect(typedExecution.githubPrTargetBranch).toBe("ephemeral-ADM01");
     expect(typedExecution.result?.agentBranch).toBe("ephemeral-ADM01");
     expect(typedExecution.result?.failingTestPaths).toEqual([
       "apps/web/test/profile-save.test.ts",
@@ -155,6 +154,7 @@ describe("completeTicketFailingTestReproStep (integration)", () => {
         "CV-902",
         "CV-902",
         "running",
+        null,
         null,
         new Date("2026-03-01T12:00:00.000Z").toISOString(),
       ),

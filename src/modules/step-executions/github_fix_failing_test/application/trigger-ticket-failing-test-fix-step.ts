@@ -117,8 +117,7 @@ export const triggerTicketFailingTestFixStep = async (
         run instanceof FailingTestReproStepExecutionEntity &&
         run.stepName === FAILING_TEST_REPRO_STEP_NAME &&
         run.result?.githubMergeStatus === "merged" &&
-        run.result?.githubPrTargetBranch?.trim() ===
-          ticketGitEnvironment.devBranch.trim(),
+        run.githubPrTargetBranch?.trim() === ticketGitEnvironment.devBranch.trim(),
     )
     .sort((a, b) => {
       const startedAtDiff = Date.parse(b.startedAt) - Date.parse(a.startedAt);

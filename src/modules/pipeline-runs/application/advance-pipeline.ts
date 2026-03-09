@@ -67,6 +67,7 @@ function buildQueuedStepExecution(
         ticketId,
         "queued",
         null,
+        null,
         now,
       );
     case FAILING_TEST_FIX_STEP_NAME:

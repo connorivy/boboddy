@@ -35,6 +35,7 @@ export const queueTicketFailingTestReproStep = async (
     input.ticketId,
     "queued",
     null,
+    null,
     queuedAt,
   );
 

@@ -1,5 +1,3 @@
-"use server";
-
 import { AppContext } from "@/lib/di";
 import type { PipelineRunContract } from "@/modules/pipeline-runs/contracts/pipeline-run-contracts";
 import type { PipelineRunRepo } from "./pipeline-run-repo";

@@ -114,6 +114,7 @@ export const triggerTicketFailingTestReproStep = async (
   const now = new Date().toISOString();
   const execution = new FailingTestReproStepExecutionEntity(
     input.ticketId,
+    input.ticketId,
     "running",
     `${FAILING_TEST_REPRO_STEP_NAME}:${input.ticketId}:${randomUUID()}`,
     null,
@@ -208,6 +209,7 @@ export const triggerTicketFailingTestReproStep = async (
     savedExecution = await stepExecutionRepo.save(
       new FailingTestReproStepExecutionEntity(
         savedExecution.pipelineId,
+        savedExecution.ticketId,
         savedExecution.status,
         savedExecution.idempotencyKey,
         null,
@@ -223,6 +225,7 @@ export const triggerTicketFailingTestReproStep = async (
       await stepExecutionRepo.save(
         new FailingTestReproStepExecutionEntity(
           savedExecution.pipelineId,
+          savedExecution.ticketId,
           "failed",
           savedExecution.idempotencyKey,
           null,

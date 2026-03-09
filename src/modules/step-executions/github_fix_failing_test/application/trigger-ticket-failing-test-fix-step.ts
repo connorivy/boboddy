@@ -157,6 +157,7 @@ export const triggerTicketFailingTestFixStep = async (
   const now = new Date().toISOString();
   const execution = new FailingTestFixStepExecutionEntity(
     ticket.id,
+    ticket.id,
     "running",
     `${FAILING_TEST_FIX_STEP_NAME}:${ticket.id}:${ticketGitEnvironment.id ?? input.ticketGitEnvironmentId}:${randomUUID()}`,
     null,
@@ -204,6 +205,7 @@ export const triggerTicketFailingTestFixStep = async (
     savedExecution = await stepExecutionRepo.save(
       new FailingTestFixStepExecutionEntity(
         savedExecution.pipelineId,
+        savedExecution.ticketId,
         savedExecution.status,
         savedExecution.idempotencyKey,
         new FailingTestFixStepResultEntity(

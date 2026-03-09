@@ -25,7 +25,10 @@ export async function processClaimedStepExecution(
     AppContext.stepExecutionRepo,
     claimedExecution,
   );
-  const ticketId = await resolveTicketId(claimedExecution.pipelineId);
+  const ticketId = await resolveTicketId(
+    claimedExecution.pipelineId,
+    claimedExecution.ticketId,
+  );
 
   switch (claimedExecution.stepName as StepExecutionStepName) {
     case TICKET_DESCRIPTION_QUALITY_STEP_NAME:

@@ -281,6 +281,7 @@ describe("tickets module use cases (integration)", () => {
     await stepExecutionRepo.save(
       new TicketDescriptionQualityStepExecutionEntity(
         "CV-321",
+        "CV-321",
         "succeeded",
         "desc-quality:CV-321:1",
         new TicketDescriptionQualityStepResultEntity(
@@ -297,6 +298,7 @@ describe("tickets module use cases (integration)", () => {
     await stepExecutionRepo.save(
       new TicketDescriptionQualityStepExecutionEntity(
         "CV-322",
+        "CV-322",
         "succeeded",
         "desc-quality:CV-322:1",
         new TicketDescriptionQualityStepResultEntity(
@@ -312,6 +314,7 @@ describe("tickets module use cases (integration)", () => {
     );
     await stepExecutionRepo.save(
       new TicketDescriptionQualityStepExecutionEntity(
+        "CV-323",
         "CV-323",
         "succeeded",
         "desc-quality:CV-323:1",
@@ -377,6 +380,7 @@ describe("tickets module use cases (integration)", () => {
     const cv311QueuedExecution = await stepExecutionRepo.save(
       new TicketDescriptionQualityStepExecutionEntity(
         "CV-311",
+        "CV-311",
         "queued",
         "desc-quality:CV-311:1",
         null,
@@ -388,6 +392,7 @@ describe("tickets module use cases (integration)", () => {
     const cv311RunningExecution = await stepExecutionRepo.save(
       new TicketDescriptionQualityStepExecutionEntity(
         "CV-311",
+        "CV-311",
         "running",
         "desc-quality:CV-311:2",
         null,
@@ -398,6 +403,7 @@ describe("tickets module use cases (integration)", () => {
 
     const cv312SucceededExecution = await stepExecutionRepo.save(
       new TicketDescriptionQualityStepExecutionEntity(
+        "CV-312",
         "CV-312",
         "succeeded",
         "desc-quality:CV-312:1",
@@ -414,6 +420,7 @@ describe("tickets module use cases (integration)", () => {
 
     await stepExecutionRepo.save(
       new TicketDuplicateCandidatesStepResultEntity(
+        "CV-314",
         "CV-314",
         "running",
         "dupe-search:CV-314:1",
@@ -480,6 +487,7 @@ describe("tickets module use cases (integration)", () => {
     const descriptionExecution = await stepExecutionRepo.save(
       new TicketDescriptionQualityStepExecutionEntity(
         "CV-401",
+        "CV-401",
         "queued",
         "desc-quality:CV-401:1",
         null,
@@ -490,6 +498,7 @@ describe("tickets module use cases (integration)", () => {
     await stepExecutionRepo.save(
       new TicketDescriptionQualityStepExecutionEntity(
         descriptionExecution.pipelineId,
+        descriptionExecution.ticketId,
         "succeeded",
         descriptionExecution.idempotencyKey,
         new TicketDescriptionQualityStepResultEntity(
@@ -510,6 +519,7 @@ describe("tickets module use cases (integration)", () => {
     const duplicateExecution = await stepExecutionRepo.save(
       new TicketDuplicateCandidatesStepResultEntity(
         "CV-401",
+        "CV-401",
         "queued",
         "dupe-search:CV-401:1",
         null,
@@ -520,6 +530,7 @@ describe("tickets module use cases (integration)", () => {
     await stepExecutionRepo.save(
       new TicketDuplicateCandidatesStepResultEntity(
         duplicateExecution.pipelineId,
+        duplicateExecution.ticketId,
         "succeeded",
         duplicateExecution.idempotencyKey,
         new TicketDuplicateCandidatesResultEntity(

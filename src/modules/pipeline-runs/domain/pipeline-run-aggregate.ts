@@ -25,6 +25,7 @@ export class PipelineRunEntity {
   }): PipelineRunEntity {
     const firstStep = new TicketDescriptionQualityStepExecutionEntity(
       id,
+      ticketId,
       "queued",
       `${TICKET_DESCRIPTION_QUALITY_STEP_NAME}:${id}:${randomUUID()}`,
       null,

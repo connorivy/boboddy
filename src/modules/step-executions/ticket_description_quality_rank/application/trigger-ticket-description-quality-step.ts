@@ -1,5 +1,3 @@
-"use server";
-
 import {
   triggerTicketDescriptionQualityStepRequestSchema,
   triggerTicketDescriptionQualityStepResponseSchema,
@@ -7,10 +5,7 @@ import {
   type TriggerTicketDescriptionQualityStepResponse,
 } from "@/modules/step-executions/ticket_description_quality_rank/contracts/trigger-ticket-description-quality-step-contracts";
 import { stepExecutionEntityToContract } from "@/modules/step-executions/application/step-execution-entity-to-contract";
-import {
-  TERMINAL_STEP_EXECUTION_STATUSES,
-  TICKET_DESCRIPTION_QUALITY_STEP_NAME,
-} from "@/modules/step-executions/domain/step-execution.types";
+import { TICKET_DESCRIPTION_QUALITY_STEP_NAME } from "@/modules/step-executions/domain/step-execution.types";
 import { CodexCliTicketDescriptionQualityAi } from "@/modules/step-executions/ticket_description_quality_rank/infra/ticket-description-quality-ai";
 import { AppContext } from "@/lib/di";
 import {
@@ -40,6 +35,7 @@ export const triggerTicketDescriptionQualityStep = async (
 
   const now = new Date().toISOString();
   const execution = new TicketDescriptionQualityStepExecutionEntity(
+    null,
     input.ticketId,
     "running",
     `${TICKET_DESCRIPTION_QUALITY_STEP_NAME}:${input.ticketId}`,
@@ -47,7 +43,7 @@ export const triggerTicketDescriptionQualityStep = async (
     now,
   );
 
-  let savedExecution = await stepExecutionRepo.save(execution);
+  await stepExecutionRepo.save(execution);
 
   try {
     const aiResult =
@@ -56,56 +52,32 @@ export const triggerTicketDescriptionQualityStep = async (
         description: ticket.description,
       });
 
-    savedExecution = await stepExecutionRepo.save(
-      new TicketDescriptionQualityStepExecutionEntity(
-        savedExecution.pipelineId,
-        "succeeded",
-        savedExecution.idempotencyKey,
-        new TicketDescriptionQualityStepResultEntity(
-          aiResult.stepsToReproduceScore,
-          aiResult.expectedBehaviorScore,
-          aiResult.observedBehaviorScore,
-          aiResult.reasoning,
-          aiResult.rawResponse,
-        ),
-        savedExecution.startedAt,
-        new Date().toISOString(),
-        savedExecution.createdAt,
-        savedExecution.updatedAt,
-        savedExecution.id,
-      ),
+    execution.status = "succeeded";
+    execution.result = new TicketDescriptionQualityStepResultEntity(
+      aiResult.stepsToReproduceScore,
+      aiResult.expectedBehaviorScore,
+      aiResult.observedBehaviorScore,
+      aiResult.reasoning,
+      aiResult.rawResponse,
     );
-  } catch (error) {
-    if (!TERMINAL_STEP_EXECUTION_STATUSES.has(savedExecution.status)) {
-      await stepExecutionRepo.save(
-        new TicketDescriptionQualityStepExecutionEntity(
-          savedExecution.pipelineId,
-          "failed",
-          savedExecution.idempotencyKey,
-          null,
-          savedExecution.startedAt,
-          new Date().toISOString(),
-          savedExecution.createdAt,
-          savedExecution.updatedAt,
-          savedExecution.id,
-        ),
-      );
-    }
+    execution.endedAt = new Date().toISOString();
 
+    await stepExecutionRepo.save(execution);
+  } catch (error) {
     const errorMessage =
       error instanceof Error ? error.message : "Unknown error";
-    throw new Error(
-      `Failed to trigger ticket description quality step: ${errorMessage}`,
-      {
-        cause: error instanceof Error ? error : undefined,
-      },
-    );
+
+    execution.failureReason = errorMessage;
+    execution.status = "failed";
+    execution.endedAt = new Date().toISOString();
+    await stepExecutionRepo.save(execution);
+    throw error;
   }
 
   return triggerTicketDescriptionQualityStepResponseSchema.parse({
     ok: true,
     data: {
-      stepExecution: stepExecutionEntityToContract(savedExecution),
+      stepExecution: stepExecutionEntityToContract(execution),
     },
   });
 };

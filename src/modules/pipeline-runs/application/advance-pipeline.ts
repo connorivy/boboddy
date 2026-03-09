@@ -1,5 +1,3 @@
-"use server";
-
 import { randomUUID } from "node:crypto";
 import { AppContext } from "@/lib/di";
 import { type PipelineRunContract } from "@/modules/pipeline-runs/contracts/pipeline-run-contracts";
@@ -34,6 +32,7 @@ const PIPELINE_STEP_SEQUENCE: StepExecutionStepName[] = [
 
 function buildQueuedStepExecution(
   pipelineId: string,
+  ticketId: string,
   stepName: StepExecutionStepName,
 ): TicketPipelineStepExecutionEntity {
   const now = new Date().toISOString();
@@ -43,6 +42,7 @@ function buildQueuedStepExecution(
     case TICKET_DESCRIPTION_QUALITY_STEP_NAME:
       return new TicketDescriptionQualityStepExecutionEntity(
         pipelineId,
+        ticketId,
         "queued",
         idempotencyKey,
         null,
@@ -51,6 +51,7 @@ function buildQueuedStepExecution(
     case TICKET_DESCRIPTION_ENRICHMENT_STEP_NAME:
       return new TicketDescriptionEnrichmentStepExecutionEntity(
         pipelineId,
+        ticketId,
         "queued",
         idempotencyKey,
         null,
@@ -59,6 +60,7 @@ function buildQueuedStepExecution(
     case TICKET_DUPLICATE_CANDIDATES_STEP_NAME:
       return new TicketDuplicateCandidatesStepResultEntity(
         pipelineId,
+        ticketId,
         "queued",
         idempotencyKey,
         null,
@@ -67,6 +69,7 @@ function buildQueuedStepExecution(
     case FAILING_TEST_REPRO_STEP_NAME:
       return new FailingTestReproStepExecutionEntity(
         pipelineId,
+        ticketId,
         "queued",
         idempotencyKey,
         null,
@@ -75,6 +78,7 @@ function buildQueuedStepExecution(
     case FAILING_TEST_FIX_STEP_NAME:
       return new FailingTestFixStepExecutionEntity(
         pipelineId,
+        ticketId,
         "queued",
         idempotencyKey,
         null,
@@ -145,7 +149,7 @@ export async function advancePipeline(
   }
 
   await stepExecutionRepo.save(
-    buildQueuedStepExecution(pipelineRun.id, nextStepName),
+    buildQueuedStepExecution(pipelineRun.id, pipelineRun.ticketId, nextStepName),
   );
   const refreshedPipelineRun = await pipelineRunRepo.loadById(pipelineRun.id, {
     includePipelineSteps: true,

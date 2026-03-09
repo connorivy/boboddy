@@ -27,7 +27,9 @@ const codexResponseSchema = z.object({
   reasoning: z.string().min(1),
 });
 
-const buildPrompt = (input: RankTicketDescriptionInput): string => `You are evaluating ticket quality.
+const buildPrompt = (
+  input: RankTicketDescriptionInput,
+): string => `You are evaluating ticket quality.
 Given the ticket title and description below, rank from 1-5 (5 is best) how well the ticket describes:
 1. Steps to reproduce
 2. Expected behavior
@@ -52,7 +54,10 @@ const extractJsonObject = (rawOutput: string): string => {
   const start = rawOutput.indexOf("{");
   const end = rawOutput.lastIndexOf("}");
   if (start === -1 || end === -1 || end <= start) {
-    throw new Error("Codex CLI did not return valid JSON");
+    const snippet = rawOutput.slice(0, 500);
+    throw new Error(
+      `Codex CLI did not return valid JSON object. Output snippet: ${snippet || "[empty]"}`,
+    );
   }
   return rawOutput.slice(start, end + 1);
 };
@@ -93,16 +98,24 @@ const runCodexCli = (prompt: string): Promise<string> =>
     });
   });
 
-export class CodexCliTicketDescriptionQualityAi
-  implements TicketDescriptionQualityAi
-{
+export class CodexCliTicketDescriptionQualityAi implements TicketDescriptionQualityAi {
   async rankTicketDescription(
     input: RankTicketDescriptionInput,
   ): Promise<RankTicketDescriptionOutput> {
     const rawResponse = await runCodexCli(buildPrompt(input));
-    const parsed = codexResponseSchema.parse(
-      JSON.parse(extractJsonObject(rawResponse)),
-    );
+    let parsed: z.infer<typeof codexResponseSchema>;
+    try {
+      parsed = codexResponseSchema.parse(
+        JSON.parse(extractJsonObject(rawResponse)),
+      );
+    } catch (error) {
+      const reason =
+        error instanceof Error ? error.message : "Unknown parse error";
+      const snippet = rawResponse.slice(0, 500) || "[empty]";
+      throw new Error(
+        `Could not parse ticket description quality response from Codex CLI: ${reason}. Raw response snippet: ${snippet}`,
+      );
+    }
 
     return {
       ...parsed,

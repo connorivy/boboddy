@@ -1,5 +1,3 @@
-"use server";
-
 import { stepExecutionEntityToContract } from "@/modules/step-executions/application/step-execution-entity-to-contract";
 import {
   completeTicketFailingTestFixStepRequestSchema,
@@ -78,6 +76,7 @@ export const completeTicketFailingTestFixStep = async (
   const savedExecution = await stepExecutionRepo.save(
     new FailingTestFixStepExecutionEntity(
       existingExecution.pipelineId,
+      existingExecution.ticketId,
       resolveStatus(input),
       existingExecution.idempotencyKey,
       new FailingTestFixStepResultEntity(

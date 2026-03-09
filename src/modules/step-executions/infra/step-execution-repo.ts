@@ -432,6 +432,7 @@ function mapDuplicateCandidatesResultOrNull(
 export class DrizzleStepExecutionRepo implements StepExecutionRepo {
   private mapRowToExecution(
     row: typeof ticketStepExecutionsTph.$inferSelect,
+    ticketId: string = row.pipelineId,
   ): TicketPipelineStepExecutionEntity {
     if (row.type !== row.stepName) {
       throw new Error(
@@ -442,6 +443,7 @@ export class DrizzleStepExecutionRepo implements StepExecutionRepo {
     if (row.type === TICKET_DESCRIPTION_QUALITY_STEP_NAME) {
       return new TicketDescriptionQualityStepExecutionEntity(
         row.pipelineId,
+        ticketId,
         row.status,
         row.idempotencyKey,
         mapDescriptionQualityResultOrNull(row),
@@ -450,12 +452,14 @@ export class DrizzleStepExecutionRepo implements StepExecutionRepo {
         row.createdAt.toISOString(),
         row.updatedAt.toISOString(),
         row.id,
+        row.failureReason ?? undefined,
       );
     }
 
     if (row.type === TICKET_DESCRIPTION_ENRICHMENT_STEP_NAME) {
       return new TicketDescriptionEnrichmentStepExecutionEntity(
         row.pipelineId,
+        ticketId,
         row.status,
         row.idempotencyKey,
         mapDescriptionEnrichmentResultOrNull(row),
@@ -464,12 +468,14 @@ export class DrizzleStepExecutionRepo implements StepExecutionRepo {
         row.createdAt.toISOString(),
         row.updatedAt.toISOString(),
         row.id,
+        row.failureReason ?? undefined,
       );
     }
 
     if (row.type === FAILING_TEST_REPRO_STEP_NAME) {
       return new FailingTestReproStepExecutionEntity(
         row.pipelineId,
+        ticketId,
         row.status,
         row.idempotencyKey,
         mapFailingTestReproResultOrNull(row),
@@ -478,12 +484,14 @@ export class DrizzleStepExecutionRepo implements StepExecutionRepo {
         row.createdAt.toISOString(),
         row.updatedAt.toISOString(),
         row.id,
+        row.failureReason ?? undefined,
       );
     }
 
     if (row.type === FAILING_TEST_FIX_STEP_NAME) {
       return new FailingTestFixStepExecutionEntity(
         row.pipelineId,
+        ticketId,
         row.status,
         row.idempotencyKey,
         mapFailingTestFixResultOrNull(row),
@@ -492,12 +500,14 @@ export class DrizzleStepExecutionRepo implements StepExecutionRepo {
         row.createdAt.toISOString(),
         row.updatedAt.toISOString(),
         row.id,
+        row.failureReason ?? undefined,
       );
     }
 
     if (row.type === TICKET_DUPLICATE_CANDIDATES_STEP_NAME) {
       return new TicketDuplicateCandidatesStepResultEntity(
         row.pipelineId,
+        ticketId,
         row.status,
         row.idempotencyKey,
         mapDuplicateCandidatesResultOrNull(row),
@@ -506,6 +516,7 @@ export class DrizzleStepExecutionRepo implements StepExecutionRepo {
         row.createdAt.toISOString(),
         row.updatedAt.toISOString(),
         row.id,
+        row.failureReason ?? undefined,
       );
     }
 
@@ -530,7 +541,9 @@ export class DrizzleStepExecutionRepo implements StepExecutionRepo {
     return this.mapRowToExecution(row);
   }
 
-  async loadQueued(limit: number): Promise<TicketPipelineStepExecutionEntity[]> {
+  async loadQueued(
+    limit: number,
+  ): Promise<TicketPipelineStepExecutionEntity[]> {
     const db = getDb();
     const safeLimit = Math.max(1, Math.min(limit, 100));
 
@@ -630,6 +643,12 @@ export class DrizzleStepExecutionRepo implements StepExecutionRepo {
   async loadByTicketId(
     ticketId: string,
   ): Promise<TicketPipelineStepExecutionEntity[]> {
+    return this.getByTicketId(ticketId);
+  }
+
+  async getByTicketId(
+    ticketId: string,
+  ): Promise<TicketPipelineStepExecutionEntity[]> {
     const db = getDb();
 
     const rows = await db
@@ -650,7 +669,7 @@ export class DrizzleStepExecutionRepo implements StepExecutionRepo {
         desc(ticketStepExecutionsTph.id),
       );
 
-    return rows.map((row) => this.mapRowToExecution(row.execution));
+    return rows.map((row) => this.mapRowToExecution(row.execution, ticketId));
   }
 
   async loadPage(
@@ -705,7 +724,6 @@ export class DrizzleStepExecutionRepo implements StepExecutionRepo {
       confidenceLevel: null,
       fixConfidenceLevel: null,
       fixOperationOutcome: null,
-      failureReason: null,
       rawResultJson: null,
       completedAt: null,
       lastPolledAt: null,
@@ -727,7 +745,7 @@ export class DrizzleStepExecutionRepo implements StepExecutionRepo {
       .insert(ticketStepExecutionsTph)
       .values({
         id: pipeline.id,
-        pipelineId: pipeline.pipelineId,
+        pipelineId: pipeline.pipelineId ?? pipeline.ticketId,
         stepName: pipeline.stepName,
         type: pipeline.stepName,
         status: pipeline.status,
@@ -738,17 +756,20 @@ export class DrizzleStepExecutionRepo implements StepExecutionRepo {
           ? parseIsoDateOrThrow(pipeline.createdAt, "createdAt")
           : now,
         updatedAt: now,
+        failureReason: pipeline.failureReason,
         ...fields,
       })
       .onConflictDoUpdate({
         target: ticketStepExecutionsTph.idempotencyKey,
         set: {
+          pipelineId: pipeline.pipelineId ?? pipeline.ticketId,
           stepName: pipeline.stepName,
           type: pipeline.stepName,
           status: pipeline.status,
           startedAt,
           endedAt,
           updatedAt: now,
+          failureReason: pipeline.failureReason,
           ...fields,
         },
       })
@@ -1051,8 +1072,9 @@ export class DrizzleStepExecutionRepo implements StepExecutionRepo {
     }
 
     return Promise.all(
-      stepExecutions.map((stepExecution) => this.save(stepExecution, dbExecutor)),
+      stepExecutions.map((stepExecution) =>
+        this.save(stepExecution, dbExecutor),
+      ),
     );
   }
-
 }

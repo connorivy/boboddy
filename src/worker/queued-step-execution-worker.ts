@@ -1,13 +1,5 @@
 import { AppContext } from "@/lib/di";
-import { type StepExecutionStatus } from "@/modules/step-executions/domain/step-execution.types";
-import {
-  FailingTestFixStepExecutionEntity,
-  FailingTestReproStepExecutionEntity,
-  TicketDescriptionEnrichmentStepExecutionEntity,
-  TicketDescriptionQualityStepExecutionEntity,
-  TicketDuplicateCandidatesStepResultEntity,
-  TicketPipelineStepExecutionEntity,
-} from "@/modules/step-executions/domain/step-execution-entity";
+import { TicketPipelineStepExecutionEntity } from "@/modules/step-executions/domain/step-execution-entity";
 import type { PipelineStepExecutionsQuery } from "@/modules/step-executions/contracts/get-pipeline-step-executions-contracts";
 import type { StepExecutionRepo } from "@/modules/step-executions/application/step-execution-repo";
 import { processClaimedStepExecution } from "./process-claimed-step-execution";
@@ -30,6 +22,7 @@ export class ClaimedExecutionStepRepo implements StepExecutionRepo {
   ): void {
     stepExecution.id = this.claimedExecution.id;
     stepExecution.pipelineId = this.claimedExecution.pipelineId;
+    stepExecution.ticketId = this.claimedExecution.ticketId;
     stepExecution.idempotencyKey = this.claimedExecution.idempotencyKey;
     stepExecution.createdAt = this.claimedExecution.createdAt;
     stepExecution.updatedAt = this.claimedExecution.updatedAt;
@@ -61,6 +54,12 @@ export class ClaimedExecutionStepRepo implements StepExecutionRepo {
     ticketId: string,
   ): Promise<TicketPipelineStepExecutionEntity[]> {
     return this.delegate.loadByTicketId(ticketId);
+  }
+
+  async getByTicketId(
+    ticketId: string,
+  ): Promise<TicketPipelineStepExecutionEntity[]> {
+    return this.delegate.getByTicketId(ticketId);
   }
 
   async loadPage(
@@ -102,85 +101,6 @@ export class ClaimedExecutionStepRepo implements StepExecutionRepo {
   }
 }
 
-function toExecutionWithStatus(
-  execution: TicketPipelineStepExecutionEntity,
-  status: StepExecutionStatus,
-): TicketPipelineStepExecutionEntity {
-  const endedAt = status === "running" ? undefined : new Date().toISOString();
-
-  if (execution instanceof TicketDescriptionQualityStepExecutionEntity) {
-    return new TicketDescriptionQualityStepExecutionEntity(
-      execution.pipelineId,
-      status,
-      execution.idempotencyKey,
-      execution.result,
-      execution.startedAt,
-      endedAt,
-      execution.createdAt,
-      execution.updatedAt,
-      execution.id,
-    );
-  }
-
-  if (execution instanceof TicketDescriptionEnrichmentStepExecutionEntity) {
-    return new TicketDescriptionEnrichmentStepExecutionEntity(
-      execution.pipelineId,
-      status,
-      execution.idempotencyKey,
-      execution.result,
-      execution.startedAt,
-      endedAt,
-      execution.createdAt,
-      execution.updatedAt,
-      execution.id,
-    );
-  }
-
-  if (execution instanceof TicketDuplicateCandidatesStepResultEntity) {
-    return new TicketDuplicateCandidatesStepResultEntity(
-      execution.pipelineId,
-      status,
-      execution.idempotencyKey,
-      execution.result,
-      execution.startedAt,
-      endedAt,
-      execution.createdAt,
-      execution.updatedAt,
-      execution.id,
-    );
-  }
-
-  if (execution instanceof FailingTestReproStepExecutionEntity) {
-    return new FailingTestReproStepExecutionEntity(
-      execution.pipelineId,
-      status,
-      execution.idempotencyKey,
-      execution.result,
-      execution.startedAt,
-      endedAt,
-      execution.createdAt,
-      execution.updatedAt,
-      execution.id,
-    );
-  }
-
-  if (execution instanceof FailingTestFixStepExecutionEntity) {
-    return new FailingTestFixStepExecutionEntity(
-      execution.pipelineId,
-      status,
-      execution.idempotencyKey,
-      execution.result,
-      execution.startedAt,
-      endedAt,
-      execution.createdAt,
-      execution.updatedAt,
-      execution.id,
-    );
-  }
-
-  throw new Error(`Unsupported step execution type '${execution.stepName}'`);
-}
-
 function parseBatchSize(rawValue: string | undefined): number {
   if (!rawValue) {
     return DEFAULT_BATCH_SIZE;
@@ -207,9 +127,22 @@ function parsePollIntervalMs(rawValue: string | undefined): number {
   return parsed;
 }
 
-export async function resolveTicketId(pipelineId: string): Promise<string> {
+export async function resolveTicketId(
+  pipelineId: string | null | undefined,
+  fallbackTicketId?: string,
+): Promise<string> {
+  if (!pipelineId) {
+    if (!fallbackTicketId) {
+      throw new Error(
+        "Cannot resolve ticket ID without pipelineId or fallback",
+      );
+    }
+
+    return fallbackTicketId;
+  }
+
   const pipelineRun = await AppContext.pipelineRunRepo.loadById(pipelineId);
-  return pipelineRun?.ticketId ?? pipelineId;
+  return pipelineRun?.ticketId ?? fallbackTicketId ?? pipelineId;
 }
 
 export async function processQueuedStepExecutionsBatch(
@@ -237,10 +170,8 @@ export async function processQueuedStepExecutionsBatch(
       await processClaimedStepExecution(claimedExecution);
       processedCount += 1;
     } catch (error) {
-      const failedExecution = toExecutionWithStatus(claimedExecution, "failed");
-      await AppContext.stepExecutionRepo.save(failedExecution);
       console.error(
-        `[worker] failed queued step execution id=${claimedExecution.id} step=${claimedExecution.stepName}:`,
+        `[worker] failed queued step execution id=${claimedExecution.id} step=${claimedExecution.stepName} reason=${claimedExecution.failureReason}:`,
         error,
       );
     }

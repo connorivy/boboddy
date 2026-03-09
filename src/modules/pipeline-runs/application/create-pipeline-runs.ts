@@ -1,5 +1,3 @@
-"use server";
-
 import { AppContext } from "@/lib/di";
 import {
   createPipelineRunsRequestSchema,

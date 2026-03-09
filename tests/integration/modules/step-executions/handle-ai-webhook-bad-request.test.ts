@@ -20,6 +20,7 @@ describe("handleAiWebhookBadRequest", () => {
   it("reassigns Copilot for repro payload correction when ticket and pipeline are resolved", async () => {
     const execution = new FailingTestReproStepExecutionEntity(
       "CV-100",
+      "CV-100",
       "running",
       "repro:CV-100:1",
       new FailingTestReproStepResultEntity(
@@ -96,6 +97,7 @@ describe("handleAiWebhookBadRequest", () => {
 
   it("falls back to execution target branch for fix payload correction", async () => {
     const execution = new FailingTestFixStepExecutionEntity(
+      "CV-101",
       "CV-101",
       "running",
       "fix:CV-101:1",
@@ -186,6 +188,7 @@ describe("handleAiWebhookBadRequest", () => {
 
   it("reassigns Copilot for enrichment payload correction", async () => {
     const execution = new TicketDescriptionEnrichmentStepExecutionEntity(
+      "CV-102",
       "CV-102",
       "running",
       "enrich:CV-102:1",

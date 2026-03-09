@@ -43,7 +43,7 @@ const mapPipelineStepToContract = (
 
   return {
     id: step.id,
-    pipelineId: step.pipelineId,
+    pipelineId: step.pipelineId ?? step.ticketId,
     stepName: step.stepName,
     status: step.status,
     idempotencyKey: step.idempotencyKey,
@@ -51,6 +51,7 @@ const mapPipelineStepToContract = (
     endedAt: step.endedAt ?? null,
     createdAt: step.createdAt,
     updatedAt: step.updatedAt,
+    failureReason: step.failureReason ?? null,
     result: null,
   };
 };

@@ -50,6 +50,7 @@ export const triggerTicketDescriptionEnrichmentStep = async (
   const now = new Date().toISOString();
   const execution = new TicketDescriptionEnrichmentStepExecutionEntity(
     input.ticketId,
+    input.ticketId,
     "running",
     `${TICKET_DESCRIPTION_ENRICHMENT_STEP_NAME}:${input.ticketId}:${randomUUID()}`,
     null,
@@ -75,6 +76,7 @@ export const triggerTicketDescriptionEnrichmentStep = async (
     savedExecution = await stepExecutionRepo.save(
       new TicketDescriptionEnrichmentStepExecutionEntity(
         savedExecution.pipelineId,
+        savedExecution.ticketId,
         "succeeded",
         savedExecution.idempotencyKey,
         new TicketDescriptionEnrichmentStepResultEntity(
@@ -104,6 +106,7 @@ export const triggerTicketDescriptionEnrichmentStep = async (
       await stepExecutionRepo.save(
         new TicketDescriptionEnrichmentStepExecutionEntity(
           savedExecution.pipelineId,
+          savedExecution.ticketId,
           "failed",
           savedExecution.idempotencyKey,
           null,

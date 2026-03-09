@@ -155,6 +155,7 @@ export const stepExecutionContractSchema = z.object({
   endedAt: z.iso.datetime().nullable(),
   createdAt: z.iso.datetime(),
   updatedAt: z.iso.datetime(),
+  failureReason: z.string().nullable(),
   result: stepExecutionResultContractSchema.nullable(),
 });
 

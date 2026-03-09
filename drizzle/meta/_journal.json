@@ -15,6 +15,20 @@
       "when": 1773090377921,
       "tag": "0001_living_mordo",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1773103060150,
+      "tag": "0002_tired_falcon",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1773103169517,
+      "tag": "0003_wide_alex_power",
+      "breakpoints": true
     }
   ]
 }

@@ -172,6 +172,12 @@ export const TicketManagerAiTimelineCard = ({
                     Trigger
                   </Button>
                 </Box>
+                {(step.status === "failed" || step.status === "failed_timeout") &&
+                step.latestExecution?.failureReason ? (
+                  <Typography variant="caption" color="text.secondary" sx={{ ml: 4, mt: 0.5, display: "block" }}>
+                    Failure reason: {step.latestExecution.failureReason}
+                  </Typography>
+                ) : null}
                 {step.stepName === TICKET_DESCRIPTION_QUALITY_STEP_NAME ? (() => {
                   const result = step.latestExecution?.result;
                   if (

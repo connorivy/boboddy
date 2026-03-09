@@ -47,6 +47,7 @@ describe("completeTicketDescriptionEnrichmentStep (integration)", () => {
     const runningExecution = await stepExecutionRepo.save(
       new TicketDescriptionEnrichmentStepExecutionEntity(
         "CV-952",
+        "CV-952",
         "running",
         "ticket_description_enrichment:CV-952:run-1",
         null,

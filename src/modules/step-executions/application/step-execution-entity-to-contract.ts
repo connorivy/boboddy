@@ -223,7 +223,7 @@ export const stepExecutionEntityToContract = (
 
   return stepExecutionContractSchema.parse({
     id: stepExecution.id,
-    pipelineId: stepExecution.pipelineId,
+    pipelineId: stepExecution.pipelineId ?? stepExecution.ticketId,
     stepName: stepExecution.stepName,
     status: stepExecution.status,
     idempotencyKey: stepExecution.idempotencyKey,
@@ -231,6 +231,7 @@ export const stepExecutionEntityToContract = (
     endedAt: stepExecution.endedAt ?? null,
     createdAt: stepExecution.createdAt,
     updatedAt: stepExecution.updatedAt,
+    failureReason: stepExecution.failureReason ?? null,
     result: mappedResult,
   });
 };

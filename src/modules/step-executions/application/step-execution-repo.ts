@@ -12,6 +12,9 @@ export interface StepExecutionRepo {
   loadByTicketId(
     ticketId: string,
   ): Promise<TicketPipelineStepExecutionEntity[]>;
+  getByTicketId(
+    ticketId: string,
+  ): Promise<TicketPipelineStepExecutionEntity[]>;
   loadPage(
     query: PipelineStepExecutionsQuery,
   ): Promise<TicketPipelineStepExecutionEntity[]>;

@@ -1,5 +1,3 @@
-"use server";
-
 import { stepExecutionEntityToContract } from "@/modules/step-executions/application/step-execution-entity-to-contract";
 import {
   completeTicketDescriptionEnrichmentStepRequestSchema,
@@ -72,6 +70,7 @@ export const completeTicketDescriptionEnrichmentStep = async (
   const savedExecution = await stepExecutionRepo.save(
     new TicketDescriptionEnrichmentStepExecutionEntity(
       existingExecution.pipelineId,
+      existingExecution.ticketId,
       resolveStatus(input),
       existingExecution.idempotencyKey,
       new TicketDescriptionEnrichmentStepResultEntity(

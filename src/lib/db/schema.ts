@@ -11,6 +11,7 @@ import {
   real,
   uniqueIndex,
   jsonb,
+  uuid,
 } from "drizzle-orm/pg-core";
 
 export const ticketStatusEnum = pgEnum("ticket_status", [
@@ -46,16 +47,6 @@ export const stepExecutionStatusEnum = pgEnum("step_execution_status", [
   "failed",
   "skipped",
   "failed_timeout",
-]);
-
-export const reproAttemptStatusEnum = pgEnum("repro_attempt_status", [
-  "queued",
-  "issue_created",
-  "agent_requested",
-  "running",
-  "completed",
-  "failed",
-  "timed_out",
 ]);
 
 export const reproAttemptOutcomeEnum = pgEnum("repro_attempt_outcome", [
@@ -154,26 +145,6 @@ export const pipelineRuns = pgTable("pipeline_runs", {
     .notNull(),
 });
 
-export const ticketStepExecutions = pgTable(
-  "ticket_step_executions",
-  {
-    id: serial("id").primaryKey(),
-    pipelineId: text("pipeline_id").notNull(),
-    stepName: text("step_name").notNull(),
-    status: stepExecutionStatusEnum("status").notNull(),
-    idempotencyKey: text("idempotency_key").notNull(),
-    startedAt: timestamp("started_at", { withTimezone: true }).notNull(),
-    endedAt: timestamp("ended_at", { withTimezone: true }),
-    createdAt: timestamp("created_at", { withTimezone: true }).notNull(),
-    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull(),
-  },
-  (table) => [
-    uniqueIndex("ticket_step_executions_idempotency_key_unique").on(
-      table.idempotencyKey,
-    ),
-  ],
-);
-
 export const ticketEmbeddings = pgTable(
   "ticket_embeddings",
   {
@@ -190,63 +161,6 @@ export const ticketEmbeddings = pgTable(
   (table) => [
     uniqueIndex("ticket_embeddings_ticket_id_unique").on(table.ticketId),
   ],
-);
-
-export const failingTestReproAttempts = pgTable(
-  "failing_test_repro_attempts",
-  {
-    id: serial("id").primaryKey(),
-    ticketId: text("ticket_id")
-      .references(() => tickets.id, { onDelete: "cascade" })
-      .notNull(),
-    stepExecutionId: integer("step_execution_id")
-      .references(() => ticketStepExecutions.id, { onDelete: "cascade" })
-      .notNull(),
-    status: reproAttemptStatusEnum("status").notNull().default("queued"),
-    outcome: reproAttemptOutcomeEnum("outcome"),
-    idempotencyKey: text("idempotency_key").notNull(),
-    githubIssueNumber: integer("github_issue_number"),
-    githubIssueId: text("github_issue_id"),
-    githubAgentRunId: text("github_agent_run_id"),
-    agentStatus: agentStatusEnum("agent_status"),
-    githubMergeStatus: githubMergeStatusEnum("github_merge_status")
-      .notNull()
-      .default("draft"),
-    githubPrTargetBranch: text("github_pr_target_branch"),
-    agentBranch: text("agent_branch"),
-    failingTestPath: text("failing_test_path"),
-    failingTestCommitSha: text("failing_test_commit_sha"),
-    failureReason: text("failure_reason"),
-    rawResultJson: jsonb("raw_result_json"),
-    startedAt: timestamp("started_at", { withTimezone: true }).notNull(),
-    completedAt: timestamp("completed_at", { withTimezone: true }),
-    lastPolledAt: timestamp("last_polled_at", { withTimezone: true }),
-    createdAt: timestamp("created_at", { withTimezone: true }).notNull(),
-    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull(),
-  },
-  (table) => [
-    uniqueIndex("failing_test_repro_attempts_idempotency_key_unique").on(
-      table.idempotencyKey,
-    ),
-  ],
-);
-
-export const ticketDescriptionQualityAssessments = pgTable(
-  "ticket_description_quality_assessments",
-  {
-    id: serial("id").primaryKey(),
-    ticketId: text("ticket_id")
-      .references(() => tickets.id, { onDelete: "cascade" })
-      .notNull(),
-    stepExecutionId: text("step_execution_id").notNull(),
-    stepsToReproduceScore: integer("steps_to_reproduce_score").notNull(),
-    expectedBehaviorScore: integer("expected_behavior_score").notNull(),
-    observedBehaviorScore: integer("observed_behavior_score").notNull(),
-    reasoning: text("reasoning").notNull(),
-    rawResponse: text("raw_response").notNull(),
-    createdAt: timestamp("created_at", { withTimezone: true }).notNull(),
-    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull(),
-  },
 );
 
 export const environments = pgTable("environments", {
@@ -275,7 +189,7 @@ export const ticketGitEnvironments = pgTable("ticket_git_environments", {
 export const ticketStepExecutionsTph = pgTable(
   "ticket_step_executions_tph",
   {
-    id: text("id").primaryKey(),
+    id: uuid("id").primaryKey(),
     pipelineId: text("pipeline_id").notNull(),
     stepName: text("step_name").notNull(),
     type: text("type").notNull(),
@@ -337,19 +251,8 @@ export type TicketGithubIssueRow = typeof ticketGithubIssues.$inferSelect;
 export type NewTicketGithubIssueRow = typeof ticketGithubIssues.$inferInsert;
 export type PipelineRunRow = typeof pipelineRuns.$inferSelect;
 export type NewPipelineRunRow = typeof pipelineRuns.$inferInsert;
-export type TicketStepExecutionRow = typeof ticketStepExecutions.$inferSelect;
-export type NewTicketStepExecutionRow =
-  typeof ticketStepExecutions.$inferInsert;
 export type TicketEmbeddingRow = typeof ticketEmbeddings.$inferSelect;
 export type NewTicketEmbeddingRow = typeof ticketEmbeddings.$inferInsert;
-export type FailingTestReproAttemptRow =
-  typeof failingTestReproAttempts.$inferSelect;
-export type NewFailingTestReproAttemptRow =
-  typeof failingTestReproAttempts.$inferInsert;
-export type TicketDescriptionQualityAssessmentRow =
-  typeof ticketDescriptionQualityAssessments.$inferSelect;
-export type NewTicketDescriptionQualityAssessmentRow =
-  typeof ticketDescriptionQualityAssessments.$inferInsert;
 export type EnvironmentRow = typeof environments.$inferSelect;
 export type NewEnvironmentRow = typeof environments.$inferInsert;
 export type TicketGitEnvironmentRow = typeof ticketGitEnvironments.$inferSelect;

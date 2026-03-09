@@ -54,6 +54,7 @@ describe("completeTicketFailingTestReproStep (integration)", () => {
     const runningExecution = await stepExecutionRepo.save(
       new FailingTestReproStepExecutionEntity(
         "CV-902",
+        "CV-902",
         "running",
         "github_repro_failing_test:CV-902:run-1",
         null,
@@ -152,6 +153,7 @@ describe("completeTicketFailingTestReproStep (integration)", () => {
 
     const runningExecution = await stepExecutionRepo.save(
       new FailingTestReproStepExecutionEntity(
+        "CV-902",
         "CV-902",
         "running",
         "github_repro_failing_test:CV-902:run-feedback",

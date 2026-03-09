@@ -52,6 +52,7 @@ export const triggerTicketDuplicateCandidatesStep = async (
   const now = new Date().toISOString();
   const execution = new TicketDuplicateCandidatesStepResultEntity(
     input.ticketId,
+    input.ticketId,
     "running",
     `${TICKET_DUPLICATE_CANDIDATES_STEP_NAME}:${input.ticketId}:${randomUUID()}`,
     null,
@@ -83,6 +84,7 @@ export const triggerTicketDuplicateCandidatesStep = async (
     savedExecution = await stepExecutionRepo.save(
       new TicketDuplicateCandidatesStepResultEntity(
         savedExecution.pipelineId,
+        savedExecution.ticketId,
         "succeeded",
         savedExecution.idempotencyKey,
         new TicketDuplicateCandidatesResultEntity(
@@ -108,6 +110,7 @@ export const triggerTicketDuplicateCandidatesStep = async (
       await stepExecutionRepo.save(
         new TicketDuplicateCandidatesStepResultEntity(
           savedExecution.pipelineId,
+          savedExecution.ticketId,
           "failed",
           savedExecution.idempotencyKey,
           null,

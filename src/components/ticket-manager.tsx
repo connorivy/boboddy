@@ -17,7 +17,7 @@ import type {
   StepExecutionStatus,
 } from "@/modules/tickets/contracts/ticket-contracts";
 import { loadTicketDetail as loadTicketDetailAction, searchTickets } from "@/modules/tickets/application/get-tickets";
-import { triggerTicketDescriptionQualityStep } from "@/modules/step-executions/ticket_description_quality_rank/application/trigger-ticket-description-quality-step";
+import { queueTicketDescriptionQualityStep } from "@/modules/step-executions/ticket_description_quality_rank/application/queue-ticket-description-quality-step";
 import { triggerTicketDescriptionEnrichmentStep } from "@/modules/step-executions/ticket_description_enrichment/application/trigger-ticket-description-enrichment-step";
 import { triggerTicketDuplicateCandidatesStep } from "@/modules/step-executions/ticket_duplicate_candidates/application/trigger-ticket-duplicate-candidates-step";
 import { triggerTicketFailingTestReproStep } from "@/modules/step-executions/github_repro_failing_test/application/trigger-ticket-failing-test-repro-step";
@@ -78,10 +78,13 @@ export const TicketManager = ({ initialTickets }: TicketManagerProps) => {
       {
         stepName: TICKET_DESCRIPTION_QUALITY_STEP_NAME,
         trigger: async (ticketId) => {
-          await triggerTicketDescriptionQualityStep({
+          const result = await queueTicketDescriptionQualityStep({
             ticketId,
           });
-          return { ok: true, data: { message: `todo` } };
+          return {
+            ok: true,
+            data: { message: `execution ${result.data.stepExecution.id}` },
+          };
         },
       },
       {

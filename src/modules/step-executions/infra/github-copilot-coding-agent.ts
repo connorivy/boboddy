@@ -135,4 +135,65 @@ export class GithubApiService {
       },
     );
   }
+
+  async getShaIfExists(
+    filePath: string,
+    branchName: string,
+  ): Promise<string | null> {
+    try {
+      const response = await this.octokit.request(
+        "GET /repos/{owner}/{repo}/contents/{path}",
+        {
+          owner: this.repo.owner,
+          repo: this.repo.repo,
+          path: filePath,
+          ref: branchName,
+          headers: {
+            accept: "application/vnd.github+json",
+            "x-github-api-version": "2022-11-28",
+          },
+        },
+      );
+
+      if (Array.isArray(response.data)) {
+        throw new Error(`Path ${filePath} is a directory, expected a file`);
+      }
+
+      return response.data.sha;
+    } catch (error: unknown) {
+      if (
+        typeof error === "object" &&
+        error !== null &&
+        "status" in error &&
+        error.status === 404
+      ) {
+        return null;
+      }
+
+      throw error;
+    }
+  }
+
+  async upsertFile(
+    filePath: string,
+    branchName: string,
+    contents: string,
+  ): Promise<void> {
+    const sha = await this.getShaIfExists(filePath, branchName);
+    const encodedContents = Buffer.from(contents, "utf8").toString("base64");
+
+    await this.octokit.request("PUT /repos/{owner}/{repo}/contents/{path}", {
+      owner: this.repo.owner,
+      repo: this.repo.repo,
+      path: filePath,
+      branch: branchName,
+      message: `chore: upsert ${filePath}`,
+      content: encodedContents,
+      ...(sha ? { sha } : {}),
+      headers: {
+        accept: "application/vnd.github+json",
+        "x-github-api-version": "2022-11-28",
+      },
+    });
+  }
 }

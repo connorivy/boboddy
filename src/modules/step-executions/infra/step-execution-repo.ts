@@ -256,23 +256,23 @@ function mapDescriptionQualityResultOrNull(
   row: typeof ticketStepExecutionsTph.$inferSelect,
 ): TicketDescriptionQualityStepResultEntity | null {
   const context = `${TICKET_DESCRIPTION_QUALITY_STEP_NAME} (execution ${row.id})`;
-  const hasResult = Boolean(row.stepsToReproduceScore);
+  const hasResult = row.stepsToReproduceScore !== null;
   if (!hasResult) {
     return null;
   }
 
   return new TicketDescriptionQualityStepResultEntity(
-    requiredTruthyField(
+    requiredField(
       row.stepsToReproduceScore,
       "stepsToReproduceScore",
       context,
     ),
-    requiredTruthyField(
+    requiredField(
       row.expectedBehaviorScore,
       "expectedBehaviorScore",
       context,
     ),
-    requiredTruthyField(
+    requiredField(
       row.observedBehaviorScore,
       "observedBehaviorScore",
       context,

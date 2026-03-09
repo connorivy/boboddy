@@ -95,15 +95,15 @@ const formatScore = (score: number): string => {
 };
 
 const getScoreRangeIcon = (score: number) => {
-  if (score < 2) {
+  if (score < 0.4) {
     return <SentimentDissatisfiedIcon color="error" fontSize="small" />;
   }
 
-  if (score < 3) {
+  if (score < 0.6) {
     return <SentimentNeutralIcon color="warning" fontSize="small" />;
   }
 
-  if (score < 4) {
+  if (score < 0.8) {
     return <SentimentSatisfiedIcon color="info" fontSize="small" />;
   }
 
@@ -209,26 +209,26 @@ export const TicketManagerAiTimelineCard = ({
                           )
                         }
                       >
-                        Score: {formatScore(averageScore)} / 5
+                        Score: {formatScore(averageScore)} / 1
                       </Button>
                       <Collapse in={isExpanded}>
                         <Stack spacing={0.75}>
                           <Box sx={{ display: "flex", gap: 0.75, alignItems: "center" }}>
                             {getScoreRangeIcon(result.stepsToReproduceScore)}
                             <Typography variant="caption" color="text.secondary">
-                              Steps to reproduce: {formatScore(result.stepsToReproduceScore)} / 5
+                              Steps to reproduce: {formatScore(result.stepsToReproduceScore)} / 1
                             </Typography>
                           </Box>
                           <Box sx={{ display: "flex", gap: 0.75, alignItems: "center" }}>
                             {getScoreRangeIcon(result.expectedBehaviorScore)}
                             <Typography variant="caption" color="text.secondary">
-                              Expected behavior: {formatScore(result.expectedBehaviorScore)} / 5
+                              Expected behavior: {formatScore(result.expectedBehaviorScore)} / 1
                             </Typography>
                           </Box>
                           <Box sx={{ display: "flex", gap: 0.75, alignItems: "center" }}>
                             {getScoreRangeIcon(result.observedBehaviorScore)}
                             <Typography variant="caption" color="text.secondary">
-                              Observed behavior: {formatScore(result.observedBehaviorScore)} / 5
+                              Observed behavior: {formatScore(result.observedBehaviorScore)} / 1
                             </Typography>
                           </Box>
                           <Typography variant="caption" color="text.secondary">

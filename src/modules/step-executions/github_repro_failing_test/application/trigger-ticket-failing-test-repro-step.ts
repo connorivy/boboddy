@@ -7,6 +7,7 @@ import {
 } from "@/modules/step-executions/github_repro_failing_test/contracts/trigger-ticket-failing-test-repro-step-contracts";
 import { stepExecutionEntityToContract } from "@/modules/step-executions/application/step-execution-entity-to-contract";
 import {
+  FAILING_TEST_REPRO_STEP_NAME,
   TERMINAL_STEP_EXECUTION_STATUSES,
   TICKET_DESCRIPTION_ENRICHMENT_STEP_NAME,
 } from "@/modules/step-executions/domain/step-execution.types";
@@ -91,10 +92,7 @@ export const triggerTicketFailingTestReproStep = async (
     ticketRepo: TicketRepo;
     stepExecutionRepo: StepExecutionRepo;
     ticketGitEnvironmentRepo: TicketGitEnvironmentRepo;
-    githubService: Pick<
-      GithubApiService,
-      "createIssue" | "assignCopilot" | "unassignCopilot"
-    >;
+    githubService: GithubApiService;
   } = AppContext,
 ): Promise<TriggerTicketFailingTestReproStepResponse> => {
   const input = triggerTicketFailingTestReproStepRequestSchema.parse(rawInput);
@@ -193,6 +191,17 @@ export const triggerTicketFailingTestReproStep = async (
         result.enrichedTicketDescription,
       ].join("\n");
     }
+
+    await githubService.upsertFile(
+      "boboddy-state.json",
+      baseBranch,
+      `
+{
+  "pipelineId": "${savedExecution.pipelineId}",
+  "stepName": "${FAILING_TEST_REPRO_STEP_NAME}",
+}
+      `,
+    );
 
     await githubService.assignCopilot({
       issueNumber: githubIssue.githubIssueNumber,

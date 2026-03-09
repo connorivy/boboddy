@@ -15,9 +15,9 @@ const uuidV7Schema = z
 export const ticketDescriptionQualityResultContractSchema = z.object({
   executionId: uuidV7Schema,
   stepName: z.literal(TICKET_DESCRIPTION_QUALITY_STEP_NAME),
-  stepsToReproduceScore: z.number().int().min(1).max(5),
-  expectedBehaviorScore: z.number().int().min(1).max(5),
-  observedBehaviorScore: z.number().int().min(1).max(5),
+  stepsToReproduceScore: z.number().min(0).max(1),
+  expectedBehaviorScore: z.number().min(0).max(1),
+  observedBehaviorScore: z.number().min(0).max(1),
   reasoning: z.string().min(1),
   rawResponse: z.string().min(1),
   createdAt: z.iso.datetime().optional(),

@@ -85,6 +85,7 @@ describe("triggerTicketFailingTestReproStep (integration)", () => {
         issueId: "I_kwDOFAKE777",
       }),
       unassignCopilot: vi.fn().mockResolvedValue(undefined),
+      upsertFile: vi.fn().mockResolvedValue(undefined),
       assignCopilot: vi.fn().mockResolvedValue(undefined),
     };
 
@@ -114,6 +115,12 @@ describe("triggerTicketFailingTestReproStep (integration)", () => {
       body: "Saving profile changes throws 500 on submit.",
     });
     expect(githubService.unassignCopilot).not.toHaveBeenCalled();
+    expect(githubService.upsertFile).toHaveBeenCalledTimes(1);
+    expect(githubService.upsertFile).toHaveBeenCalledWith(
+      "boboddy-state.json",
+      expect.stringMatching(/^ephemeral-MEM9-dev\d+$/),
+      expect.stringContaining(`"stepName": "${FAILING_TEST_REPRO_STEP_NAME}"`),
+    );
     expect(githubService.assignCopilot).toHaveBeenCalledTimes(1);
     expect(githubService.assignCopilot).toHaveBeenCalledWith({
       issueNumber: 777,
@@ -187,6 +194,7 @@ describe("triggerTicketFailingTestReproStep (integration)", () => {
         issueId: "I_kwDOFAKE999",
       }),
       unassignCopilot: vi.fn().mockResolvedValue(undefined),
+      upsertFile: vi.fn().mockResolvedValue(undefined),
       assignCopilot: vi.fn().mockResolvedValue(undefined),
     };
 
@@ -206,6 +214,12 @@ describe("triggerTicketFailingTestReproStep (integration)", () => {
     expect(githubService.createIssue).not.toHaveBeenCalled();
     expect(githubService.unassignCopilot).toHaveBeenCalledTimes(1);
     expect(githubService.unassignCopilot).toHaveBeenCalledWith(801);
+    expect(githubService.upsertFile).toHaveBeenCalledTimes(1);
+    expect(githubService.upsertFile).toHaveBeenCalledWith(
+      "boboddy-state.json",
+      expect.stringMatching(/^ephemeral-MEM9-dev\d+$/),
+      expect.stringContaining(`"stepName": "${FAILING_TEST_REPRO_STEP_NAME}"`),
+    );
     expect(githubService.assignCopilot).toHaveBeenCalledTimes(1);
     expect(githubService.assignCopilot).toHaveBeenCalledWith({
       issueNumber: 801,

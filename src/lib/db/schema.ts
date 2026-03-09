@@ -202,9 +202,9 @@ export const ticketStepExecutionsTph = pgTable(
 
     // Discriminator columns for TPH
     // For description quality step
-    stepsToReproduceScore: integer("steps_to_reproduce_score"),
-    expectedBehaviorScore: integer("expected_behavior_score"),
-    observedBehaviorScore: integer("observed_behavior_score"),
+    stepsToReproduceScore: real("steps_to_reproduce_score"),
+    expectedBehaviorScore: real("expected_behavior_score"),
+    observedBehaviorScore: real("observed_behavior_score"),
     reasoning: text("reasoning"),
     rawResponse: text("raw_response"),
 

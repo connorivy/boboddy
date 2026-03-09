@@ -8,6 +8,14 @@ import {
   TICKET_DUPLICATE_CANDIDATES_STEP_NAME,
 } from "@/modules/step-executions/domain/step-execution.types";
 
+const assertNormalizedScore = (value: number, fieldName: string): number => {
+  if (value < 0 || value > 1) {
+    throw new Error(`${fieldName} must be between 0 and 1`);
+  }
+
+  return value;
+};
+
 export type FailingTestReproFeedbackRequestEntity = {
   requestId: string;
   reason: string;
@@ -44,7 +52,20 @@ export class TicketDescriptionQualityStepResultEntity {
     public observedBehaviorScore: number,
     public reasoning: string,
     public rawResponse: string,
-  ) {}
+  ) {
+    this.stepsToReproduceScore = assertNormalizedScore(
+      stepsToReproduceScore,
+      "stepsToReproduceScore",
+    );
+    this.expectedBehaviorScore = assertNormalizedScore(
+      expectedBehaviorScore,
+      "expectedBehaviorScore",
+    );
+    this.observedBehaviorScore = assertNormalizedScore(
+      observedBehaviorScore,
+      "observedBehaviorScore",
+    );
+  }
 }
 
 export class TicketDescriptionEnrichmentStepResultEntity {

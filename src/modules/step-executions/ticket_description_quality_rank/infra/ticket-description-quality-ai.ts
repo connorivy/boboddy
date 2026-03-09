@@ -21,25 +21,25 @@ export interface TicketDescriptionQualityAi {
 }
 
 const codexResponseSchema = z.object({
-  stepsToReproduceScore: z.number().int().min(1).max(5),
-  expectedBehaviorScore: z.number().int().min(1).max(5),
-  observedBehaviorScore: z.number().int().min(1).max(5),
+  stepsToReproduceScore: z.number().min(0).max(1),
+  expectedBehaviorScore: z.number().min(0).max(1),
+  observedBehaviorScore: z.number().min(0).max(1),
   reasoning: z.string().min(1),
 });
 
 const buildPrompt = (
   input: RankTicketDescriptionInput,
 ): string => `You are evaluating ticket quality.
-Given the ticket title and description below, rank from 1-5 (5 is best) how well the ticket describes:
+Given the ticket title and description below, rank from 0 to 1 (1 is best) how well the ticket describes:
 1. Steps to reproduce
 2. Expected behavior
 3. Observed behavior (including any error messages)
 
 Return strictly valid JSON using exactly this shape:
 {
-  "stepsToReproduceScore": 1-5,
-  "expectedBehaviorScore": 1-5,
-  "observedBehaviorScore": 1-5,
+  "stepsToReproduceScore": 0-1,
+  "expectedBehaviorScore": 0-1,
+  "observedBehaviorScore": 0-1,
   "reasoning": "brief explanation"
 }
 

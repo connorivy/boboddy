@@ -8,8 +8,10 @@ import {
 import { completeTicketFailingTestFixStepRequestBodySchema } from "@/modules/step-executions/github_fix_failing_test/contracts/complete-ticket-failing-test-fix-step-contracts";
 import { stepExecutionEntityToContract } from "@/modules/step-executions/application/step-execution-entity-to-contract";
 import {
+  FAILING_TEST_FIX_STEP_NAME,
   FAILING_TEST_REPRO_STEP_NAME,
   TERMINAL_STEP_EXECUTION_STATUSES,
+  TICKET_DESCRIPTION_QUALITY_STEP_NAME,
 } from "@/modules/step-executions/domain/step-execution.types";
 import type { GithubApiService } from "@/modules/step-executions/infra/github-copilot-coding-agent";
 import { TicketGithubIssueEntity } from "@/modules/tickets/domain/ticket-github-issue.entity";
@@ -85,10 +87,7 @@ export const triggerTicketFailingTestFixStep = async (
     ticketRepo: TicketRepo;
     stepExecutionRepo: StepExecutionRepo;
     ticketGitEnvironmentRepo: TicketGitEnvironmentRepo;
-    githubService: Pick<
-      GithubApiService,
-      "createIssue" | "assignCopilot" | "unassignCopilot"
-    >;
+    githubService: GithubApiService;
   } = AppContext,
 ): Promise<TriggerTicketFailingTestFixStepResponse> => {
   const input = triggerTicketFailingTestFixStepRequestSchema.parse(rawInput);
@@ -187,6 +186,17 @@ export const triggerTicketFailingTestFixStep = async (
     } else {
       await githubService.unassignCopilot(githubIssue.githubIssueNumber);
     }
+
+    await githubService.upsertFile(
+      "boboddy-state.json",
+      ticketGitEnvironment.devBranch,
+      `
+{
+  "pipelineId": "${savedExecution.pipelineId}",
+  "stepName": "${FAILING_TEST_FIX_STEP_NAME}",
+}
+      `,
+    );
 
     await githubService.assignCopilot({
       issueNumber: githubIssue.githubIssueNumber,

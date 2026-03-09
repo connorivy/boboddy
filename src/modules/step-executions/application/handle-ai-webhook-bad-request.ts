@@ -106,6 +106,10 @@ export const handleAiWebhookBadRequest = async (
     githubService: GithubApiService;
   } = AppContext,
 ): Promise<void> => {
+  console.warn(
+    `Received bad request payload for step "${stepName}". Attempting recovery if possible.`,
+  );
+  console.debug("Raw payload:", rawPayload);
   if (
     stepName !== TICKET_INVESTIGATION_STEP_NAME &&
     stepName !== FAILING_TEST_REPRO_STEP_NAME &&
@@ -116,22 +120,28 @@ export const handleAiWebhookBadRequest = async (
 
   const normalizedPayload = normalizePayload(rawPayload);
   if (!normalizedPayload) {
+    console.warn("Failed to normalize payload");
     return;
   }
 
   const parsedEnvelope =
     webhookRepairEnvelopeSchema.safeParse(normalizedPayload);
   if (!parsedEnvelope.success) {
+    console.warn("Failed to parse webhook repair envelope");
     return;
   }
 
   const stepExecutionId = parsedEnvelope.data.stepExecutionId;
   if (!stepExecutionId) {
+    console.warn("No stepExecutionId found in payload");
     return;
   }
 
   const existingExecution = await stepExecutionRepo.load(stepExecutionId);
   if (!existingExecution || existingExecution.stepName !== stepName) {
+    console.warn(
+      `No matching step execution found for ID ${stepExecutionId} and step name ${stepName}`,
+    );
     return;
   }
 
@@ -145,6 +155,9 @@ export const handleAiWebhookBadRequest = async (
   });
 
   if (!ticket || !ticket.ticketGitEnvironmentAggregate) {
+    console.warn(
+      `No ticket or ticket Git environment found for ticket ID ${existingExecution.ticketId}`,
+    );
     return;
   }
 

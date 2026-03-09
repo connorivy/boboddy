@@ -59,11 +59,12 @@ export class QueueNextPipelineStepOnStepExecutionCompleted implements DomainEven
         throw error;
       }
 
-      nextStepExecution = this.pipelineAdvancementPolicy.createNextStepExecution(
-        new PipelineRunEntity(pipelineRun.id, pipelineRun.ticketId, [
-          this.buildCompletedExecutionFromEvent(event),
-        ]),
-      );
+      nextStepExecution =
+        this.pipelineAdvancementPolicy.createNextStepExecution(
+          new PipelineRunEntity(pipelineRun.id, pipelineRun.ticketId, [
+            this.buildCompletedExecutionFromEvent(event),
+          ]),
+        );
     }
 
     if (!nextStepExecution) {

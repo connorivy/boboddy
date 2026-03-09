@@ -199,19 +199,16 @@ export const triggerTicketFailingTestFixStep = async (
       customInstructions: buildCustomInstructions(failingTestPaths),
     });
 
-    savedExecution.setResult({
-      status: savedExecution.status,
-      result: new FailingTestFixStepResultEntity(
-        "draft",
-        githubIssue.githubIssueNumber,
-        githubIssue.githubIssueId,
-        ticketGitEnvironment.devBranch,
-        null,
-        undefined,
-        undefined,
-        failingTestPaths[0],
-      ),
-    });
+    savedExecution.result = new FailingTestFixStepResultEntity(
+      "draft",
+      githubIssue.githubIssueNumber,
+      githubIssue.githubIssueId,
+      ticketGitEnvironment.devBranch,
+      null,
+      undefined,
+      undefined,
+      failingTestPaths[0],
+    );
     savedExecution = await stepExecutionRepo.save(savedExecution);
   } catch (error) {
     if (!TERMINAL_STEP_EXECUTION_STATUSES.has(savedExecution.status)) {

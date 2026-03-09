@@ -1,0 +1,441 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`AI pipeline flow (integration) > walks through the AI pipeline happy path from ticket ingest through pipeline advancement > completed description step result 1`] = `
+{
+  "createdAt": "<iso-timestamp>",
+  "endedAt": "<iso-timestamp>",
+  "failureReason": null,
+  "id": "<uuid>",
+  "pipelineId": "<uuid>",
+  "result": {
+    "createdAt": "<iso-timestamp>",
+    "executionId": "<uuid>",
+    "expectedBehaviorScore": 0.45,
+    "observedBehaviorScore": 0.9,
+    "rawResponse": "{"mocked":true}",
+    "reasoning": "Observed behavior is clear, but expected behavior is thin.",
+    "stepName": "ticket_description_quality_rank",
+    "stepsToReproduceScore": 0.8,
+    "updatedAt": "<iso-timestamp>",
+  },
+  "startedAt": "<iso-timestamp>",
+  "status": "succeeded",
+  "stepName": "ticket_description_quality_rank",
+  "ticketId": "CV-612",
+  "updatedAt": "<iso-timestamp>",
+}
+`;
+
+exports[`AI pipeline flow (integration) > walks through the AI pipeline happy path from ticket ingest through pipeline advancement > completed fix step result 1`] = `
+{
+  "createdAt": "<iso-timestamp>",
+  "endedAt": "<iso-timestamp>",
+  "failureReason": null,
+  "id": "<uuid>",
+  "pipelineId": "<uuid>",
+  "result": {
+    "agentBranch": "ticket/CV-612-fix",
+    "agentStatus": "complete",
+    "agentSummary": null,
+    "createdAt": "<iso-timestamp>",
+    "executionId": "<uuid>",
+    "failingTestCommitSha": undefined,
+    "failureReason": null,
+    "fixConfidenceLevel": 0.89,
+    "fixOperationOutcome": "fixed",
+    "fixedTestPath": "tests/integration/modules/session/restore-session.integration.test.ts",
+    "githubAgentRunId": null,
+    "githubIssueId": "issue_123",
+    "githubIssueNumber": 123,
+    "githubMergeStatus": "draft",
+    "githubPrTargetBranch": "ticket-cv-612-dev",
+    "rawResultJson": null,
+    "stepName": "github_fix_failing_test",
+    "summaryOfFix": "Updated session restore to rehydrate saved filters before rendering restored tabs, which makes the reproduced integration test pass.",
+    "updatedAt": "<iso-timestamp>",
+  },
+  "startedAt": "<iso-timestamp>",
+  "status": "succeeded",
+  "stepName": "github_fix_failing_test",
+  "ticketId": "CV-612",
+  "updatedAt": "<iso-timestamp>",
+}
+`;
+
+exports[`AI pipeline flow (integration) > walks through the AI pipeline happy path from ticket ingest through pipeline advancement > completed investigation step result 1`] = `
+{
+  "createdAt": "<iso-timestamp>",
+  "endedAt": "<iso-timestamp>",
+  "failureReason": null,
+  "id": "<uuid>",
+  "pipelineId": "<uuid>",
+  "result": {
+    "agentBranch": "ticket/CV-612-investigation",
+    "agentStatus": "complete",
+    "codeUnitsInvolved": [
+      {
+        "evidence": [
+          "Tab restoration occurs without filter payload hydration.",
+        ],
+        "filePath": "src/modules/session/restore-session.ts",
+        "kind": "function",
+        "name": "restoreSession",
+        "notes": [],
+        "relevance": "Restores tab state but not filters.",
+        "symbol": "restoreSession",
+      },
+    ],
+    "confidenceLevel": 0.87,
+    "createdAt": "<iso-timestamp>",
+    "databaseFindings": [
+      {
+        "comparisonNotes": [
+          "Saved session record did not contain filter data.",
+        ],
+        "entityType": "saved_session",
+        "identifiers": [
+          "CV-612",
+          "session-restore",
+        ],
+        "notes": [],
+        "records": [
+          {
+            "filters": null,
+            "id": "session-restore",
+          },
+        ],
+        "relationToTicket": "Captured session state for the affected restore flow.",
+      },
+    ],
+    "datadogQueryTerms": [
+      "CV-612",
+      "session restore",
+      "filters",
+    ],
+    "datadogSessionFindings": [
+      {
+        "events": [
+          {
+            "description": "User restored a saved session and filters were absent.",
+            "metadata": {
+              "ticketId": "CV-612",
+            },
+            "route": "/session/restore",
+            "timestamp": "<iso-timestamp>",
+            "type": "action",
+          },
+        ],
+        "notes": [],
+        "sessionId": "session-restore",
+        "timeWindow": "2026-03-11T10:04:00.000Z/2026-03-11T10:05:10.000Z",
+        "userIdentifier": "reporter@acme.test",
+      },
+    ],
+    "datadogTimeRange": "2026-03-11T10:00:00.000Z/2026-03-11T10:05:10.000Z",
+    "exactEventTimes": [
+      "<iso-timestamp>",
+    ],
+    "executionId": "<uuid>",
+    "investigationGaps": [],
+    "investigationReport": "Investigation found filter state is not persisted during session restore.",
+    "keyIdentifiers": [
+      "CV-612",
+      "session-restore",
+    ],
+    "logFindings": [
+      {
+        "evidence": [
+          "Log confirms filter payload was empty at restore time.",
+        ],
+        "identifiers": [
+          "CV-612",
+        ],
+        "message": "restoreSession completed without filter state",
+        "notes": [],
+        "queryOrFilter": "ticket:CV-612",
+        "routeOrCodePath": "/session/restore",
+        "source": "application_log",
+        "timestamp": "<iso-timestamp>",
+      },
+    ],
+    "operationOutcome": "findings_recorded",
+    "rawResultJson": {
+      "codeUnitsInvolved": [
+        {
+          "evidence": [
+            "Tab restoration occurs without filter payload hydration.",
+          ],
+          "filePath": "src/modules/session/restore-session.ts",
+          "kind": "function",
+          "name": "restoreSession",
+          "notes": [],
+          "relevance": "Restores tab state but not filters.",
+          "symbol": "restoreSession",
+        },
+      ],
+      "databaseFindings": [
+        {
+          "comparisonNotes": [
+            "Saved session record did not contain filter data.",
+          ],
+          "entityType": "saved_session",
+          "identifiers": [
+            "CV-612",
+            "session-restore",
+          ],
+          "notes": [],
+          "records": [
+            {
+              "filters": null,
+              "id": "session-restore",
+            },
+          ],
+          "relationToTicket": "Captured session state for the affected restore flow.",
+        },
+      ],
+      "datadogQueryTerms": [
+        "CV-612",
+        "session restore",
+        "filters",
+      ],
+      "datadogSessionFindings": [
+        {
+          "events": [
+            {
+              "description": "User restored a saved session and filters were absent.",
+              "metadata": {
+                "ticketId": "CV-612",
+              },
+              "route": "/session/restore",
+              "timestamp": "<iso-timestamp>",
+              "type": "action",
+            },
+          ],
+          "notes": [],
+          "sessionId": "session-restore",
+          "timeWindow": "2026-03-11T10:04:00.000Z/2026-03-11T10:05:10.000Z",
+          "userIdentifier": "reporter@acme.test",
+        },
+      ],
+      "datadogTimeRange": "2026-03-11T10:00:00.000Z/2026-03-11T10:05:10.000Z",
+      "exactEventTimes": [
+        "<iso-timestamp>",
+      ],
+      "investigationGaps": [],
+      "investigationReport": "Investigation found filter state is not persisted during session restore.",
+      "keyIdentifiers": [
+        "CV-612",
+        "session-restore",
+      ],
+      "logFindings": [
+        {
+          "evidence": [
+            "Log confirms filter payload was empty at restore time.",
+          ],
+          "identifiers": [
+            "CV-612",
+          ],
+          "message": "restoreSession completed without filter state",
+          "notes": [],
+          "queryOrFilter": "ticket:CV-612",
+          "routeOrCodePath": "/session/restore",
+          "source": "application_log",
+          "timestamp": "<iso-timestamp>",
+        },
+      ],
+      "mocked": true,
+      "operationOutcome": "findings_recorded",
+      "recommendedNextQueries": [
+        "Inspect filter serialization during save flow.",
+      ],
+      "summaryOfInvestigation": "Session restore reopens tabs but does not restore filters.",
+      "ticketId": "CV-612",
+      "whatHappened": "The restore flow rehydrates tabs but omits the saved filter payload.",
+    },
+    "recommendedNextQueries": [
+      "Inspect filter serialization during save flow.",
+    ],
+    "stepName": "ticket_investigation",
+    "summaryOfInvestigation": "Session restore reopens tabs but does not restore filters.",
+    "updatedAt": "<iso-timestamp>",
+    "whatHappened": "The restore flow rehydrates tabs but omits the saved filter payload.",
+  },
+  "startedAt": "<iso-timestamp>",
+  "status": "succeeded",
+  "stepName": "ticket_investigation",
+  "ticketId": "CV-612",
+  "updatedAt": "<iso-timestamp>",
+}
+`;
+
+exports[`AI pipeline flow (integration) > walks through the AI pipeline happy path from ticket ingest through pipeline advancement > completed repro step result 1`] = `
+{
+  "createdAt": "<iso-timestamp>",
+  "endedAt": "<iso-timestamp>",
+  "failureReason": null,
+  "id": "<uuid>",
+  "pipelineId": "<uuid>",
+  "result": {
+    "agentBranch": "ticket/CV-612-repro",
+    "agentStatus": "complete",
+    "confidenceLevel": 0.91,
+    "createdAt": "<iso-timestamp>",
+    "executionId": "<uuid>",
+    "failingTestCommitSha": null,
+    "failingTestPaths": [
+      "tests/integration/modules/session/restore-session.integration.test.ts",
+    ],
+    "failureReason": null,
+    "feedbackRequest": null,
+    "githubAgentRunId": null,
+    "githubIssueId": "issue_123",
+    "githubIssueNumber": 123,
+    "githubMergeStatus": "draft",
+    "githubPrTargetBranch": "ticket-cv-612-dev",
+    "outcome": "reproduced",
+    "rawResultJson": {
+      "feedbackRequest": null,
+    },
+    "stepName": "github_repro_failing_test",
+    "summaryOfFindings": "Added a failing integration test that confirms session restore drops saved filters.",
+    "updatedAt": "<iso-timestamp>",
+  },
+  "startedAt": "<iso-timestamp>",
+  "status": "succeeded",
+  "stepName": "github_repro_failing_test",
+  "ticketId": "CV-612",
+  "updatedAt": "<iso-timestamp>",
+}
+`;
+
+exports[`AI pipeline flow (integration) > walks through the AI pipeline happy path from ticket ingest through pipeline advancement > initial queued description step 1`] = `
+{
+  "createdAt": "<iso-timestamp>",
+  "endedAt": null,
+  "failureReason": null,
+  "id": "<uuid>",
+  "pipelineId": "<uuid>",
+  "result": null,
+  "startedAt": "<iso-timestamp>",
+  "status": "queued",
+  "stepName": "ticket_description_quality_rank",
+  "ticketId": "CV-612",
+  "updatedAt": "<iso-timestamp>",
+}
+`;
+
+exports[`AI pipeline flow (integration) > walks through the AI pipeline happy path from ticket ingest through pipeline advancement > queued fix step after repro completion 1`] = `
+{
+  "createdAt": "<iso-timestamp>",
+  "endedAt": null,
+  "failureReason": null,
+  "id": "<uuid>",
+  "pipelineId": "<uuid>",
+  "result": null,
+  "startedAt": "<iso-timestamp>",
+  "status": "queued",
+  "stepName": "github_fix_failing_test",
+  "ticketId": "CV-612",
+  "updatedAt": "<iso-timestamp>",
+}
+`;
+
+exports[`AI pipeline flow (integration) > walks through the AI pipeline happy path from ticket ingest through pipeline advancement > queued investigation step after description completion 1`] = `
+{
+  "createdAt": "<iso-timestamp>",
+  "endedAt": null,
+  "failureReason": null,
+  "id": "<uuid>",
+  "pipelineId": "<uuid>",
+  "result": null,
+  "startedAt": "<iso-timestamp>",
+  "status": "queued",
+  "stepName": "ticket_investigation",
+  "ticketId": "CV-612",
+  "updatedAt": "<iso-timestamp>",
+}
+`;
+
+exports[`AI pipeline flow (integration) > walks through the AI pipeline happy path from ticket ingest through pipeline advancement > queued repro step after investigation completion 1`] = `
+{
+  "createdAt": "<iso-timestamp>",
+  "endedAt": null,
+  "failureReason": null,
+  "id": "<uuid>",
+  "pipelineId": "<uuid>",
+  "result": null,
+  "startedAt": "<iso-timestamp>",
+  "status": "queued",
+  "stepName": "github_repro_failing_test",
+  "ticketId": "CV-612",
+  "updatedAt": "<iso-timestamp>",
+}
+`;
+
+exports[`AI pipeline flow (integration) > walks through the AI pipeline happy path from ticket ingest through pipeline advancement > running fix step 1`] = `
+{
+  "createdAt": "<iso-timestamp>",
+  "endedAt": null,
+  "failureReason": null,
+  "id": "<uuid>",
+  "pipelineId": "<uuid>",
+  "result": {
+    "agentBranch": null,
+    "agentStatus": null,
+    "agentSummary": null,
+    "createdAt": "<iso-timestamp>",
+    "executionId": "<uuid>",
+    "failingTestCommitSha": undefined,
+    "failureReason": null,
+    "fixConfidenceLevel": null,
+    "fixOperationOutcome": null,
+    "fixedTestPath": null,
+    "githubAgentRunId": null,
+    "githubIssueId": "issue_123",
+    "githubIssueNumber": 123,
+    "githubMergeStatus": "draft",
+    "githubPrTargetBranch": "ticket-cv-612-dev",
+    "rawResultJson": null,
+    "stepName": "github_fix_failing_test",
+    "summaryOfFix": null,
+    "updatedAt": "<iso-timestamp>",
+  },
+  "startedAt": "<iso-timestamp>",
+  "status": "running",
+  "stepName": "github_fix_failing_test",
+  "ticketId": "CV-612",
+  "updatedAt": "<iso-timestamp>",
+}
+`;
+
+exports[`AI pipeline flow (integration) > walks through the AI pipeline happy path from ticket ingest through pipeline advancement > running investigation step 1`] = `
+{
+  "createdAt": "<iso-timestamp>",
+  "endedAt": null,
+  "failureReason": null,
+  "id": "<uuid>",
+  "pipelineId": "<uuid>",
+  "result": null,
+  "startedAt": "<iso-timestamp>",
+  "status": "running",
+  "stepName": "ticket_investigation",
+  "ticketId": "CV-612",
+  "updatedAt": "<iso-timestamp>",
+}
+`;
+
+exports[`AI pipeline flow (integration) > walks through the AI pipeline happy path from ticket ingest through pipeline advancement > running repro step 1`] = `
+{
+  "createdAt": "<iso-timestamp>",
+  "endedAt": null,
+  "failureReason": null,
+  "id": "<uuid>",
+  "pipelineId": "<uuid>",
+  "result": null,
+  "startedAt": "<iso-timestamp>",
+  "status": "running",
+  "stepName": "github_repro_failing_test",
+  "ticketId": "CV-612",
+  "updatedAt": "<iso-timestamp>",
+}
+`;

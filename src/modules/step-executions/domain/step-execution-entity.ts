@@ -4,6 +4,7 @@ import {
   FAILING_TEST_FIX_STEP_NAME,
   FAILING_TEST_REPRO_STEP_NAME,
   StepExecutionStatus,
+  TERMINAL_STEP_EXECUTION_STATUSES,
   TICKET_INVESTIGATION_STEP_NAME,
   TICKET_DESCRIPTION_QUALITY_STEP_NAME,
   TICKET_DUPLICATE_CANDIDATES_STEP_NAME,
@@ -92,6 +93,10 @@ export abstract class TicketPipelineStepExecutionEntity<TResult = unknown> {
         endedAt: this.endedAt,
       }),
     );
+  }
+
+  updateStatus(newStatus: StepExecutionStatus): void {
+    this.status = newStatus;
   }
 
   protected addDomainEvent(event: DomainEvent): void {
@@ -315,16 +320,27 @@ export class FailingTestReproStepExecutionEntity extends TicketPipelineStepExecu
   }
 
   override setResult({
+    status,
+    endedAt,
+    failureReason,
+    result,
     githubPrTargetBranch,
-    ...input
   }: SetStepExecutionResultInput<FailingTestReproStepResultEntity> & {
-    githubPrTargetBranch?: string | null;
+    githubPrTargetBranch?: string;
   }): void {
+    super.setResult({ status, endedAt, failureReason, result });
+    this.githubPrTargetBranch = githubPrTargetBranch ?? null;
+  }
+
+  override updateStatus(
+    newStatus: StepExecutionStatus,
+    githubPrTargetBranch?: string | null,
+  ): void {
     if (githubPrTargetBranch !== undefined) {
       this.githubPrTargetBranch = githubPrTargetBranch;
     }
 
-    super.setResult(input);
+    super.updateStatus(newStatus);
   }
 }
 

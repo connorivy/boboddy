@@ -9,10 +9,16 @@ import type { PipelineRunRepo } from "@/modules/pipeline-runs/application/pipeli
 import { PipelineRunEntity } from "@/modules/pipeline-runs/domain/pipeline-run-aggregate";
 import type { StepExecutionRepo } from "@/modules/step-executions/application/step-execution-repo";
 import { TicketAggregate } from "../domain/ticket-aggregate";
+import {
+  ingestTicketsRequestSchema,
+  type IngestTicketsRequest,
+} from "../contracts/ticket-contracts";
 
 type TicketIngestDeps = {
   ticketRepo: TicketRepo;
   jiraTicketRepo: JiraTicketRepo;
+  pipelineRunRepo: PipelineRunRepo;
+  stepExecutionRepo: StepExecutionRepo;
 };
 
 type TicketIngestFromBoardsDeps = TicketIngestDeps & {
@@ -21,27 +27,57 @@ type TicketIngestFromBoardsDeps = TicketIngestDeps & {
 };
 export async function ingestTickets(
   ticketNumbers: string[],
-  { ticketRepo, jiraTicketRepo }: TicketIngestDeps = AppContext,
+  {
+    ticketRepo,
+    jiraTicketRepo,
+    pipelineRunRepo,
+    stepExecutionRepo,
+  }: TicketIngestDeps = AppContext,
 ) {
   const jiraTickets = await jiraTicketRepo.fetchByTicketNumbers(ticketNumbers);
   return await persistTicketsAndPipelines(
     ticketRepo,
     jiraTickets,
-    AppContext.pipelineRunRepo,
-    AppContext.stepExecutionRepo,
+    pipelineRunRepo,
+    stepExecutionRepo,
   );
 }
 
 export async function ingestTicketsModifiedSince(
   sinceDate: string,
-  { ticketRepo, jiraTicketRepo }: TicketIngestDeps = AppContext,
+  {
+    ticketRepo,
+    jiraTicketRepo,
+    pipelineRunRepo,
+    stepExecutionRepo,
+  }: TicketIngestDeps = AppContext,
 ) {
   const jiraTickets = await jiraTicketRepo.fetchModifiedSince(sinceDate);
   return await persistTicketsAndPipelines(
     ticketRepo,
     jiraTickets,
-    AppContext.pipelineRunRepo,
-    AppContext.stepExecutionRepo,
+    pipelineRunRepo,
+    stepExecutionRepo,
+  );
+}
+
+export async function ingestTicketContracts(
+  rawRequest: IngestTicketsRequest,
+  {
+    ticketRepo,
+    pipelineRunRepo,
+    stepExecutionRepo,
+  }: Pick<TicketIngestDeps, "ticketRepo" | "pipelineRunRepo" | "stepExecutionRepo"> =
+    AppContext,
+) {
+  const request = ingestTicketsRequestSchema.parse(rawRequest);
+  const tickets = request.tickets.map((ticket) => TicketAggregate.create(ticket));
+
+  return await persistTicketsAndPipelines(
+    ticketRepo,
+    tickets,
+    pipelineRunRepo,
+    stepExecutionRepo,
   );
 }
 

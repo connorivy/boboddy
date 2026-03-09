@@ -19,8 +19,8 @@ import {
 
 const PIPELINE_STEP_SEQUENCE: ReadonlyArray<StepExecutionStepName> = [
   TICKET_DESCRIPTION_QUALITY_STEP_NAME,
+  // TICKET_DUPLICATE_CANDIDATES_STEP_NAME,
   TICKET_INVESTIGATION_STEP_NAME,
-  TICKET_DUPLICATE_CANDIDATES_STEP_NAME,
   FAILING_TEST_REPRO_STEP_NAME,
   FAILING_TEST_FIX_STEP_NAME,
 ];
@@ -53,7 +53,10 @@ export class PipelineAdvancementPolicy {
     pipelineRun: PipelineRunEntity,
   ): TicketPipelineStepExecutionEntity {
     if (pipelineRun.pipelineSteps?.length === 0) {
-      throw httpError(`Pipeline run with ID ${pipelineRun.id} has no steps`, 400);
+      throw httpError(
+        `Pipeline run with ID ${pipelineRun.id} has no steps`,
+        400,
+      );
     }
 
     const latestStepExecution =
@@ -67,7 +70,10 @@ export class PipelineAdvancementPolicy {
       })[0] ?? null;
 
     if (!latestStepExecution) {
-      throw httpError(`Pipeline run with ID ${pipelineRun.id} has no steps`, 400);
+      throw httpError(
+        `Pipeline run with ID ${pipelineRun.id} has no steps`,
+        400,
+      );
     }
 
     return latestStepExecution;

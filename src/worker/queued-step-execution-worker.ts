@@ -1,104 +1,9 @@
 import { AppContext } from "@/lib/di";
-import { TicketPipelineStepExecutionEntity } from "@/modules/step-executions/domain/step-execution-entity";
-import type { PipelineStepExecutionsQuery } from "@/modules/step-executions/contracts/get-pipeline-step-executions-contracts";
-import type { StepExecutionRepo } from "@/modules/step-executions/application/step-execution-repo";
-import { processClaimedStepExecution } from "./process-claimed-step-execution";
-import type { DbExecutor } from "@/lib/db/db-executor";
+import { executeQueuedStepExecution } from "@/modules/step-executions/application/execute-queued-step-execution";
 
 const DEFAULT_POLL_INTERVAL_MS = 5_000;
 const DEFAULT_BATCH_SIZE = 10;
 const MAX_BATCH_SIZE = 100;
-
-export class ClaimedExecutionStepRepo implements StepExecutionRepo {
-  private hasRemappedFirstSave = false;
-
-  constructor(
-    private readonly delegate: StepExecutionRepo,
-    private readonly claimedExecution: TicketPipelineStepExecutionEntity,
-  ) {}
-
-  private remapToClaimedExecution(
-    stepExecution: TicketPipelineStepExecutionEntity,
-  ): void {
-    stepExecution.id = this.claimedExecution.id;
-    stepExecution.pipelineId = this.claimedExecution.pipelineId;
-    stepExecution.ticketId = this.claimedExecution.ticketId;
-    stepExecution.createdAt = this.claimedExecution.createdAt;
-    stepExecution.updatedAt = this.claimedExecution.updatedAt;
-  }
-
-  async load(id: string): Promise<TicketPipelineStepExecutionEntity | null> {
-    return this.delegate.load(id);
-  }
-
-  async loadQueued(
-    limit: number,
-  ): Promise<TicketPipelineStepExecutionEntity[]> {
-    return this.delegate.loadQueued(limit);
-  }
-
-  async claimQueued(
-    id: string,
-  ): Promise<TicketPipelineStepExecutionEntity | null> {
-    return this.delegate.claimQueued(id);
-  }
-
-  async loadByPipelineId(
-    pipelineId: string,
-  ): Promise<TicketPipelineStepExecutionEntity[]> {
-    return this.delegate.loadByPipelineId(pipelineId);
-  }
-
-  async loadByTicketId(
-    ticketId: string,
-  ): Promise<TicketPipelineStepExecutionEntity[]> {
-    return this.delegate.loadByTicketId(ticketId);
-  }
-
-  async getByTicketId(
-    ticketId: string,
-  ): Promise<TicketPipelineStepExecutionEntity[]> {
-    return this.delegate.getByTicketId(ticketId);
-  }
-
-  async loadPage(
-    query: PipelineStepExecutionsQuery,
-  ): Promise<TicketPipelineStepExecutionEntity[]> {
-    return this.delegate.loadPage(query);
-  }
-
-  async count(): Promise<number> {
-    return this.delegate.count();
-  }
-
-  async save(
-    stepExecution: TicketPipelineStepExecutionEntity,
-    dbExecutor?: DbExecutor,
-  ): Promise<TicketPipelineStepExecutionEntity> {
-    if (!this.hasRemappedFirstSave) {
-      this.remapToClaimedExecution(stepExecution);
-      this.hasRemappedFirstSave = true;
-    }
-
-    return this.delegate.save(stepExecution, dbExecutor);
-  }
-
-  async saveMany(
-    stepExecutions: TicketPipelineStepExecutionEntity[],
-    dbExecutor?: DbExecutor,
-  ): Promise<TicketPipelineStepExecutionEntity[]> {
-    if (stepExecutions.length === 0) {
-      return [];
-    }
-
-    if (!this.hasRemappedFirstSave) {
-      this.remapToClaimedExecution(stepExecutions[0]);
-      this.hasRemappedFirstSave = true;
-    }
-
-    return this.delegate.saveMany(stepExecutions, dbExecutor);
-  }
-}
 
 function parseBatchSize(rawValue: string | undefined): number {
   if (!rawValue) {
@@ -126,24 +31,6 @@ function parsePollIntervalMs(rawValue: string | undefined): number {
   return parsed;
 }
 
-export async function resolveTicketId(
-  pipelineId: string | null | undefined,
-  fallbackTicketId?: string,
-): Promise<string> {
-  if (!pipelineId) {
-    if (!fallbackTicketId) {
-      throw new Error(
-        "Cannot resolve ticket ID without pipelineId or fallback",
-      );
-    }
-
-    return fallbackTicketId;
-  }
-
-  const pipelineRun = await AppContext.pipelineRunRepo.loadById(pipelineId);
-  return pipelineRun?.ticketId ?? fallbackTicketId ?? pipelineId;
-}
-
 export async function processQueuedStepExecutionsBatch(
   batchSize = parseBatchSize(process.env.WORKER_BATCH_SIZE),
 ): Promise<number> {
@@ -157,20 +44,16 @@ export async function processQueuedStepExecutionsBatch(
   }
 
   for (const queuedExecution of queuedExecutions) {
-    const claimedExecution = await AppContext.stepExecutionRepo.claimQueued(
-      queuedExecution.id,
-    );
-
-    if (!claimedExecution) {
-      continue;
-    }
-
     try {
-      await processClaimedStepExecution(claimedExecution);
-      processedCount += 1;
+      const result = await executeQueuedStepExecution({
+        stepExecutionId: queuedExecution.id,
+      });
+      if (result.data.stepExecution) {
+        processedCount += 1;
+      }
     } catch (error) {
       console.error(
-        `[worker] failed queued step execution id=${claimedExecution.id} step=${claimedExecution.stepName} reason=${claimedExecution.failureReason}:`,
+        `[worker] failed queued step execution id=${queuedExecution.id} step=${queuedExecution.stepName} reason=${queuedExecution.failureReason}:`,
         error,
       );
     }

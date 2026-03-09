@@ -239,10 +239,7 @@ export const triggerTicketFailingTestReproStep = async (
     if (!(savedExecution instanceof FailingTestReproStepExecutionEntity)) {
       throw new Error("Expected saved failing-test repro execution entity");
     }
-    savedExecution.setResult({
-      status: savedExecution.status,
-      githubPrTargetBranch: baseBranch,
-    });
+    savedExecution.updateStatus("running", baseBranch);
     savedExecution = await stepExecutionRepo.save(savedExecution);
   } catch (error) {
     if (savedExecution instanceof FailingTestReproStepExecutionEntity) {

@@ -52,8 +52,7 @@ describe("completeTicketDescriptionEnrichmentStep (integration)", () => {
 
     const result = await completeTicketDescriptionEnrichmentStep(
       {
-        ticketId: "CV-952",
-        pipelineId: runningExecution.id!,
+        stepExecutionId: runningExecution.id,
         operationOutcome: "findings_recorded",
         summaryOfInvestigation:
           "Errors spike on /api/auth/refresh for Acme users in us-east-1.",

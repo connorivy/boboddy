@@ -5,12 +5,8 @@ import { DrizzleTicketRepo } from "@/modules/tickets/infra/drizzle-ticket-repo";
 import { DrizzleStepExecutionRepo } from "@/modules/step-executions/infra/step-execution-repo";
 import { FAILING_TEST_REPRO_STEP_NAME } from "@/modules/step-executions/domain/step-execution.types";
 import { completeTicketFailingTestReproStep } from "@/modules/step-executions/github_repro_failing_test/application/complete-ticket-failing-test-repro-step";
-import {
-  truncateTestTables,
-} from "../../helpers/pgvector-test-db";
-import {
-  FailingTestReproStepExecutionEntity,
-} from "@/modules/step-executions/domain/step-execution-entity";
+import { truncateTestTables } from "../../helpers/pgvector-test-db";
+import { FailingTestReproStepExecutionEntity } from "@/modules/step-executions/domain/step-execution-entity";
 import { TicketGithubIssueEntity } from "@/modules/tickets/domain/ticket-github-issue.entity";
 import { getDb } from "@/lib/db";
 import { ticketStepExecutionsTph } from "@/lib/db/schema";
@@ -66,8 +62,7 @@ describe("completeTicketFailingTestReproStep (integration)", () => {
 
     const result = await completeTicketFailingTestReproStep(
       {
-        ticketId: "CV-902",
-        pipelineId: runningExecution.id!,
+        stepExecutionId: runningExecution.id,
         reproduceOperationOutcome: "reproduced",
         summaryOfFindings:
           "Added a profile-save regression test and confirmed it fails with 500.",
@@ -96,7 +91,8 @@ describe("completeTicketFailingTestReproStep (integration)", () => {
     const [savedExecution] = await stepExecutionRepo.loadByTicketId("CV-902");
     expect(savedExecution).toBeInstanceOf(FailingTestReproStepExecutionEntity);
 
-    const typedExecution = savedExecution as FailingTestReproStepExecutionEntity;
+    const typedExecution =
+      savedExecution as FailingTestReproStepExecutionEntity;
     expect(typedExecution.result?.outcome).toBe("reproduced");
     expect(typedExecution.result?.agentStatus).toBe("complete");
     expect(typedExecution.result?.githubMergeStatus).toBe("draft");
@@ -128,8 +124,7 @@ describe("completeTicketFailingTestReproStep (integration)", () => {
     await expect(
       completeTicketFailingTestReproStep(
         {
-          ticketId: "CV-902",
-          pipelineId: "018f47ac-7f5a-7cc1-b54a-6f91d5b89999",
+          stepExecutionId: "018f47ac-7f5a-7cc1-b54a-6f91d5b89999",
           reproduceOperationOutcome: "agent_error",
           summaryOfFindings: "Could not reproduce after multiple attempts.",
           confidenceLevel: null,
@@ -162,8 +157,7 @@ describe("completeTicketFailingTestReproStep (integration)", () => {
 
     const result = await completeTicketFailingTestReproStep(
       {
-        ticketId: "CV-902",
-        pipelineId: runningExecution.id!,
+        stepExecutionId: runningExecution.id,
         reproduceOperationOutcome: "needs_user_feedback",
         summaryOfFindings:
           "Observed two conflicting expected behaviors in issue comments.",

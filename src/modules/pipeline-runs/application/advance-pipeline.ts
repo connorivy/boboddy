@@ -3,6 +3,7 @@ import { type PipelineRunContract } from "@/modules/pipeline-runs/contracts/pipe
 import { pipelineRunEntityToContract } from "./pipeline-run-entity-to-contract";
 import type { PipelineRunRepo } from "./pipeline-run-repo";
 import { httpError } from "@/lib/api/http";
+import { PipelineAdvancementPolicy } from "../domain/pipeline-advancement-policy";
 import {
   FAILING_TEST_FIX_STEP_NAME,
   FAILING_TEST_REPRO_STEP_NAME,
@@ -20,14 +21,6 @@ import {
   type TicketPipelineStepExecutionEntity,
 } from "@/modules/step-executions/domain/step-execution-entity";
 import type { StepExecutionRepo } from "@/modules/step-executions/application/step-execution-repo";
-
-const PIPELINE_STEP_SEQUENCE: StepExecutionStepName[] = [
-  TICKET_DESCRIPTION_QUALITY_STEP_NAME,
-  TICKET_INVESTIGATION_STEP_NAME,
-  TICKET_DUPLICATE_CANDIDATES_STEP_NAME,
-  FAILING_TEST_REPRO_STEP_NAME,
-  FAILING_TEST_FIX_STEP_NAME,
-];
 
 function buildQueuedStepExecution(
   pipelineId: string,
@@ -86,12 +79,17 @@ function buildQueuedStepExecution(
 export async function advancePipeline(
   pipelineRunId: string,
   {
+    pipelineAdvancementPolicy,
     pipelineRunRepo,
     stepExecutionRepo,
   }: {
+    pipelineAdvancementPolicy: PipelineAdvancementPolicy;
     pipelineRunRepo: PipelineRunRepo;
     stepExecutionRepo: StepExecutionRepo;
-  } = AppContext,
+  } = {
+    pipelineAdvancementPolicy: new PipelineAdvancementPolicy(),
+    ...AppContext,
+  },
 ): Promise<PipelineRunContract> {
   const pipelineRun = await pipelineRunRepo.loadById(pipelineRunId, {
     includePipelineSteps: true,
@@ -100,45 +98,9 @@ export async function advancePipeline(
     throw httpError(`Pipeline run with ID ${pipelineRunId} not found`, 404);
   }
 
-  if (pipelineRun.pipelineSteps?.length === 0) {
-    throw httpError(`Pipeline run with ID ${pipelineRunId} has no steps`, 400);
-  }
+  const decision = pipelineAdvancementPolicy.decideNextAction(pipelineRun);
 
-  const lastSavedStep =
-    [...(pipelineRun.pipelineSteps ?? [])].sort((a, b) => {
-      const startedAtDiff = Date.parse(b.startedAt) - Date.parse(a.startedAt);
-      if (startedAtDiff !== 0) {
-        return startedAtDiff;
-      }
-
-      return String(b.id).localeCompare(String(a.id));
-    })[0] ?? null;
-
-  if (!lastSavedStep) {
-    throw httpError(`Pipeline run with ID ${pipelineRunId} has no steps`, 400);
-  }
-
-  // todo: make pipeline more flexible
-  if (lastSavedStep.status !== "succeeded") {
-    throw httpError(
-      `Latest step execution with ID ${lastSavedStep.id} is not completed for pipeline run ${pipelineRunId}`,
-      400,
-    );
-  }
-
-  const currentStepIndex = PIPELINE_STEP_SEQUENCE.indexOf(
-    lastSavedStep.stepName,
-  );
-  if (currentStepIndex === -1) {
-    throw httpError(
-      `Step '${lastSavedStep.stepName}' is not part of the pipeline sequence`,
-      400,
-    );
-  }
-
-  const nextStepName = PIPELINE_STEP_SEQUENCE[currentStepIndex + 1];
-
-  if (!nextStepName) {
+  if (decision.kind === "complete") {
     return pipelineRunEntityToContract(pipelineRun);
   }
 
@@ -146,7 +108,7 @@ export async function advancePipeline(
     buildQueuedStepExecution(
       pipelineRun.id,
       pipelineRun.ticketId,
-      nextStepName,
+      decision.stepName,
     ),
   );
   const refreshedPipelineRun = await pipelineRunRepo.loadById(pipelineRun.id, {

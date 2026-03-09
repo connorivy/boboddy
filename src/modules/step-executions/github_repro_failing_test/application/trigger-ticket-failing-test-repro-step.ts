@@ -108,7 +108,7 @@ export const triggerTicketFailingTestReproStep = async (
 
   const now = new Date().toISOString();
   const execution = new FailingTestReproStepExecutionEntity(
-    input.ticketId,
+    null,
     input.ticketId,
     "running",
     null,
@@ -183,12 +183,12 @@ export const triggerTicketFailingTestReproStep = async (
     ) {
       const result = latestEnrichmentStep.result;
       enrichmentContext = [
-        `Summary: ${result.summaryOfEnrichment}`,
+        `Summary: ${result.summaryOfInvestigation}`,
         `Datadog query terms: ${result.datadogQueryTerms.join(", ") || "none"}`,
         `Datadog time range: ${result.datadogTimeRange ?? "not provided"}`,
         `Key identifiers: ${result.keyIdentifiers.join(", ") || "none"}`,
-        "Enriched ticket description:",
-        result.enrichedTicketDescription,
+        "Investigation report:",
+        result.investigationReport,
       ].join("\n");
     }
 

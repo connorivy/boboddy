@@ -10,13 +10,13 @@ export const completeTicketDescriptionEnrichmentStepRequestBodySchema =
     ticketId: z.string().trim().min(1),
     pipelineId: z.string().uuid(),
     operationOutcome: z.enum([
-      "enriched",
-      "insufficient_evidence",
+      "findings_recorded",
+      "inconclusive",
       "agent_error",
       "cancelled",
     ]),
-    summaryOfEnrichment: z.string().trim().min(1).max(4000),
-    enrichedTicketDescription: z.string().trim().min(1).max(20000),
+    summaryOfInvestigation: z.string().trim().min(1).max(4000),
+    investigationReport: z.string().trim().min(1).max(20000),
     confidenceLevel: z.number().min(0).max(1).nullable(),
     rawResultJson: z.record(z.string(), z.unknown()).default({}),
   });

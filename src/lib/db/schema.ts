@@ -190,7 +190,10 @@ export const ticketStepExecutionsTph = pgTable(
   "ticket_step_executions_tph",
   {
     id: uuid("id").primaryKey(),
-    pipelineId: uuid("pipeline_id").notNull(),
+    pipelineId: uuid("pipeline_id"),
+    ticketId: text("ticket_id")
+      .references(() => tickets.id, { onDelete: "cascade" })
+      .notNull(),
     stepName: text("step_name").notNull(),
     type: text("type").notNull(),
     status: stepExecutionStatusEnum("status").notNull(),

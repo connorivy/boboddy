@@ -58,10 +58,10 @@ describe("completeTicketDescriptionEnrichmentStep (integration)", () => {
       {
         ticketId: "CV-952",
         pipelineId: runningExecution.id!,
-        operationOutcome: "enriched",
-        summaryOfEnrichment:
+        operationOutcome: "findings_recorded",
+        summaryOfInvestigation:
           "Errors spike on /api/auth/refresh for Acme users in us-east-1.",
-        enrichedTicketDescription:
+        investigationReport:
           "Symptoms: refresh 401s. Impact: Acme users. Evidence: Datadog logs include request_id=req-123 and trace_id=trace-456.",
         whatHappened:
           "Acme users hit /api/auth/refresh and received 401 responses during token refresh attempts.",
@@ -145,7 +145,7 @@ describe("completeTicketDescriptionEnrichmentStep (integration)", () => {
     expect(result.data.stepExecution.status).toBe("succeeded");
     expect(result.data.stepExecution.result).toMatchObject({
       stepName: TICKET_DESCRIPTION_ENRICHMENT_STEP_NAME,
-      operationOutcome: "enriched",
+      operationOutcome: "findings_recorded",
       agentBranch: "ephemeral-MEM9-dev1",
     });
 

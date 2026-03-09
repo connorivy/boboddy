@@ -76,8 +76,8 @@ export class TicketDescriptionQualityStepResultEntity {
 
 export class TicketDescriptionEnrichmentStepResultEntity {
   constructor(
-    public summaryOfEnrichment: string,
-    public enrichedTicketDescription: string,
+    public summaryOfInvestigation: string,
+    public investigationReport: string,
     public whatHappened: string,
     public datadogQueryTerms: string[],
     public datadogTimeRange: string | null,
@@ -99,8 +99,8 @@ export class TicketDescriptionEnrichmentStepResultEntity {
       | "user_exit",
     public agentBranch: string,
     public operationOutcome:
-      | "enriched"
-      | "insufficient_evidence"
+      | "findings_recorded"
+      | "inconclusive"
       | "agent_error"
       | "cancelled",
   ) {}

@@ -1,7 +1,6 @@
 import { and, desc, eq, ilike, inArray, or, sql } from "drizzle-orm";
 import type { TicketSearchQuery } from "@/modules/tickets/contracts/ticket-contracts";
 import {
-  pipelineRuns,
   ticketGitEnvironments,
   ticketGithubIssues,
   ticketStepExecutionsTph,
@@ -87,11 +86,7 @@ export class DrizzleTicketRepo implements TicketRepo {
       const latestStepStatusSubquery = sql`(
         select tse.status
         from ${ticketStepExecutionsTph} as tse
-        left join ${pipelineRuns} as pr on tse.pipeline_id = pr.id
-        where (
-            pr.ticket_id = ${tickets.id}
-            or tse.pipeline_id = ${tickets.id}
-          )
+        where tse.ticket_id = ${tickets.id}
           and tse.step_name = ${query.stepName}
         order by tse.started_at desc, tse.id desc
         limit 1
@@ -103,11 +98,7 @@ export class DrizzleTicketRepo implements TicketRepo {
           not exists (
             select 1
             from ${ticketStepExecutionsTph} as tse
-            left join ${pipelineRuns} as pr on tse.pipeline_id = pr.id
-            where (
-              pr.ticket_id = ${tickets.id}
-              or tse.pipeline_id = ${tickets.id}
-            )
+            where tse.ticket_id = ${tickets.id}
               and tse.step_name = ${query.stepName}
           ) or ${latestStepStatusAsTextSubquery} = ${query.stepExecutionStatus}
         )`);
@@ -300,11 +291,7 @@ export class DrizzleTicketRepo implements TicketRepo {
         / 3.0
       )
       from ${ticketStepExecutionsTph} as tse
-      left join ${pipelineRuns} as pr on tse.pipeline_id = pr.id
-      where (
-        pr.ticket_id = ${tickets.id}
-        or tse.pipeline_id = ${tickets.id}
-      )
+      where tse.ticket_id = ${tickets.id}
         and tse.step_name = ${TICKET_DESCRIPTION_QUALITY_STEP_NAME}
       order by tse.started_at desc, tse.id desc
       limit 1

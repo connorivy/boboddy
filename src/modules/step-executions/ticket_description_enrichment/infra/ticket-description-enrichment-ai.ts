@@ -22,12 +22,12 @@ export type EnrichTicketDescriptionInput = {
 
 export type EnrichTicketDescriptionOutput = {
   operationOutcome:
-    | "enriched"
-    | "insufficient_evidence"
+    | "findings_recorded"
+    | "inconclusive"
     | "agent_error"
     | "cancelled";
-  summaryOfEnrichment: string;
-  enrichedTicketDescription: string;
+  summaryOfInvestigation: string;
+  investigationReport: string;
   whatHappened: string;
   confidenceLevel: number | null;
   datadogQueryTerms: string[];
@@ -53,13 +53,13 @@ export interface TicketDescriptionEnrichmentAi {
 const codexResponseSchema = ticketDescriptionEnrichmentEvidenceFieldsSchema
   .extend({
     operationOutcome: z.enum([
-      "enriched",
-      "insufficient_evidence",
+      "findings_recorded",
+      "inconclusive",
       "agent_error",
       "cancelled",
     ]),
-    summaryOfEnrichment: z.string().min(1),
-    enrichedTicketDescription: z.string().min(1),
+    summaryOfInvestigation: z.string().min(1),
+    investigationReport: z.string().min(1),
     confidenceLevel: z.number().min(0).max(1).nullable(),
     rawResultJson: z.record(z.string(), z.unknown()).default({}),
   })
@@ -67,6 +67,7 @@ const codexResponseSchema = ticketDescriptionEnrichmentEvidenceFieldsSchema
     ...result,
     rawResultJson: {
       ...result.rawResultJson,
+      summaryOfInvestigation: result.summaryOfInvestigation,
       whatHappened: result.whatHappened,
       datadogQueryTerms: result.datadogQueryTerms,
       datadogTimeRange: result.datadogTimeRange,
@@ -78,7 +79,7 @@ const codexResponseSchema = ticketDescriptionEnrichmentEvidenceFieldsSchema
       datadogSessionFindings: result.datadogSessionFindings,
       investigationGaps: result.investigationGaps,
       recommendedNextQueries: result.recommendedNextQueries,
-      enrichedTicketDescription: result.enrichedTicketDescription,
+      investigationReport: result.investigationReport,
       operationOutcome: result.operationOutcome,
     },
   }));
@@ -93,9 +94,9 @@ const buildPrompt = (
 
 Return strictly valid JSON using exactly this shape:
 {
-  "operationOutcome": "enriched" | "insufficient_evidence" | "agent_error" | "cancelled",
-  "summaryOfEnrichment": "...",
-  "enrichedTicketDescription": "...",
+  "operationOutcome": "findings_recorded" | "inconclusive" | "agent_error" | "cancelled",
+  "summaryOfInvestigation": "...",
+  "investigationReport": "...",
   "whatHappened": "...",
   "confidenceLevel": 0..1 or null,
   "datadogQueryTerms": ["..."],
@@ -172,9 +173,9 @@ Required workflow:
 
 Additional rules:
 - Prefer concrete evidence over speculation.
-- operationOutcome should be "enriched" when you found meaningful evidence from at least one source. Use "insufficient_evidence" only when you could not collect meaningful evidence.
-- Keep summaryOfEnrichment concise.
-- Keep enrichedTicketDescription ticket-ready and structured as an investigation report, not generic prose.
+- operationOutcome should be "findings_recorded" when you found meaningful evidence from at least one source. Use "inconclusive" when you investigated but could not establish enough concrete evidence for a stronger conclusion.
+- Keep summaryOfInvestigation concise.
+- Keep investigationReport ticket-ready and structured as an investigation report, not generic prose.
 - exactEventTimes should contain any precise timestamps you established.
 - codeUnitsInvolved should prioritize the units directly tied to the failing flow and explain why each one matters.
 - rawResultJson may contain supplemental details, but the main findings must be present in the top-level fields above.

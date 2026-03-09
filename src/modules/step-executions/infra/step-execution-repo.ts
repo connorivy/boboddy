@@ -313,11 +313,13 @@ function mapDescriptionEnrichmentResultOrNull(
     return null;
   }
 
-  const enrichedTicketDescription = requiredNonEmptyString(
-    typeof rawResultJson.enrichedTicketDescription === "string"
-      ? rawResultJson.enrichedTicketDescription
-      : null,
-    "enrichedTicketDescription",
+  const investigationReport = requiredNonEmptyString(
+    typeof rawResultJson.investigationReport === "string"
+      ? rawResultJson.investigationReport
+      : typeof rawResultJson.enrichedTicketDescription === "string"
+        ? rawResultJson.enrichedTicketDescription
+        : null,
+    "investigationReport",
     context,
   );
 
@@ -328,8 +330,8 @@ function mapDescriptionEnrichmentResultOrNull(
   const evidenceFields =
     ticketDescriptionEnrichmentEvidenceFieldsSchema.parse(rawResultJson);
   const operationOutcome =
-    rawResultJson.operationOutcome === "enriched" ||
-    rawResultJson.operationOutcome === "insufficient_evidence" ||
+    rawResultJson.operationOutcome === "findings_recorded" ||
+    rawResultJson.operationOutcome === "inconclusive" ||
     rawResultJson.operationOutcome === "agent_error" ||
     rawResultJson.operationOutcome === "cancelled"
       ? rawResultJson.operationOutcome
@@ -345,7 +347,7 @@ function mapDescriptionEnrichmentResultOrNull(
 
   return new TicketDescriptionEnrichmentStepResultEntity(
     requiredNonEmptyString(row.summaryOfFindings, "summaryOfFindings", context),
-    enrichedTicketDescription,
+    investigationReport,
     evidenceFields.whatHappened,
     evidenceFields.datadogQueryTerms,
     datadogTimeRange,
@@ -445,7 +447,7 @@ function mapDuplicateCandidatesResultOrNull(
 export class DrizzleStepExecutionRepo implements StepExecutionRepo {
   private mapRowToExecution(
     row: typeof ticketStepExecutionsTph.$inferSelect,
-    ticketId: string = row.pipelineId,
+    ticketId: string = row.ticketId,
   ): TicketPipelineStepExecutionEntity {
     if (row.type !== row.stepName) {
       throw new Error(
@@ -636,6 +638,10 @@ export class DrizzleStepExecutionRepo implements StepExecutionRepo {
     >();
 
     for (const row of rows) {
+      if (!row.pipelineId) {
+        continue;
+      }
+
       const execution = this.mapRowToExecution(row);
       const executions = stepExecutionsByPipelineId.get(row.pipelineId);
       if (executions) {
@@ -660,24 +666,15 @@ export class DrizzleStepExecutionRepo implements StepExecutionRepo {
     const db = getDb();
 
     const rows = await db
-      .select({ execution: ticketStepExecutionsTph })
+      .select()
       .from(ticketStepExecutionsTph)
-      .leftJoin(
-        pipelineRuns,
-        eq(ticketStepExecutionsTph.pipelineId, pipelineRuns.id),
-      )
-      .where(
-        or(
-          eq(pipelineRuns.ticketId, ticketId),
-          eq(ticketStepExecutionsTph.pipelineId, ticketId),
-        ),
-      )
+      .where(eq(ticketStepExecutionsTph.ticketId, ticketId))
       .orderBy(
         desc(ticketStepExecutionsTph.startedAt),
         desc(ticketStepExecutionsTph.id),
       );
 
-    return rows.map((row) => this.mapRowToExecution(row.execution, ticketId));
+    return rows.map((row) => this.mapRowToExecution(row, ticketId));
   }
 
   async loadPage(
@@ -752,7 +749,8 @@ export class DrizzleStepExecutionRepo implements StepExecutionRepo {
     const [updated] = await tx
       .update(ticketStepExecutionsTph)
       .set({
-        pipelineId: pipeline.pipelineId ?? pipeline.ticketId,
+        pipelineId: pipeline.pipelineId,
+        ticketId: pipeline.ticketId,
         stepName: pipeline.stepName,
         type: pipeline.stepName,
         status: pipeline.status,
@@ -780,7 +778,8 @@ export class DrizzleStepExecutionRepo implements StepExecutionRepo {
       .insert(ticketStepExecutionsTph)
       .values({
         id: pipeline.id,
-        pipelineId: pipeline.pipelineId ?? pipeline.ticketId,
+        pipelineId: pipeline.pipelineId,
+        ticketId: pipeline.ticketId,
         stepName: pipeline.stepName,
         type: pipeline.stepName,
         status: pipeline.status,
@@ -827,10 +826,11 @@ export class DrizzleStepExecutionRepo implements StepExecutionRepo {
         ...fields,
         agentStatus: pipeline.result.agentStatus,
         agentBranch: pipeline.result.agentBranch,
-        summaryOfFindings: pipeline.result.summaryOfEnrichment,
+        summaryOfFindings: pipeline.result.summaryOfInvestigation,
         confidenceLevel: pipeline.result.confidenceLevel,
         rawResultJson: {
           ...pipeline.result.rawResultJson,
+          summaryOfInvestigation: pipeline.result.summaryOfInvestigation,
           whatHappened: pipeline.result.whatHappened,
           datadogQueryTerms: pipeline.result.datadogQueryTerms,
           datadogTimeRange: pipeline.result.datadogTimeRange,
@@ -842,7 +842,7 @@ export class DrizzleStepExecutionRepo implements StepExecutionRepo {
           datadogSessionFindings: pipeline.result.datadogSessionFindings,
           investigationGaps: pipeline.result.investigationGaps,
           recommendedNextQueries: pipeline.result.recommendedNextQueries,
-          enrichedTicketDescription: pipeline.result.enrichedTicketDescription,
+          investigationReport: pipeline.result.investigationReport,
           operationOutcome: pipeline.result.operationOutcome,
         },
         completedAt: endedAt,

@@ -96,12 +96,14 @@ describe("triggerTicketFailingTestReproStep (integration)", () => {
         ticketRepo,
         stepExecutionRepo,
         ticketGitEnvironmentRepo,
-        githubService,
+        githubService: githubService as never,
       },
     );
 
     expect(result.ok).toBe(true);
-    expect(result.data.stepExecution.pipelineId).toBe("CV-901");
+    expect(result.data.stepExecution.pipelineId).toMatch(
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i,
+    );
     expect(result.data.stepExecution.stepName).toBe(
       FAILING_TEST_REPRO_STEP_NAME,
     );
@@ -204,7 +206,7 @@ describe("triggerTicketFailingTestReproStep (integration)", () => {
         ticketRepo,
         stepExecutionRepo,
         ticketGitEnvironmentRepo,
-        githubService,
+        githubService: githubService as never,
       },
     );
 

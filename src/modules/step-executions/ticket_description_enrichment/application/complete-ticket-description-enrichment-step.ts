@@ -31,8 +31,8 @@ const resolveStatus = (
   }
 
   if (
-    input.operationOutcome === "enriched" ||
-    input.operationOutcome === "insufficient_evidence"
+    input.operationOutcome === "findings_recorded" ||
+    input.operationOutcome === "inconclusive"
   ) {
     return "succeeded";
   }
@@ -73,8 +73,8 @@ export const completeTicketDescriptionEnrichmentStep = async (
       existingExecution.ticketId,
       resolveStatus(input),
       new TicketDescriptionEnrichmentStepResultEntity(
-        input.summaryOfEnrichment,
-        input.enrichedTicketDescription,
+        input.summaryOfInvestigation,
+        input.investigationReport,
         input.whatHappened,
         input.datadogQueryTerms,
         input.datadogTimeRange,
@@ -89,6 +89,7 @@ export const completeTicketDescriptionEnrichmentStep = async (
         input.confidenceLevel,
         {
           ...input.rawResultJson,
+          summaryOfInvestigation: input.summaryOfInvestigation,
           whatHappened: input.whatHappened,
           datadogQueryTerms: input.datadogQueryTerms,
           datadogTimeRange: input.datadogTimeRange,
@@ -100,7 +101,7 @@ export const completeTicketDescriptionEnrichmentStep = async (
           datadogSessionFindings: input.datadogSessionFindings,
           investigationGaps: input.investigationGaps,
           recommendedNextQueries: input.recommendedNextQueries,
-          enrichedTicketDescription: input.enrichedTicketDescription,
+          investigationReport: input.investigationReport,
           operationOutcome: input.operationOutcome,
         },
         input.agentStatus,

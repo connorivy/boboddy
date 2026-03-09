@@ -43,7 +43,8 @@ const mapPipelineStepToContract = (
 
   return {
     id: step.id,
-    pipelineId: step.pipelineId ?? step.ticketId,
+    pipelineId: step.pipelineId,
+    ticketId: step.ticketId,
     stepName: step.stepName,
     status: step.status,
     startedAt: step.startedAt,

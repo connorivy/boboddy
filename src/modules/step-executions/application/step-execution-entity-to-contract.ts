@@ -29,8 +29,8 @@ function mapDescriptionEnrichmentResult(
   return ticketDescriptionEnrichmentResultContractSchema.parse({
     executionId: stepExecution.id,
     stepName: stepExecution.stepName,
-    summaryOfEnrichment: result.summaryOfEnrichment,
-    enrichedTicketDescription: result.enrichedTicketDescription,
+    summaryOfInvestigation: result.summaryOfInvestigation,
+    investigationReport: result.investigationReport,
     whatHappened: result.whatHappened,
     datadogQueryTerms: result.datadogQueryTerms,
     datadogTimeRange: result.datadogTimeRange,
@@ -231,7 +231,8 @@ export const stepExecutionEntityToContract = (
 
   return stepExecutionContractSchema.parse({
     id: stepExecution.id,
-    pipelineId: stepExecution.pipelineId ?? stepExecution.ticketId,
+    pipelineId: stepExecution.pipelineId,
+    ticketId: stepExecution.ticketId,
     stepName: stepExecution.stepName,
     status: stepExecution.status,
     startedAt: stepExecution.startedAt,

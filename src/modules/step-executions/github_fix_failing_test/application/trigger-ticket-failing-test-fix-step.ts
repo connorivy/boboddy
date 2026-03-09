@@ -151,7 +151,7 @@ export const triggerTicketFailingTestFixStep = async (
 
   const now = new Date().toISOString();
   const execution = new FailingTestFixStepExecutionEntity(
-    ticket.id,
+    null,
     ticket.id,
     "running",
     null,

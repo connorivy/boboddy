@@ -31,14 +31,14 @@ export const ticketDescriptionEnrichmentResultContractSchema =
   ticketDescriptionEnrichmentEvidenceFieldsSchema.extend({
     executionId: uuidV7Schema,
     stepName: z.literal(TICKET_DESCRIPTION_ENRICHMENT_STEP_NAME),
-    summaryOfEnrichment: z.string().min(1),
-    enrichedTicketDescription: z.string().min(1),
+    summaryOfInvestigation: z.string().min(1),
+    investigationReport: z.string().min(1),
     confidenceLevel: z.number().min(0).max(1).nullable(),
     agentStatus: z.enum(["complete", "error", "abort", "timeout", "user_exit"]),
     agentBranch: z.string().min(1),
     operationOutcome: z.enum([
-      "enriched",
-      "insufficient_evidence",
+      "findings_recorded",
+      "inconclusive",
       "agent_error",
       "cancelled",
     ]),
@@ -148,7 +148,8 @@ export const stepExecutionStatusEnumSchema = z.enum([
 
 export const stepExecutionContractSchema = z.object({
   id: uuidV7Schema,
-  pipelineId: z.string().min(1),
+  pipelineId: z.string().min(1).nullable(),
+  ticketId: z.string().min(1),
   stepName: z.string().min(1),
   status: stepExecutionStatusEnumSchema,
   startedAt: z.iso.datetime(),

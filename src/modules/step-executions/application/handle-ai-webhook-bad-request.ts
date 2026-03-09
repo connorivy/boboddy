@@ -29,10 +29,10 @@ import type { GithubApiService } from "@/modules/step-executions/infra/github-co
 const webhookRepairEnvelopeSchema = z
   .object({
     ticketId: z.string().trim().min(1).optional(),
-    pipelineId: z.string().uuid().optional(),
+    pipelineId: z.string().optional(),
     agentBranch: z.string().trim().min(1).optional(),
   })
-  .passthrough();
+  .loose();
 
 type SupportedWebhookStepName =
   | typeof TICKET_DESCRIPTION_ENRICHMENT_STEP_NAME
@@ -113,8 +113,6 @@ const buildCorrectionInstructions = (
     2,
   );
 
-  const rawPayloadText = JSON.stringify(rawPayload, null, 2);
-
   return `The webhook payload JSON for step "${stepName}" was rejected because it did not match the required schema.
 
 Goal:
@@ -122,10 +120,6 @@ Goal:
 - Keep ticketId and pipelineId unchanged.
 - Create ${webhookPayloadPath} with valid JSON matching this schema exactly.
 
-Rejected payload:
-${rawPayloadText}
-
-Required schema:
 ${jsonSchemaText}
 
 Rules:

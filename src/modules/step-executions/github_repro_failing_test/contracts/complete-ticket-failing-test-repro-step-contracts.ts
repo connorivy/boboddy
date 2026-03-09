@@ -34,6 +34,7 @@ export const completeTicketFailingTestReproStepRequestBodySchema = z.object({
 export const completeTicketFailingTestReproStepRequestQuerySchema = z.object({
   agentStatus: agentStatusEnum,
   agentBranch: z.string().trim().min(1),
+  pipelineId: z.string(),
 });
 export const completeTicketFailingTestReproStepRequestSchema =
   completeTicketFailingTestReproStepRequestBodySchema

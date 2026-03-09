@@ -40,9 +40,11 @@ export async function PUT(request: Request) {
   let rawQuery: {
     agentStatus: string | null;
     agentBranch: string | null;
+    pipelineId: string | null;
   } = {
     agentStatus: null,
     agentBranch: null,
+    pipelineId: null,
   };
 
   try {
@@ -50,6 +52,7 @@ export async function PUT(request: Request) {
     rawQuery = {
       agentStatus: url.searchParams.get("agentStatus"),
       agentBranch: url.searchParams.get("agentBranch"),
+      pipelineId: url.searchParams.get("pipelineId"),
     };
 
     const rawBodyText = await request.text();

@@ -67,7 +67,7 @@ export const assignEnvironmentRequestSchema = z.object({
 export const upsertEnvironmentRequestSchema = z.object({
   environmentId: environmentIdSchema,
   region: z.string().trim().min(1),
-  databaseHostUrl: z.url(),
+  databaseHostUrl: z.string(),
 });
 
 export type EnvironmentResponse = z.infer<typeof environmentResponseSchema>;

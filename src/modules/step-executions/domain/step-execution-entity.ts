@@ -7,6 +7,12 @@ import {
   TICKET_DESCRIPTION_QUALITY_STEP_NAME,
   TICKET_DUPLICATE_CANDIDATES_STEP_NAME,
 } from "@/modules/step-executions/domain/step-execution.types";
+import type {
+  TicketDescriptionEnrichmentCodeUnit,
+  TicketDescriptionEnrichmentDatabaseFinding,
+  TicketDescriptionEnrichmentDatadogSessionFinding,
+  TicketDescriptionEnrichmentLogFinding,
+} from "@/modules/step-executions/ticket_description_enrichment/shared/ticket-description-enrichment-result";
 
 const assertNormalizedScore = (value: number, fieldName: string): number => {
   if (value < 0 || value > 1) {
@@ -72,9 +78,17 @@ export class TicketDescriptionEnrichmentStepResultEntity {
   constructor(
     public summaryOfEnrichment: string,
     public enrichedTicketDescription: string,
+    public whatHappened: string,
     public datadogQueryTerms: string[],
     public datadogTimeRange: string | null,
     public keyIdentifiers: string[],
+    public exactEventTimes: string[],
+    public codeUnitsInvolved: TicketDescriptionEnrichmentCodeUnit[],
+    public databaseFindings: TicketDescriptionEnrichmentDatabaseFinding[],
+    public logFindings: TicketDescriptionEnrichmentLogFinding[],
+    public datadogSessionFindings: TicketDescriptionEnrichmentDatadogSessionFinding[],
+    public investigationGaps: string[],
+    public recommendedNextQueries: string[],
     public confidenceLevel: number | null,
     public rawResultJson: Record<string, unknown>,
     public agentStatus:

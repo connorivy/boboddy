@@ -17,15 +17,9 @@ import {
   FAILING_TEST_REPRO_STEP_NAME,
   TICKET_DESCRIPTION_ENRICHMENT_STEP_NAME,
 } from "@/modules/step-executions/domain/step-execution.types";
-import {
-  TicketDescriptionEnrichmentStepExecutionEntity,
-  FailingTestFixStepExecutionEntity,
-  FailingTestReproStepExecutionEntity,
-} from "@/modules/step-executions/domain/step-execution-entity";
 import { StepExecutionRepo } from "@/modules/step-executions/application/step-execution-repo";
 import { TicketRepo } from "@/modules/tickets/application/jira-ticket-repo";
 import type { GithubApiService } from "@/modules/step-executions/infra/github-copilot-coding-agent";
-import { PipelineRunRepo } from "@/modules/pipeline-runs/application/pipeline-run-repo";
 
 const webhookRepairEnvelopeSchema = z
   .object({

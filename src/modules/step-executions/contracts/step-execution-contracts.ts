@@ -6,6 +6,9 @@ import {
   TICKET_DESCRIPTION_QUALITY_STEP_NAME,
   TICKET_DUPLICATE_CANDIDATES_STEP_NAME,
 } from "@/modules/step-executions/domain/step-execution.types";
+import {
+  ticketDescriptionEnrichmentEvidenceFieldsSchema,
+} from "@/modules/step-executions/ticket_description_enrichment/shared/ticket-description-enrichment-result";
 
 const uuidV7Schema = z
   .string()
@@ -24,27 +27,25 @@ export const ticketDescriptionQualityResultContractSchema = z.object({
   updatedAt: z.iso.datetime().optional(),
 });
 
-export const ticketDescriptionEnrichmentResultContractSchema = z.object({
-  executionId: uuidV7Schema,
-  stepName: z.literal(TICKET_DESCRIPTION_ENRICHMENT_STEP_NAME),
-  summaryOfEnrichment: z.string().min(1),
-  enrichedTicketDescription: z.string().min(1),
-  datadogQueryTerms: z.array(z.string().min(1)),
-  datadogTimeRange: z.string().nullable(),
-  keyIdentifiers: z.array(z.string().min(1)),
-  confidenceLevel: z.number().min(0).max(1).nullable(),
-  agentStatus: z.enum(["complete", "error", "abort", "timeout", "user_exit"]),
-  agentBranch: z.string().min(1),
-  operationOutcome: z.enum([
-    "enriched",
-    "insufficient_evidence",
-    "agent_error",
-    "cancelled",
-  ]),
-  rawResultJson: z.record(z.string(), z.unknown()),
-  createdAt: z.iso.datetime().optional(),
-  updatedAt: z.iso.datetime().optional(),
-});
+export const ticketDescriptionEnrichmentResultContractSchema =
+  ticketDescriptionEnrichmentEvidenceFieldsSchema.extend({
+    executionId: uuidV7Schema,
+    stepName: z.literal(TICKET_DESCRIPTION_ENRICHMENT_STEP_NAME),
+    summaryOfEnrichment: z.string().min(1),
+    enrichedTicketDescription: z.string().min(1),
+    confidenceLevel: z.number().min(0).max(1).nullable(),
+    agentStatus: z.enum(["complete", "error", "abort", "timeout", "user_exit"]),
+    agentBranch: z.string().min(1),
+    operationOutcome: z.enum([
+      "enriched",
+      "insufficient_evidence",
+      "agent_error",
+      "cancelled",
+    ]),
+    rawResultJson: z.record(z.string(), z.unknown()),
+    createdAt: z.iso.datetime().optional(),
+    updatedAt: z.iso.datetime().optional(),
+  });
 
 export const duplicateCandidateResultContractSchema = z.object({
   candidateTicketId: z.string().min(1),

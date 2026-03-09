@@ -63,10 +63,74 @@ describe("completeTicketDescriptionEnrichmentStep (integration)", () => {
           "Errors spike on /api/auth/refresh for Acme users in us-east-1.",
         enrichedTicketDescription:
           "Symptoms: refresh 401s. Impact: Acme users. Evidence: Datadog logs include request_id=req-123 and trace_id=trace-456.",
+        whatHappened:
+          "Acme users hit /api/auth/refresh and received 401 responses during token refresh attempts.",
         confidenceLevel: 0.88,
         datadogQueryTerms: ["service:api", "route:/api/auth/refresh", "status:error"],
         datadogTimeRange: "last_60m",
         keyIdentifiers: ["company:Acme", "request_id:req-123", "trace_id:trace-456"],
+        exactEventTimes: ["2026-03-01T12:03:12.000Z"],
+        codeUnitsInvolved: [
+          {
+            kind: "api_route",
+            name: "/api/auth/refresh",
+            filePath: "src/app/api/auth/refresh/route.ts",
+            symbol: "POST",
+            relevance: "Handles the refresh request that returned 401.",
+            evidence: ["request_id=req-123", "trace_id=trace-456"],
+            notes: [],
+          },
+          {
+            kind: "frontend_component",
+            name: "RefreshSessionBoundary",
+            filePath: "frontend-web/src/components/auth/refresh-session-boundary.tsx",
+            symbol: "RefreshSessionBoundary",
+            relevance: "Initiates the client-side refresh flow.",
+            evidence: ["user reported refresh failure after app action"],
+            notes: [],
+          },
+        ],
+        databaseFindings: [
+          {
+            entityType: "auth_session",
+            relationToTicket: "Session used by the affected refresh flow",
+            identifiers: ["request_id:req-123"],
+            records: [{ sessionId: "sess_123", updatedAt: "2026-03-01T12:03:10.000Z" }],
+            comparisonNotes: [],
+            notes: [],
+          },
+        ],
+        logFindings: [
+          {
+            source: "application_log",
+            routeOrCodePath: "/api/auth/refresh",
+            queryOrFilter: "service:api route:/api/auth/refresh request_id:req-123",
+            timestamp: "2026-03-01T12:03:12.000Z",
+            message: "refresh failed with 401",
+            identifiers: ["request_id:req-123"],
+            evidence: ["trace_id=trace-456"],
+            notes: [],
+          },
+        ],
+        datadogSessionFindings: [
+          {
+            userIdentifier: "reporter@acme.test",
+            sessionId: "rum-session-1",
+            timeWindow: "2026-03-01T12:02:12.000Z -> 2026-03-01T12:03:22.000Z",
+            events: [
+              {
+                timestamp: "2026-03-01T12:03:12.000Z",
+                type: "error",
+                description: "401 during refresh",
+                route: "/api/auth/refresh",
+                metadata: { traceId: "trace-456" },
+              },
+            ],
+            notes: [],
+          },
+        ],
+        investigationGaps: [],
+        recommendedNextQueries: ["trace_id:trace-456"],
         rawResultJson: {
           hits: 42,
         },
@@ -98,5 +162,7 @@ describe("completeTicketDescriptionEnrichmentStep (integration)", () => {
       "status:error",
     ]);
     expect(typedExecution.result?.confidenceLevel).toBe(0.88);
+    expect(typedExecution.result?.whatHappened).toContain("/api/auth/refresh");
+    expect(typedExecution.result?.codeUnitsInvolved[0]?.symbol).toBe("POST");
   });
 });

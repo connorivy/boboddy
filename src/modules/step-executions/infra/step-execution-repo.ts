@@ -27,6 +27,9 @@ import {
 } from "../domain/step-execution-entity";
 import { DbExecutor } from "@/lib/db/db-executor";
 import { StepExecutionRepo } from "../application/step-execution-repo";
+import {
+  ticketDescriptionEnrichmentEvidenceFieldsSchema,
+} from "@/modules/step-executions/ticket_description_enrichment/shared/ticket-description-enrichment-result";
 
 function requiredField<T>(
   value: T | null | undefined,
@@ -322,6 +325,8 @@ function mapDescriptionEnrichmentResultOrNull(
     typeof rawResultJson.datadogTimeRange === "string"
       ? rawResultJson.datadogTimeRange
       : null;
+  const evidenceFields =
+    ticketDescriptionEnrichmentEvidenceFieldsSchema.parse(rawResultJson);
   const operationOutcome =
     rawResultJson.operationOutcome === "enriched" ||
     rawResultJson.operationOutcome === "insufficient_evidence" ||
@@ -341,9 +346,17 @@ function mapDescriptionEnrichmentResultOrNull(
   return new TicketDescriptionEnrichmentStepResultEntity(
     requiredNonEmptyString(row.summaryOfFindings, "summaryOfFindings", context),
     enrichedTicketDescription,
-    parseStringArray(rawResultJson.datadogQueryTerms),
+    evidenceFields.whatHappened,
+    evidenceFields.datadogQueryTerms,
     datadogTimeRange,
-    parseStringArray(rawResultJson.keyIdentifiers),
+    evidenceFields.keyIdentifiers,
+    evidenceFields.exactEventTimes,
+    evidenceFields.codeUnitsInvolved,
+    evidenceFields.databaseFindings,
+    evidenceFields.logFindings,
+    evidenceFields.datadogSessionFindings,
+    evidenceFields.investigationGaps,
+    evidenceFields.recommendedNextQueries,
     row.confidenceLevel ?? null,
     rawResultJson,
     agentStatus,
@@ -818,9 +831,17 @@ export class DrizzleStepExecutionRepo implements StepExecutionRepo {
         confidenceLevel: pipeline.result.confidenceLevel,
         rawResultJson: {
           ...pipeline.result.rawResultJson,
+          whatHappened: pipeline.result.whatHappened,
           datadogQueryTerms: pipeline.result.datadogQueryTerms,
           datadogTimeRange: pipeline.result.datadogTimeRange,
           keyIdentifiers: pipeline.result.keyIdentifiers,
+          exactEventTimes: pipeline.result.exactEventTimes,
+          codeUnitsInvolved: pipeline.result.codeUnitsInvolved,
+          databaseFindings: pipeline.result.databaseFindings,
+          logFindings: pipeline.result.logFindings,
+          datadogSessionFindings: pipeline.result.datadogSessionFindings,
+          investigationGaps: pipeline.result.investigationGaps,
+          recommendedNextQueries: pipeline.result.recommendedNextQueries,
           enrichedTicketDescription: pipeline.result.enrichedTicketDescription,
           operationOutcome: pipeline.result.operationOutcome,
         },

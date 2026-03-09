@@ -139,7 +139,7 @@ export const ticketGithubIssues = pgTable(
 );
 
 export const pipelineRuns = pgTable("pipeline_runs", {
-  id: text("id").primaryKey(),
+  id: uuid("id").primaryKey(),
   ticketId: text("ticket_id")
     .references(() => tickets.id, { onDelete: "cascade" })
     .notNull(),
@@ -190,7 +190,7 @@ export const ticketStepExecutionsTph = pgTable(
   "ticket_step_executions_tph",
   {
     id: uuid("id").primaryKey(),
-    pipelineId: text("pipeline_id").notNull(),
+    pipelineId: uuid("pipeline_id").notNull(),
     stepName: text("step_name").notNull(),
     type: text("type").notNull(),
     status: stepExecutionStatusEnum("status").notNull(),

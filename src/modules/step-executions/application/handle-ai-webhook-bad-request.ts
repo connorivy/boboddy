@@ -25,12 +25,13 @@ import {
 import { StepExecutionRepo } from "@/modules/step-executions/application/step-execution-repo";
 import { TicketRepo } from "@/modules/tickets/application/jira-ticket-repo";
 import type { GithubApiService } from "@/modules/step-executions/infra/github-copilot-coding-agent";
+import { PipelineRunRepo } from "@/modules/pipeline-runs/application/pipeline-run-repo";
 
 const webhookRepairEnvelopeSchema = z
   .object({
     ticketId: z.string().trim().min(1).optional(),
-    pipelineId: z.string().optional(),
-    agentBranch: z.string().trim().min(1).optional(),
+    stepExecutionId: z.string(),
+    agentBranch: z.string().trim().min(1),
   })
   .loose();
 
@@ -66,9 +67,6 @@ const normalizePayload = (
 
 const buildCorrectionInstructions = (
   stepName: SupportedWebhookStepName,
-  ticketId: string,
-  pipelineId: string,
-  rawPayload: Record<string, unknown>,
 ): string => {
   const webhookPayloadPath =
     stepName === TICKET_DESCRIPTION_ENRICHMENT_STEP_NAME
@@ -76,36 +74,13 @@ const buildCorrectionInstructions = (
       : stepName === FAILING_TEST_REPRO_STEP_NAME
         ? "tmp/copilot-repro-webhook-payload.json"
         : "tmp/copilot-fix-webhook-payload.json";
+
   const hardcodedTicketIdAndPipelineIdSchema =
     stepName === TICKET_DESCRIPTION_ENRICHMENT_STEP_NAME
       ? completeTicketDescriptionEnrichmentStepRequestBodySchema
-          .omit({
-            ticketId: true,
-            pipelineId: true,
-          })
-          .extend({
-            ticketId: z.literal(ticketId),
-            pipelineId: z.literal(pipelineId),
-          })
       : stepName === FAILING_TEST_REPRO_STEP_NAME
         ? completeTicketFailingTestReproStepRequestBodySchema
-            .omit({
-              ticketId: true,
-              pipelineId: true,
-            })
-            .extend({
-              ticketId: z.literal(ticketId),
-              pipelineId: z.literal(pipelineId),
-            })
-        : completeTicketFailingTestFixStepRequestBodySchema
-            .omit({
-              ticketId: true,
-              pipelineId: true,
-            })
-            .extend({
-              ticketId: z.literal(ticketId),
-              pipelineId: z.literal(pipelineId),
-            });
+        : completeTicketFailingTestFixStepRequestBodySchema;
 
   const jsonSchemaText = JSON.stringify(
     hardcodedTicketIdAndPipelineIdSchema.toJSONSchema(),
@@ -113,35 +88,15 @@ const buildCorrectionInstructions = (
     2,
   );
 
-  return `The webhook payload JSON for step "${stepName}" was rejected because it did not match the required schema.
-
-Goal:
-- Produce a corrected JSON payload with the same intent as the previous output.
-- Keep ticketId and pipelineId unchanged.
-- Create ${webhookPayloadPath} with valid JSON matching this schema exactly.
+  return `@copilot You need to use your findings from the initial creation of the PR to create a JSON payload that matches the expected schema below.
 
 ${jsonSchemaText}
 
 Rules:
+- Output the JSON payload at the specified path: ${webhookPayloadPath}.
 - Output must be strict JSON (no markdown, no comments, no trailing commas).
 - If a field is unknown, use the schema-compatible null value where allowed.
 - Do not change unrelated repository files for this correction task.`;
-};
-
-const getExecutionBranch = (pipeline: unknown): string | undefined => {
-  if (pipeline instanceof TicketDescriptionEnrichmentStepExecutionEntity) {
-    return pipeline.result?.agentBranch?.trim() || undefined;
-  }
-
-  if (pipeline instanceof FailingTestReproStepExecutionEntity) {
-    return pipeline.result?.githubPrTargetBranch?.trim() || undefined;
-  }
-
-  if (pipeline instanceof FailingTestFixStepExecutionEntity) {
-    return pipeline.result?.githubPrTargetBranch?.trim() || undefined;
-  }
-
-  return undefined;
 };
 
 export const handleAiWebhookBadRequest = async (
@@ -154,7 +109,7 @@ export const handleAiWebhookBadRequest = async (
   }: {
     stepExecutionRepo: StepExecutionRepo;
     ticketRepo: TicketRepo;
-    githubService: Pick<GithubApiService, "assignCopilot" | "unassignCopilot">;
+    githubService: GithubApiService;
   } = AppContext,
 ): Promise<void> => {
   if (
@@ -176,60 +131,36 @@ export const handleAiWebhookBadRequest = async (
     return;
   }
 
-  const pipelineId = parsedEnvelope.data.pipelineId;
-  if (!pipelineId) {
+  const stepExecutionId = parsedEnvelope.data.stepExecutionId;
+  if (!stepExecutionId) {
     return;
   }
 
-  const existingExecution = await stepExecutionRepo.load(pipelineId);
+  const existingExecution = await stepExecutionRepo.load(stepExecutionId);
   if (!existingExecution || existingExecution.stepName !== stepName) {
     return;
   }
 
-  const ticketId = parsedEnvelope.data.ticketId;
-  if (!ticketId) {
-    return;
-  }
+  // let pipelineRun;
+  // if (existingExecution.pipelineId) {
+  //   pipelineRun = await pipelineRunRepo.loadById(existingExecution.pipelineId);
+  // }
 
-  const ticket = await ticketRepo.loadById(ticketId, {
-    loadGithubIssue: true,
+  const ticket = await ticketRepo.loadById(existingExecution.ticketId, {
+    loadTicketGitEnvironmentAggregate: true,
   });
-  if (!ticket?.githubIssue) {
+
+  if (!ticket || !ticket.ticketGitEnvironmentAggregate) {
     return;
   }
 
-  let branchFromExecution: string | undefined;
-  if (existingExecution instanceof FailingTestReproStepExecutionEntity) {
-    branchFromExecution = getExecutionBranch(existingExecution);
-  }
-  if (
-    existingExecution instanceof TicketDescriptionEnrichmentStepExecutionEntity
-  ) {
-    branchFromExecution = getExecutionBranch(existingExecution);
-  }
-  if (existingExecution instanceof FailingTestFixStepExecutionEntity) {
-    branchFromExecution = getExecutionBranch(existingExecution);
-  }
+  const customInstructions = buildCorrectionInstructions(stepName);
 
-  const baseBranch =
-    parsedEnvelope.data.agentBranch ?? branchFromExecution ?? undefined;
-  if (!baseBranch) {
-    return;
-  }
-
-  const customInstructions = buildCorrectionInstructions(
-    stepName,
-    ticketId,
-    pipelineId,
-    normalizedPayload,
-  );
-
-  await githubService.unassignCopilot(ticket.githubIssue.githubIssueNumber);
-  await githubService.assignCopilot({
-    issueNumber: ticket.githubIssue.githubIssueNumber,
-    baseBranch,
+  await githubService.commentOnPrByBranches(
+    ticket.ticketGitEnvironmentAggregate.devBranch,
+    parsedEnvelope.data.agentBranch,
     customInstructions,
-  });
+  );
 };
 
 export type HandleAiWebhookBadRequestInput =

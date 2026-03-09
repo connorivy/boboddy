@@ -136,6 +136,58 @@ export class GithubApiService {
     );
   }
 
+  async commentOnIssue(issueNum: number, message: string): Promise<void> {
+    await this.octokit.request(
+      "POST /repos/{owner}/{repo}/issues/{issue_number}/comments",
+      {
+        owner: this.repo.owner,
+        repo: this.repo.repo,
+        issue_number: issueNum,
+        body: message,
+        headers: {
+          accept: "application/vnd.github+json",
+          "x-github-api-version": "2022-11-28",
+        },
+      },
+    );
+  }
+
+  async commentOnPrByBranches(
+    base: string,
+    target: string,
+    message: string,
+  ): Promise<void> {
+    const head = `${this.repo.owner}:${target}`;
+    const response = await this.octokit.request(
+      "GET /repos/{owner}/{repo}/pulls",
+      {
+        owner: this.repo.owner,
+        repo: this.repo.repo,
+        state: "open",
+        base,
+        head,
+        per_page: 1,
+        headers: {
+          accept: "application/vnd.github+json",
+          "x-github-api-version": "2022-11-28",
+        },
+      },
+    );
+
+    const pull = response.data.find(
+      (candidate) =>
+        candidate.base.ref === base && candidate.head.ref === target,
+    );
+
+    if (!pull) {
+      throw new Error(
+        `No open PR found for base branch "${base}" and target branch "${target}"`,
+      );
+    }
+
+    await this.commentOnIssue(pull.number, message);
+  }
+
   async getShaIfExists(
     filePath: string,
     branchName: string,

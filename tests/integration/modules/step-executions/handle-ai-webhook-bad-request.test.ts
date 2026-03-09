@@ -17,7 +17,8 @@ import {
 const now = new Date("2026-03-01T12:00:00.000Z").toISOString();
 
 describe("handleAiWebhookBadRequest", () => {
-  it("reassigns Copilot for repro payload correction when ticket and pipeline are resolved", async () => {
+  it("comments on repro PR when execution and ticket git environment are resolved", async () => {
+    const stepExecutionId = "018f47ac-7f5a-7cc1-b54a-6f91d5b8e017";
     const execution = new FailingTestReproStepExecutionEntity(
       "CV-100",
       "CV-100",
@@ -37,7 +38,7 @@ describe("handleAiWebhookBadRequest", () => {
       undefined,
       now,
       now,
-      "018f47ac-7f5a-7cc1-b54a-6f91d5b8e017",
+      stepExecutionId,
     );
 
     const stepExecutionRepo = {
@@ -45,24 +46,21 @@ describe("handleAiWebhookBadRequest", () => {
     };
     const ticketRepo = {
       loadById: vi.fn().mockResolvedValue({
-        githubIssue: {
-          githubIssueNumber: 777,
-          githubIssueId: "I_kwDO777",
+        ticketGitEnvironmentAggregate: {
+          devBranch: "ephemeral-ADM01-dev",
         },
       }),
     };
     const githubService = {
-      unassignCopilot: vi.fn().mockResolvedValue(undefined),
-      assignCopilot: vi.fn().mockResolvedValue(undefined),
+      commentOnPrByBranches: vi.fn().mockResolvedValue(undefined),
     };
 
     await handleAiWebhookBadRequest(
       FAILING_TEST_REPRO_STEP_NAME,
       {
         ticketId: "CV-100",
-        pipelineId: "018f47ac-7f5a-7cc1-b54a-6f91d5b8e017",
+        stepExecutionId,
         agentBranch: "ephemeral-OVERRIDE",
-        summaryOfFindings: "The run output was malformed",
       },
       {
         stepExecutionRepo,
@@ -71,30 +69,24 @@ describe("handleAiWebhookBadRequest", () => {
       } as never,
     );
 
-    expect(stepExecutionRepo.load).toHaveBeenCalledWith(
-      "018f47ac-7f5a-7cc1-b54a-6f91d5b8e017",
-    );
+    expect(stepExecutionRepo.load).toHaveBeenCalledWith(stepExecutionId);
     expect(ticketRepo.loadById).toHaveBeenCalledWith("CV-100", {
-      loadGithubIssue: true,
+      loadTicketGitEnvironmentAggregate: true,
     });
-    expect(githubService.unassignCopilot).toHaveBeenCalledWith(777);
-    expect(githubService.assignCopilot).toHaveBeenCalledWith(
-      expect.objectContaining({
-        issueNumber: 777,
-        baseBranch: "ephemeral-OVERRIDE",
-      }),
+    expect(githubService.commentOnPrByBranches).toHaveBeenCalledWith(
+      "ephemeral-ADM01-dev",
+      "ephemeral-OVERRIDE",
+      expect.any(String),
     );
 
-    const customInstructions = githubService.assignCopilot.mock.calls[0]?.[0]
-      ?.customInstructions;
+    const customInstructions =
+      githubService.commentOnPrByBranches.mock.calls[0]?.[2];
     expect(customInstructions).toContain("tmp/copilot-repro-webhook-payload.json");
-    expect(customInstructions).toContain('"const": "CV-100"');
-    expect(customInstructions).toContain(
-      '"const": "018f47ac-7f5a-7cc1-b54a-6f91d5b8e017"',
-    );
+    expect(customInstructions).toContain("reproduceOperationOutcome");
   });
 
-  it("falls back to execution target branch for fix payload correction", async () => {
+  it("comments on fix PR for fix payload correction", async () => {
+    const stepExecutionId = "018f47ac-7f5a-7cc1-b54a-6f91d5b8e019";
     const execution = new FailingTestFixStepExecutionEntity(
       "CV-101",
       "CV-101",
@@ -110,7 +102,7 @@ describe("handleAiWebhookBadRequest", () => {
       undefined,
       now,
       now,
-      "018f47ac-7f5a-7cc1-b54a-6f91d5b8e019",
+      stepExecutionId,
     );
 
     const stepExecutionRepo = {
@@ -118,22 +110,20 @@ describe("handleAiWebhookBadRequest", () => {
     };
     const ticketRepo = {
       loadById: vi.fn().mockResolvedValue({
-        githubIssue: {
-          githubIssueNumber: 991,
-          githubIssueId: "I_kwDO991",
+        ticketGitEnvironmentAggregate: {
+          devBranch: "ephemeral-MEM9-dev",
         },
       }),
     };
     const githubService = {
-      unassignCopilot: vi.fn().mockResolvedValue(undefined),
-      assignCopilot: vi.fn().mockResolvedValue(undefined),
+      commentOnPrByBranches: vi.fn().mockResolvedValue(undefined),
     };
 
     await handleAiWebhookBadRequest(
       FAILING_TEST_FIX_STEP_NAME,
       {
-        ticketId: "CV-101",
-        pipelineId: "018f47ac-7f5a-7cc1-b54a-6f91d5b8e019",
+        stepExecutionId,
+        agentBranch: "ephemeral-fix-attempt",
       },
       {
         stepExecutionRepo,
@@ -142,19 +132,22 @@ describe("handleAiWebhookBadRequest", () => {
       } as never,
     );
 
-    expect(githubService.assignCopilot).toHaveBeenCalledWith(
-      expect.objectContaining({
-        issueNumber: 991,
-        baseBranch: "ephemeral-MEM9-dev1",
-      }),
+    expect(stepExecutionRepo.load).toHaveBeenCalledWith(stepExecutionId);
+    expect(ticketRepo.loadById).toHaveBeenCalledWith("CV-101", {
+      loadTicketGitEnvironmentAggregate: true,
+    });
+    expect(githubService.commentOnPrByBranches).toHaveBeenCalledWith(
+      "ephemeral-MEM9-dev",
+      "ephemeral-fix-attempt",
+      expect.any(String),
     );
 
-    const customInstructions = githubService.assignCopilot.mock.calls[0]?.[0]
-      ?.customInstructions;
+    const customInstructions =
+      githubService.commentOnPrByBranches.mock.calls[0]?.[2];
     expect(customInstructions).toContain("tmp/copilot-fix-webhook-payload.json");
   });
 
-  it("does nothing when pipeline cannot be resolved", async () => {
+  it("does nothing when step execution cannot be resolved", async () => {
     const stepExecutionRepo = {
       load: vi.fn().mockResolvedValue(null),
     };
@@ -162,15 +155,15 @@ describe("handleAiWebhookBadRequest", () => {
       loadById: vi.fn(),
     };
     const githubService = {
-      unassignCopilot: vi.fn(),
-      assignCopilot: vi.fn(),
+      commentOnPrByBranches: vi.fn(),
     };
 
     await handleAiWebhookBadRequest(
       FAILING_TEST_REPRO_STEP_NAME,
       {
         ticketId: "CV-404",
-        pipelineId: "018f47ac-7f5a-7cc1-b54a-6f91d5b8e404",
+        stepExecutionId: "018f47ac-7f5a-7cc1-b54a-6f91d5b8e404",
+        agentBranch: "ephemeral-404",
       },
       {
         stepExecutionRepo,
@@ -180,11 +173,11 @@ describe("handleAiWebhookBadRequest", () => {
     );
 
     expect(ticketRepo.loadById).not.toHaveBeenCalled();
-    expect(githubService.unassignCopilot).not.toHaveBeenCalled();
-    expect(githubService.assignCopilot).not.toHaveBeenCalled();
+    expect(githubService.commentOnPrByBranches).not.toHaveBeenCalled();
   });
 
-  it("reassigns Copilot for enrichment payload correction", async () => {
+  it("comments on enrichment PR for enrichment payload correction", async () => {
+    const stepExecutionId = "018f47ac-7f5a-7cc1-b54a-6f91d5b8e020";
     const execution = new TicketDescriptionEnrichmentStepExecutionEntity(
       "CV-102",
       "CV-102",
@@ -205,7 +198,7 @@ describe("handleAiWebhookBadRequest", () => {
       undefined,
       now,
       now,
-      "018f47ac-7f5a-7cc1-b54a-6f91d5b8e020",
+      stepExecutionId,
     );
 
     const stepExecutionRepo = {
@@ -213,22 +206,21 @@ describe("handleAiWebhookBadRequest", () => {
     };
     const ticketRepo = {
       loadById: vi.fn().mockResolvedValue({
-        githubIssue: {
-          githubIssueNumber: 992,
-          githubIssueId: "I_kwDO992",
+        ticketGitEnvironmentAggregate: {
+          devBranch: "ephemeral-MEM9-dev",
         },
       }),
     };
     const githubService = {
-      unassignCopilot: vi.fn().mockResolvedValue(undefined),
-      assignCopilot: vi.fn().mockResolvedValue(undefined),
+      commentOnPrByBranches: vi.fn().mockResolvedValue(undefined),
     };
 
     await handleAiWebhookBadRequest(
       TICKET_DESCRIPTION_ENRICHMENT_STEP_NAME,
       {
         ticketId: "CV-102",
-        pipelineId: "018f47ac-7f5a-7cc1-b54a-6f91d5b8e020",
+        stepExecutionId,
+        agentBranch: "ephemeral-enrichment-attempt",
       },
       {
         stepExecutionRepo,
@@ -237,15 +229,18 @@ describe("handleAiWebhookBadRequest", () => {
       } as never,
     );
 
-    expect(githubService.assignCopilot).toHaveBeenCalledWith(
-      expect.objectContaining({
-        issueNumber: 992,
-        baseBranch: "ephemeral-MEM9-dev1",
-      }),
+    expect(stepExecutionRepo.load).toHaveBeenCalledWith(stepExecutionId);
+    expect(ticketRepo.loadById).toHaveBeenCalledWith("CV-102", {
+      loadTicketGitEnvironmentAggregate: true,
+    });
+    expect(githubService.commentOnPrByBranches).toHaveBeenCalledWith(
+      "ephemeral-MEM9-dev",
+      "ephemeral-enrichment-attempt",
+      expect.any(String),
     );
 
-    const customInstructions = githubService.assignCopilot.mock.calls[0]?.[0]
-      ?.customInstructions;
+    const customInstructions =
+      githubService.commentOnPrByBranches.mock.calls[0]?.[2];
     expect(customInstructions).toContain(
       "copilot-ticket-description-enrichment-webhook-payload.json",
     );

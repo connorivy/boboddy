@@ -40,11 +40,11 @@ export async function PUT(request: Request) {
   let rawQuery: {
     agentStatus: string | null;
     agentBranch: string | null;
-    pipelineId: string | null;
+    stepExecutionId: string | null;
   } = {
     agentStatus: null,
     agentBranch: null,
-    pipelineId: null,
+    stepExecutionId: null,
   };
 
   try {
@@ -52,7 +52,7 @@ export async function PUT(request: Request) {
     rawQuery = {
       agentStatus: url.searchParams.get("agentStatus"),
       agentBranch: url.searchParams.get("agentBranch"),
-      pipelineId: url.searchParams.get("pipelineId"),
+      stepExecutionId: url.searchParams.get("stepExecutionId"),
     };
 
     const rawBodyText = await request.text();

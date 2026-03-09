@@ -53,7 +53,7 @@ describe("failing-test repro webhook route", () => {
       FAILING_TEST_REPRO_STEP_NAME,
       expect.objectContaining({
         ticketId: "CV-100",
-        pipelineId: "018f47ac-7f5a-7cc1-b54a-6f91d5b8e017",
+        pipelineId: null,
         agentStatus: "complete",
         agentBranch: "ephemeral-ADM01",
       }),

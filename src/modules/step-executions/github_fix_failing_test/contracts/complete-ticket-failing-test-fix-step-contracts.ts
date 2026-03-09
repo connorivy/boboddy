@@ -19,7 +19,7 @@ export const completeTicketFailingTestFixStepRequestBodySchema = z.object({
 export const completeTicketFailingTestFixStepRequestQuerySchema = z.object({
   agentStatus: agentStatusEnum,
   agentBranch: z.string().trim().min(1),
-  pipelineId: z.string(),
+  stepExecutionId: z.string(),
 });
 
 export const completeTicketFailingTestFixStepRequestSchema =

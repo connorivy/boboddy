@@ -5,8 +5,6 @@ import { ticketDescriptionEnrichmentEvidenceFieldsSchema } from "@/modules/step-
 
 export const completeTicketDescriptionEnrichmentStepRequestBodySchema =
   ticketDescriptionEnrichmentEvidenceFieldsSchema.extend({
-    ticketId: z.string().trim().min(1),
-    pipelineId: z.string().uuid(),
     operationOutcome: z.enum([
       "findings_recorded",
       "inconclusive",

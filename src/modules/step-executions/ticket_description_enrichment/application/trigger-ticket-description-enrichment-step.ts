@@ -29,18 +29,8 @@ const WEBHOOK_PAYLOAD_PATH =
 const TICKET_INVESTIGATION_AGENT = "ticket-investigation-agent";
 
 function buildCustomInstructions(ticketId: string, pipelineId: string): string {
-  const hardcodedTicketIdAndPipelineIdSchema =
-    completeTicketDescriptionEnrichmentStepRequestBodySchema
-      .omit({
-        ticketId: true,
-        pipelineId: true,
-      })
-      .extend({
-        ticketId: z.literal(ticketId),
-        pipelineId: z.literal(pipelineId),
-      });
   const jsonSchemaText = JSON.stringify(
-    hardcodedTicketIdAndPipelineIdSchema.toJSONSchema(),
+    completeTicketDescriptionEnrichmentStepRequestBodySchema.toJSONSchema(),
     null,
     2,
   );

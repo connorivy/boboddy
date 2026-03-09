@@ -47,7 +47,7 @@ export const completeTicketDescriptionEnrichmentStep = async (
   const input =
     completeTicketDescriptionEnrichmentStepRequestSchema.parse(rawInput);
 
-  const existingExecution = await stepExecutionRepo.load(input.pipelineId);
+  const existingExecution = await stepExecutionRepo.load(input.stepExecutionId);
   if (!existingExecution) {
     throw httpError("Pipeline step execution not found", 404);
   }

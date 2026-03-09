@@ -8,6 +8,7 @@ export interface StepExecutionRepo {
   claimQueued(id: string): Promise<TicketPipelineStepExecutionEntity | null>;
   loadByPipelineId(
     pipelineId: string,
+    dbExecutor?: DbExecutor,
   ): Promise<TicketPipelineStepExecutionEntity[]>;
   loadByTicketId(
     ticketId: string,

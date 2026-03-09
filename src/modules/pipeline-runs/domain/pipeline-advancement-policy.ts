@@ -1,6 +1,13 @@
 import { httpError } from "@/lib/api/http";
 import type { PipelineRunEntity } from "@/modules/pipeline-runs/domain/pipeline-run-aggregate";
-import type { TicketPipelineStepExecutionEntity } from "@/modules/step-executions/domain/step-execution-entity";
+import {
+  FailingTestFixStepExecutionEntity,
+  FailingTestReproStepExecutionEntity,
+  TicketDescriptionEnrichmentStepExecutionEntity,
+  TicketDescriptionQualityStepExecutionEntity,
+  TicketDuplicateCandidatesStepResultEntity,
+  type TicketPipelineStepExecutionEntity,
+} from "@/modules/step-executions/domain/step-execution-entity";
 import {
   FAILING_TEST_FIX_STEP_NAME,
   FAILING_TEST_REPRO_STEP_NAME,
@@ -18,19 +25,10 @@ const PIPELINE_STEP_SEQUENCE: ReadonlyArray<StepExecutionStepName> = [
   FAILING_TEST_FIX_STEP_NAME,
 ];
 
-export type PipelineAdvancementDecision =
-  | {
-      kind: "queue_next_step";
-      stepName: StepExecutionStepName;
-    }
-  | {
-      kind: "complete";
-    };
-
 export class PipelineAdvancementPolicy {
-  decideNextAction(
+  createNextStepExecution(
     pipelineRun: PipelineRunEntity,
-  ): PipelineAdvancementDecision {
+  ): TicketPipelineStepExecutionEntity | null {
     const latestStepExecution = this.getLatestStepExecution(pipelineRun);
     if (!this.shouldAdvance(latestStepExecution, pipelineRun)) {
       throw httpError(
@@ -41,13 +39,14 @@ export class PipelineAdvancementPolicy {
 
     const nextStepName = this.getNextStepName(latestStepExecution, pipelineRun);
     if (!nextStepName) {
-      return { kind: "complete" };
+      return null;
     }
 
-    return {
-      kind: "queue_next_step",
-      stepName: nextStepName,
-    };
+    return this.buildQueuedStepExecution(
+      pipelineRun.id,
+      pipelineRun.ticketId,
+      nextStepName,
+    );
   }
 
   protected getLatestStepExecution(
@@ -96,5 +95,59 @@ export class PipelineAdvancementPolicy {
     }
 
     return PIPELINE_STEP_SEQUENCE[currentStepIndex + 1] ?? null;
+  }
+
+  protected buildQueuedStepExecution(
+    pipelineId: string,
+    ticketId: string,
+    stepName: StepExecutionStepName,
+  ): TicketPipelineStepExecutionEntity {
+    const now = new Date().toISOString();
+
+    switch (stepName) {
+      case TICKET_DESCRIPTION_QUALITY_STEP_NAME:
+        return new TicketDescriptionQualityStepExecutionEntity(
+          pipelineId,
+          ticketId,
+          "queued",
+          null,
+          now,
+        );
+      case TICKET_INVESTIGATION_STEP_NAME:
+        return new TicketDescriptionEnrichmentStepExecutionEntity(
+          pipelineId,
+          ticketId,
+          "queued",
+          null,
+          now,
+        );
+      case TICKET_DUPLICATE_CANDIDATES_STEP_NAME:
+        return new TicketDuplicateCandidatesStepResultEntity(
+          pipelineId,
+          ticketId,
+          "queued",
+          null,
+          now,
+        );
+      case FAILING_TEST_REPRO_STEP_NAME:
+        return new FailingTestReproStepExecutionEntity(
+          pipelineId,
+          ticketId,
+          "queued",
+          null,
+          null,
+          now,
+        );
+      case FAILING_TEST_FIX_STEP_NAME:
+        return new FailingTestFixStepExecutionEntity(
+          pipelineId,
+          ticketId,
+          "queued",
+          null,
+          now,
+        );
+      default:
+        throw httpError(`Unsupported pipeline step '${stepName}'`, 400);
+    }
   }
 }

@@ -73,38 +73,32 @@ export const completeTicketFailingTestFixStep = async (
 
   const endedAt = new Date().toISOString();
 
-  const savedExecution = await stepExecutionRepo.save(
-    new FailingTestFixStepExecutionEntity(
-      existingExecution.pipelineId,
-      existingExecution.ticketId,
-      resolveStatus(input),
-      new FailingTestFixStepResultEntity(
-        existingExecution.result.githubMergeStatus,
-        existingExecution.result.githubIssueNumber,
-        existingExecution.result.githubIssueId,
-        existingExecution.result.githubPrTargetBranch,
-        new FailingTestFixStepCompletionResultEntity(
-          input.agentStatus,
-          input.agentBranch,
-          input.fixOperationOutcome,
-          input.summaryOfFix,
-          input.fixConfidenceLevel ?? 0,
-          input.fixedTestPath ?? undefined,
-          existingExecution.result.completionResult?.failureReason,
-          existingExecution.result.completionResult?.rawResultJson,
-        ),
-        existingExecution.result.githubAgentRunId,
-        existingExecution.result.agentSummary,
-        existingExecution.result.failingTestPath,
-        existingExecution.result.failingTestCommitSha,
+  existingExecution.setResult({
+    status: resolveStatus(input),
+    endedAt,
+    result: new FailingTestFixStepResultEntity(
+      existingExecution.result.githubMergeStatus,
+      existingExecution.result.githubIssueNumber,
+      existingExecution.result.githubIssueId,
+      existingExecution.result.githubPrTargetBranch,
+      new FailingTestFixStepCompletionResultEntity(
+        input.agentStatus,
+        input.agentBranch,
+        input.fixOperationOutcome,
+        input.summaryOfFix,
+        input.fixConfidenceLevel ?? 0,
+        input.fixedTestPath ?? undefined,
+        existingExecution.result.completionResult?.failureReason,
+        existingExecution.result.completionResult?.rawResultJson,
       ),
-      existingExecution.startedAt,
-      endedAt,
-      existingExecution.createdAt,
-      existingExecution.updatedAt,
-      existingExecution.id,
+      existingExecution.result.githubAgentRunId,
+      existingExecution.result.agentSummary,
+      existingExecution.result.failingTestPath,
+      existingExecution.result.failingTestCommitSha,
     ),
-  );
+  });
+
+  const savedExecution = await stepExecutionRepo.save(existingExecution);
 
   return completeTicketFailingTestFixStepResponseSchema.parse({
     ok: true,

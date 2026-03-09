@@ -23,17 +23,22 @@ import { TicketGitEnvironmentRepo } from "@/modules/environments/application/tic
 import { createTicketGitEnvironment } from "@/modules/environments/application/create-ticket-git-environment";
 import { EnvironmentRepo } from "@/modules/environments/application/environment-repo";
 import z from "zod";
+import type { PipelineRunRepo } from "@/modules/pipeline-runs/application/pipeline-run-repo";
+import { PipelineRunEntity } from "@/modules/pipeline-runs/domain/pipeline-run-aggregate";
+import { v7 as uuidv7 } from "uuid";
 
 const WEBHOOK_PAYLOAD_PATH =
-  "tmp/copilot-ticket-investigation-webhook-payload.json";
-const TICKET_INVESTIGATION_AGENT = "ticket-investigation-agent";
+  "tmp/copilot-ticket-description-enrichment-webhook-payload.json";
+const TICKET_INVESTIGATION_AGENT = "ticket-description-enrichment-agent";
 
 function buildCustomInstructions(ticketId: string, pipelineId: string): string {
-  const jsonSchemaText = JSON.stringify(
-    completeTicketDescriptionEnrichmentStepRequestBodySchema.toJSONSchema(),
-    null,
-    2,
-  );
+  const jsonSchema = completeTicketDescriptionEnrichmentStepRequestBodySchema
+    .extend({
+      ticketId: z.literal(ticketId),
+      pipelineId: z.literal(pipelineId),
+    })
+    .toJSONSchema();
+  const jsonSchemaText = JSON.stringify(jsonSchema, null, 2);
 
   return `You are investigating a support ticket to determine what actually happened.
 
@@ -82,12 +87,14 @@ export const triggerTicketDescriptionEnrichmentStep = async (
     stepExecutionRepo,
     environmentRepo,
     ticketGitEnvironmentRepo,
+    pipelineRunRepo = AppContext.pipelineRunRepo,
     githubService,
   }: {
     ticketRepo: TicketRepo;
     stepExecutionRepo: StepExecutionRepo;
     environmentRepo: EnvironmentRepo;
     ticketGitEnvironmentRepo: TicketGitEnvironmentRepo;
+    pipelineRunRepo?: PipelineRunRepo;
     githubService: GithubApiService;
   } = AppContext,
 ): Promise<TriggerTicketDescriptionEnrichmentStepResponse> => {
@@ -103,15 +110,17 @@ export const triggerTicketDescriptionEnrichmentStep = async (
   }
 
   const now = new Date().toISOString();
+  const pipelineId = uuidv7();
+  await pipelineRunRepo.save(new PipelineRunEntity(pipelineId, input.ticketId));
   const execution = new TicketDescriptionEnrichmentStepExecutionEntity(
-    null,
+    pipelineId,
     input.ticketId,
     "running",
     null,
     now,
   );
 
-  let savedExecution = await stepExecutionRepo.save(execution);
+  const savedExecution = await stepExecutionRepo.save(execution);
 
   try {
     let githubIssue = ticket.githubIssue;
@@ -191,41 +200,19 @@ export const triggerTicketDescriptionEnrichmentStep = async (
       issueNumber: githubIssue.githubIssueNumber,
       baseBranch: ticketGitEnvironment.devBranch,
       customAgent: TICKET_INVESTIGATION_AGENT,
-      customInstructions: buildCustomInstructions(
-        input.ticketId,
-        savedExecution.id,
-      ),
+      customInstructions: buildCustomInstructions(input.ticketId, pipelineId),
     });
-
-    savedExecution = await stepExecutionRepo.save(
-      new TicketDescriptionEnrichmentStepExecutionEntity(
-        savedExecution.pipelineId,
-        savedExecution.ticketId,
-        savedExecution.status,
-        null,
-        savedExecution.startedAt,
-        savedExecution.endedAt,
-        savedExecution.createdAt,
-        savedExecution.updatedAt,
-        savedExecution.id,
-      ),
-    );
   } catch (error) {
-    if (!TERMINAL_STEP_EXECUTION_STATUSES.has(savedExecution.status)) {
-      await stepExecutionRepo.save(
-        new TicketDescriptionEnrichmentStepExecutionEntity(
-          savedExecution.pipelineId,
-          savedExecution.ticketId,
-          "failed",
-          null,
-          savedExecution.startedAt,
-          new Date().toISOString(),
-          savedExecution.createdAt,
-          savedExecution.updatedAt,
-          savedExecution.id,
-        ),
-      );
-    }
+    // get error message
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown error";
+
+    savedExecution.setResult({
+      status: "failed",
+      endedAt: new Date().toISOString(),
+      failureReason: errorMessage,
+    });
+    await stepExecutionRepo.save(savedExecution);
 
     throw error;
   }

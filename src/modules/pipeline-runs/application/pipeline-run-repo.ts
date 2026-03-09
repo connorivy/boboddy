@@ -13,6 +13,7 @@ export type PipelineRunRepo = {
   loadById(
     pipelineRunId: string,
     options?: LoadPipelineRunByIdOptions,
+    dbExecutor?: DbExecutor,
   ): Promise<PipelineRunEntity | null>;
   loadByTicketId(ticketId: string): Promise<PipelineRunEntity[]>;
   loadByTicketIds(

@@ -1,4 +1,5 @@
 import { v7 as uuidv7 } from "uuid";
+import type { DomainEvent } from "@/lib/domain-events/domain-event";
 import {
   FAILING_TEST_FIX_STEP_NAME,
   FAILING_TEST_REPRO_STEP_NAME,
@@ -7,6 +8,7 @@ import {
   TICKET_DESCRIPTION_QUALITY_STEP_NAME,
   TICKET_DUPLICATE_CANDIDATES_STEP_NAME,
 } from "@/modules/step-executions/domain/step-execution.types";
+import { StepExecutionCompletedDomainEvent } from "@/modules/step-executions/domain/step-execution-completed.domain-event";
 import type {
   TicketDescriptionEnrichmentCodeUnit,
   TicketDescriptionEnrichmentDatabaseFinding,
@@ -29,14 +31,23 @@ export type FailingTestReproFeedbackRequestEntity = {
   assumptions: string[];
 };
 
-export abstract class TicketPipelineStepExecutionEntity {
+type SetStepExecutionResultInput<TResult> = {
+  status: StepExecutionStatus;
+  endedAt: string;
+  failureReason?: string;
+  result?: TResult | null;
+};
+
+export abstract class TicketPipelineStepExecutionEntity<TResult = unknown> {
   public id: string;
+  private readonly domainEvents: DomainEvent[] = [];
 
   constructor(
     pipelineId: string | null | undefined,
     public ticketId: string,
     public stepName: string,
     public status: StepExecutionStatus,
+    public result: TResult | null,
     public startedAt: string,
     public endedAt?: string,
     id?: string,
@@ -49,6 +60,43 @@ export abstract class TicketPipelineStepExecutionEntity {
   }
 
   public pipelineId: string | null;
+
+  pullDomainEvents(): DomainEvent[] {
+    const events = [...this.domainEvents];
+    this.domainEvents.length = 0;
+    return events;
+  }
+
+  setResult({
+    status,
+    endedAt,
+    failureReason,
+    result,
+  }: SetStepExecutionResultInput<TResult>): void {
+    this.status = status;
+    this.endedAt = endedAt;
+    if (failureReason !== undefined) {
+      this.failureReason = failureReason;
+    }
+    if (result !== undefined) {
+      this.result = result;
+    }
+    this.addDomainEvent(
+      new StepExecutionCompletedDomainEvent({
+        stepExecutionId: this.id,
+        pipelineId: this.pipelineId,
+        ticketId: this.ticketId,
+        stepName: this.stepName,
+        status: this.status,
+        startedAt: this.startedAt,
+        endedAt: this.endedAt,
+      }),
+    );
+  }
+
+  protected addDomainEvent(event: DomainEvent): void {
+    this.domainEvents.push(event);
+  }
 }
 
 export class TicketDescriptionQualityStepResultEntity {
@@ -106,12 +154,12 @@ export class TicketDescriptionEnrichmentStepResultEntity {
   ) {}
 }
 
-export class TicketDescriptionEnrichmentStepExecutionEntity extends TicketPipelineStepExecutionEntity {
+export class TicketDescriptionEnrichmentStepExecutionEntity extends TicketPipelineStepExecutionEntity<TicketDescriptionEnrichmentStepResultEntity> {
   constructor(
     pipelineId: string | null | undefined,
     ticketId: string,
     status: StepExecutionStatus,
-    public result: TicketDescriptionEnrichmentStepResultEntity | null,
+    result: TicketDescriptionEnrichmentStepResultEntity | null,
     startedAt: string,
     endedAt?: string,
     createdAt?: string,
@@ -124,6 +172,7 @@ export class TicketDescriptionEnrichmentStepExecutionEntity extends TicketPipeli
       ticketId,
       TICKET_INVESTIGATION_STEP_NAME,
       status,
+      result,
       startedAt,
       endedAt,
       id,
@@ -134,12 +183,12 @@ export class TicketDescriptionEnrichmentStepExecutionEntity extends TicketPipeli
   }
 }
 
-export class TicketDescriptionQualityStepExecutionEntity extends TicketPipelineStepExecutionEntity {
+export class TicketDescriptionQualityStepExecutionEntity extends TicketPipelineStepExecutionEntity<TicketDescriptionQualityStepResultEntity> {
   constructor(
     pipelineId: string | null | undefined,
     ticketId: string,
     status: StepExecutionStatus,
-    public result: TicketDescriptionQualityStepResultEntity | null,
+    result: TicketDescriptionQualityStepResultEntity | null,
     startedAt: string,
     endedAt?: string,
     createdAt?: string,
@@ -152,6 +201,7 @@ export class TicketDescriptionQualityStepExecutionEntity extends TicketPipelineS
       ticketId,
       TICKET_DESCRIPTION_QUALITY_STEP_NAME,
       status,
+      result,
       startedAt,
       endedAt,
       id,
@@ -177,12 +227,12 @@ export class TicketDuplicateCandidatesResultEntity {
   ) {}
 }
 
-export class TicketDuplicateCandidatesStepResultEntity extends TicketPipelineStepExecutionEntity {
+export class TicketDuplicateCandidatesStepResultEntity extends TicketPipelineStepExecutionEntity<TicketDuplicateCandidatesResultEntity> {
   constructor(
     pipelineId: string | null | undefined,
     ticketId: string,
     status: StepExecutionStatus,
-    public result: TicketDuplicateCandidatesResultEntity | null,
+    result: TicketDuplicateCandidatesResultEntity | null,
     startedAt: string,
     endedAt?: string,
     createdAt?: string,
@@ -195,6 +245,7 @@ export class TicketDuplicateCandidatesStepResultEntity extends TicketPipelineSte
       ticketId,
       TICKET_DUPLICATE_CANDIDATES_STEP_NAME,
       status,
+      result,
       startedAt,
       endedAt,
       id,
@@ -234,12 +285,12 @@ export class FailingTestReproStepResultEntity {
   ) {}
 }
 
-export class FailingTestReproStepExecutionEntity extends TicketPipelineStepExecutionEntity {
+export class FailingTestReproStepExecutionEntity extends TicketPipelineStepExecutionEntity<FailingTestReproStepResultEntity> {
   constructor(
     pipelineId: string | null | undefined,
     ticketId: string,
     status: StepExecutionStatus,
-    public result: FailingTestReproStepResultEntity | null,
+    result: FailingTestReproStepResultEntity | null,
     public githubPrTargetBranch: string | null,
     startedAt: string,
     endedAt?: string,
@@ -253,6 +304,7 @@ export class FailingTestReproStepExecutionEntity extends TicketPipelineStepExecu
       ticketId,
       FAILING_TEST_REPRO_STEP_NAME,
       status,
+      result,
       startedAt,
       endedAt,
       id,
@@ -260,6 +312,19 @@ export class FailingTestReproStepExecutionEntity extends TicketPipelineStepExecu
       updatedAt,
       failureReason,
     );
+  }
+
+  override setResult({
+    githubPrTargetBranch,
+    ...input
+  }: SetStepExecutionResultInput<FailingTestReproStepResultEntity> & {
+    githubPrTargetBranch?: string | null;
+  }): void {
+    if (githubPrTargetBranch !== undefined) {
+      this.githubPrTargetBranch = githubPrTargetBranch;
+    }
+
+    super.setResult(input);
   }
 }
 
@@ -299,12 +364,12 @@ export class FailingTestFixStepCompletionResultEntity {
   ) {}
 }
 
-export class FailingTestFixStepExecutionEntity extends TicketPipelineStepExecutionEntity {
+export class FailingTestFixStepExecutionEntity extends TicketPipelineStepExecutionEntity<FailingTestFixStepResultEntity> {
   constructor(
     pipelineId: string | null | undefined,
     ticketId: string,
     status: StepExecutionStatus,
-    public result: FailingTestFixStepResultEntity | null,
+    result: FailingTestFixStepResultEntity | null,
     startedAt: string,
     endedAt?: string,
     createdAt?: string,
@@ -317,6 +382,7 @@ export class FailingTestFixStepExecutionEntity extends TicketPipelineStepExecuti
       ticketId,
       FAILING_TEST_FIX_STEP_NAME,
       status,
+      result,
       startedAt,
       endedAt,
       id,

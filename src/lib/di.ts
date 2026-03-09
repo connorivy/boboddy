@@ -1,3 +1,4 @@
+import { InProcessDomainEventBus } from "@/lib/domain-events/in-process-domain-event-bus";
 import { DrizzleTicketRepo } from "@/modules/tickets/infra/drizzle-ticket-repo";
 import { JiraTicketRepoByHttpClient } from "@/modules/tickets/infra/jira-ticket-repo";
 import { DrizzleStepExecutionRepo } from "@/modules/step-executions/infra/step-execution-repo";
@@ -6,8 +7,22 @@ import { DrizzleEnvironmentRepo } from "@/modules/environments/infra/drizzle-env
 import { DrizzleTicketGitEnvironmentRepo } from "@/modules/environments/infra/drizzle-ticket-git-environment-repo";
 import { GithubApiService } from "@/modules/step-executions/infra/github-copilot-coding-agent";
 import { DrizzlePipelineRunRepo } from "@/modules/pipeline-runs/infra/drizzle-pipeline-run-repo";
+import { QueueNextPipelineStepOnStepExecutionCompleted } from "@/modules/pipeline-runs/application/queue-next-pipeline-step-on-step-execution-completed";
+import { STEP_EXECUTION_COMPLETED_DOMAIN_EVENT_TYPE } from "@/modules/step-executions/domain/step-execution-completed.domain-event";
 
 let githubServiceInstance: GithubApiService | null = null;
+const domainEventBus = new InProcessDomainEventBus();
+const stepExecutionRepo = new DrizzleStepExecutionRepo(domainEventBus);
+const pipelineRunRepo = new DrizzlePipelineRunRepo();
+
+domainEventBus.register(
+  STEP_EXECUTION_COMPLETED_DOMAIN_EVENT_TYPE,
+  new QueueNextPipelineStepOnStepExecutionCompleted(
+    stepExecutionRepo,
+    pipelineRunRepo,
+  ),
+);
+
 const getGithubService = (): GithubApiService => {
   if (!githubServiceInstance) {
     githubServiceInstance = new GithubApiService();
@@ -19,11 +34,12 @@ const getGithubService = (): GithubApiService => {
 export const AppContext = {
   ticketRepo: new DrizzleTicketRepo(),
   jiraTicketRepo: new JiraTicketRepoByHttpClient(),
-  stepExecutionRepo: new DrizzleStepExecutionRepo(),
+  stepExecutionRepo,
   ticketVectorRepo: new DrizzleTicketVectorRepo(),
   environmentRepo: new DrizzleEnvironmentRepo(),
   ticketGitEnvironmentRepo: new DrizzleTicketGitEnvironmentRepo(),
-  pipelineRunRepo: new DrizzlePipelineRunRepo(),
+  pipelineRunRepo,
+  domainEventBus,
   get githubService() {
     return getGithubService();
   },

@@ -29,12 +29,22 @@ import { TicketGitEnvironmentRepo } from "@/modules/environments/application/tic
 import { createTicketGitEnvironment } from "@/modules/environments/application/create-ticket-git-environment";
 import { EnvironmentRepo } from "@/modules/environments/application/environment-repo";
 import { v7 as uuidv7 } from "uuid";
+import type { PipelineRunRepo } from "@/modules/pipeline-runs/application/pipeline-run-repo";
+import { PipelineRunEntity } from "@/modules/pipeline-runs/domain/pipeline-run-aggregate";
 
 const WEBHOOK_PAYLOAD_PATH = "tmp/copilot-repro-webhook-payload.json";
 
-function buildCustomInstructions(enrichmentContext: string | null): string {
-  const jsonSchema =
-    completeTicketFailingTestReproStepRequestBodySchema.toJSONSchema();
+function buildCustomInstructions(
+  ticketId: string,
+  pipelineId: string,
+  enrichmentContext: string | null,
+): string {
+  const jsonSchema = completeTicketFailingTestReproStepRequestBodySchema
+    .extend({
+      ticketId: z.literal(ticketId),
+      pipelineId: z.literal(pipelineId),
+    })
+    .toJSONSchema();
   const jsonSchemaText = JSON.stringify(jsonSchema, null, 2);
   return `You are reproducing a bug from the linked GitHub issue.
 
@@ -78,12 +88,14 @@ export const triggerTicketFailingTestReproStep = async (
     stepExecutionRepo,
     environmentRepo,
     ticketGitEnvironmentRepo,
+    pipelineRunRepo = AppContext.pipelineRunRepo,
     githubService,
   }: {
     ticketRepo: TicketRepo;
     stepExecutionRepo: StepExecutionRepo;
     environmentRepo: EnvironmentRepo;
     ticketGitEnvironmentRepo: TicketGitEnvironmentRepo;
+    pipelineRunRepo?: PipelineRunRepo;
     githubService: GithubApiService;
   } = AppContext,
 ): Promise<TriggerTicketFailingTestReproStepResponse> => {
@@ -99,7 +111,23 @@ export const triggerTicketFailingTestReproStep = async (
   }
 
   const now = new Date().toISOString();
-  let savedExecution: TicketPipelineStepExecutionEntity;
+  const pipelineId = uuidv7();
+  await pipelineRunRepo.save(new PipelineRunEntity(pipelineId, input.ticketId));
+  const executionId = uuidv7();
+  const execution = new FailingTestReproStepExecutionEntity(
+    pipelineId,
+    input.ticketId,
+    "running",
+    null,
+    null,
+    now,
+    undefined,
+    undefined,
+    undefined,
+    executionId,
+  );
+  let savedExecution: TicketPipelineStepExecutionEntity =
+    await stepExecutionRepo.save(execution);
   let baseBranch: string | null = null;
 
   try {
@@ -186,7 +214,6 @@ export const triggerTicketFailingTestReproStep = async (
       ].join("\n");
     }
 
-    const executionId = uuidv7();
     await githubService.upsertFile(
       "boboddy-state.json",
       baseBranch,
@@ -202,34 +229,30 @@ export const triggerTicketFailingTestReproStep = async (
     await githubService.assignCopilot({
       issueNumber: githubIssue.githubIssueNumber,
       baseBranch,
-      customInstructions: buildCustomInstructions(enrichmentContext),
+      customInstructions: buildCustomInstructions(
+        input.ticketId,
+        pipelineId,
+        enrichmentContext,
+      ),
     });
 
-    savedExecution = await stepExecutionRepo.save(
-      new FailingTestReproStepExecutionEntity(
-        null,
-        input.ticketId,
-        "running",
-        null,
-        baseBranch,
-        now,
-        undefined,
-        undefined,
-        undefined,
-        executionId,
-      ),
-    );
+    if (!(savedExecution instanceof FailingTestReproStepExecutionEntity)) {
+      throw new Error("Expected saved failing-test repro execution entity");
+    }
+    savedExecution.setResult({
+      status: savedExecution.status,
+      githubPrTargetBranch: baseBranch,
+    });
+    savedExecution = await stepExecutionRepo.save(savedExecution);
   } catch (error) {
-    savedExecution = await stepExecutionRepo.save(
-      new FailingTestReproStepExecutionEntity(
-        null,
-        input.ticketId,
-        "failed",
-        null,
-        baseBranch,
-        now,
-      ),
-    );
+    if (savedExecution instanceof FailingTestReproStepExecutionEntity) {
+      savedExecution.setResult({
+        status: "failed",
+        endedAt: new Date().toISOString(),
+        githubPrTargetBranch: baseBranch,
+      });
+    }
+    savedExecution = await stepExecutionRepo.save(savedExecution);
 
     throw error;
   }

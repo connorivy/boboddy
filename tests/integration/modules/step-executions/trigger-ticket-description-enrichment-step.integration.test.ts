@@ -10,6 +10,7 @@ import { truncateTestTables } from "../../helpers/pgvector-test-db";
 import { upsertEnvironment } from "@/modules/environments/application/upsert-environment";
 import { DrizzleEnvironmentRepo } from "@/modules/environments/infra/drizzle-environment-repo";
 import { DrizzleTicketGitEnvironmentRepo } from "@/modules/environments/infra/drizzle-ticket-git-environment-repo";
+import { DrizzlePipelineRunRepo } from "@/modules/pipeline-runs/infra/drizzle-pipeline-run-repo";
 
 const hoisted = vi.hoisted(() => ({
   requestMock: vi.fn(),
@@ -56,6 +57,7 @@ describe("triggerTicketDescriptionEnrichmentStep (integration)", () => {
   const stepExecutionRepo = new DrizzleStepExecutionRepo();
   const environmentRepo = new DrizzleEnvironmentRepo();
   const ticketGitEnvironmentRepo = new DrizzleTicketGitEnvironmentRepo();
+  const pipelineRunRepo = new DrizzlePipelineRunRepo();
 
   beforeEach(async () => {
     await truncateTestTables();
@@ -100,6 +102,7 @@ describe("triggerTicketDescriptionEnrichmentStep (integration)", () => {
         stepExecutionRepo,
         environmentRepo,
         ticketGitEnvironmentRepo,
+        pipelineRunRepo,
         githubService: githubService as never,
       },
     );
@@ -201,6 +204,7 @@ describe("triggerTicketDescriptionEnrichmentStep (integration)", () => {
         stepExecutionRepo,
         environmentRepo,
         ticketGitEnvironmentRepo,
+        pipelineRunRepo,
         githubService: githubService as never,
       },
     );

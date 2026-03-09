@@ -93,35 +93,29 @@ export const completeTicketFailingTestReproStep = async (
     feedbackRequest: input.feedbackRequest ?? null,
   };
 
-  const savedExecution = await stepExecutionRepo.save(
-    new FailingTestReproStepExecutionEntity(
-      existingExecution.pipelineId,
-      existingExecution.ticketId,
-      nextStatus,
-      new FailingTestReproStepResultEntity(
-        existingExecution.result?.githubMergeStatus ?? "draft",
-        ticket.githubIssue.githubIssueNumber,
-        ticket.githubIssue.githubIssueId,
-        input.agentStatus,
-        input.agentBranch,
-        input.reproduceOperationOutcome,
-        input.summaryOfFindings,
-        input.confidenceLevel,
-        existingExecution.result?.githubAgentRunId,
-        input.failingTestPaths ?? undefined,
-        existingExecution.result?.failingTestCommitSha,
-        existingExecution.result?.failureReason,
-        rawResultJson,
-        input.feedbackRequest ?? undefined,
-      ),
-      existingExecution.githubPrTargetBranch ?? input.agentBranch,
-      existingExecution.startedAt,
-      shouldRemainOpen ? undefined : endedAt,
-      existingExecution.createdAt,
-      existingExecution.updatedAt,
-      existingExecution.id,
+  existingExecution.setResult({
+    status: nextStatus,
+    endedAt: shouldRemainOpen ? undefined : endedAt,
+    result: new FailingTestReproStepResultEntity(
+      existingExecution.result?.githubMergeStatus ?? "draft",
+      ticket.githubIssue.githubIssueNumber,
+      ticket.githubIssue.githubIssueId,
+      input.agentStatus,
+      input.agentBranch,
+      input.reproduceOperationOutcome,
+      input.summaryOfFindings,
+      input.confidenceLevel,
+      existingExecution.result?.githubAgentRunId,
+      input.failingTestPaths ?? undefined,
+      existingExecution.result?.failingTestCommitSha,
+      existingExecution.result?.failureReason,
+      rawResultJson,
+      input.feedbackRequest ?? undefined,
     ),
-  );
+    githubPrTargetBranch: existingExecution.githubPrTargetBranch ?? input.agentBranch,
+  });
+
+  const savedExecution = await stepExecutionRepo.save(existingExecution);
 
   return completeTicketFailingTestReproStepResponseSchema.parse({
     ok: true,

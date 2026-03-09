@@ -1,6 +1,7 @@
 import { and, asc, desc, eq, inArray, or, sql } from "drizzle-orm";
 import { getDb } from "@/lib/db";
 import { pipelineRuns, ticketStepExecutionsTph } from "@/lib/db/schema";
+import type { InProcessDomainEventBus } from "@/lib/domain-events/in-process-domain-event-bus";
 import {
   FAILING_TEST_FIX_STEP_NAME,
   FAILING_TEST_REPRO_STEP_NAME,
@@ -426,6 +427,10 @@ function mapDuplicateCandidatesResultOrNull(
 }
 
 export class DrizzleStepExecutionRepo implements StepExecutionRepo {
+  constructor(
+    private readonly domainEventBus: InProcessDomainEventBus | null = null,
+  ) {}
+
   private mapRowToExecution(
     row: typeof ticketStepExecutionsTph.$inferSelect,
     ticketId: string = row.ticketId,
@@ -582,8 +587,9 @@ export class DrizzleStepExecutionRepo implements StepExecutionRepo {
 
   async loadByPipelineId(
     pipelineId: string,
+    dbExecutor?: DbExecutor,
   ): Promise<TicketPipelineStepExecutionEntity[]> {
-    const db = getDb();
+    const db = dbExecutor ?? getDb();
 
     const rows = await db
       .select()
@@ -1015,8 +1021,44 @@ export class DrizzleStepExecutionRepo implements StepExecutionRepo {
     pipeline: TicketPipelineStepExecutionEntity,
     dbExecutor?: DbExecutor,
   ): Promise<TicketPipelineStepExecutionEntity> {
-    const db = dbExecutor ?? getDb();
+    if (dbExecutor) {
+      return this.saveInExecutor(pipeline, dbExecutor);
+    }
 
+    return getDb().transaction(async (tx) => this.saveInExecutor(pipeline, tx));
+  }
+
+  async saveMany(
+    stepExecutions: TicketPipelineStepExecutionEntity[],
+    dbExecutor?: DbExecutor,
+  ): Promise<TicketPipelineStepExecutionEntity[]> {
+    if (stepExecutions.length === 0) {
+      return [];
+    }
+
+    if (dbExecutor) {
+      const savedExecutions: TicketPipelineStepExecutionEntity[] = [];
+      for (const stepExecution of stepExecutions) {
+        savedExecutions.push(await this.saveInExecutor(stepExecution, dbExecutor));
+      }
+
+      return savedExecutions;
+    }
+
+    return getDb().transaction(async (tx) => {
+      const savedExecutions: TicketPipelineStepExecutionEntity[] = [];
+      for (const stepExecution of stepExecutions) {
+        savedExecutions.push(await this.saveInExecutor(stepExecution, tx));
+      }
+
+      return savedExecutions;
+    });
+  }
+
+  private async saveInExecutor(
+    pipeline: TicketPipelineStepExecutionEntity,
+    dbExecutor: DbExecutor,
+  ): Promise<TicketPipelineStepExecutionEntity> {
     const now = new Date();
     const startedAt = parseIsoDateOrThrow(pipeline.startedAt, "startedAt");
     const endedAt = pipeline.endedAt
@@ -1026,7 +1068,7 @@ export class DrizzleStepExecutionRepo implements StepExecutionRepo {
     let savedExecution: TicketPipelineStepExecutionEntity;
     if (pipeline instanceof TicketDescriptionEnrichmentStepExecutionEntity) {
       savedExecution = await this.saveDescriptionEnrichmentExecution(
-        db,
+        dbExecutor,
         pipeline,
         startedAt,
         endedAt,
@@ -1036,7 +1078,7 @@ export class DrizzleStepExecutionRepo implements StepExecutionRepo {
       pipeline instanceof TicketDescriptionQualityStepExecutionEntity
     ) {
       savedExecution = await this.saveDescriptionQualityExecution(
-        db,
+        dbExecutor,
         pipeline,
         startedAt,
         endedAt,
@@ -1044,7 +1086,7 @@ export class DrizzleStepExecutionRepo implements StepExecutionRepo {
       );
     } else if (pipeline instanceof TicketDuplicateCandidatesStepResultEntity) {
       savedExecution = await this.saveDuplicateCandidatesExecution(
-        db,
+        dbExecutor,
         pipeline,
         startedAt,
         endedAt,
@@ -1052,7 +1094,7 @@ export class DrizzleStepExecutionRepo implements StepExecutionRepo {
       );
     } else if (pipeline instanceof FailingTestReproStepExecutionEntity) {
       savedExecution = await this.saveFailingTestReproExecution(
-        db,
+        dbExecutor,
         pipeline,
         startedAt,
         endedAt,
@@ -1060,7 +1102,7 @@ export class DrizzleStepExecutionRepo implements StepExecutionRepo {
       );
     } else if (pipeline instanceof FailingTestFixStepExecutionEntity) {
       savedExecution = await this.saveFailingTestFixExecution(
-        db,
+        dbExecutor,
         pipeline,
         startedAt,
         endedAt,
@@ -1072,21 +1114,14 @@ export class DrizzleStepExecutionRepo implements StepExecutionRepo {
       );
     }
 
-    return savedExecution;
-  }
-
-  async saveMany(
-    stepExecutions: TicketPipelineStepExecutionEntity[],
-    dbExecutor?: DbExecutor,
-  ): Promise<TicketPipelineStepExecutionEntity[]> {
-    if (stepExecutions.length === 0) {
-      return [];
+    const domainEvents = pipeline.pullDomainEvents();
+    if (this.domainEventBus && domainEvents.length > 0) {
+      await this.domainEventBus.publish(
+        domainEvents,
+        dbExecutor as Parameters<InProcessDomainEventBus["publish"]>[1],
+      );
     }
 
-    return Promise.all(
-      stepExecutions.map((stepExecution) =>
-        this.save(stepExecution, dbExecutor),
-      ),
-    );
+    return savedExecution;
   }
 }

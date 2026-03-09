@@ -72,55 +72,31 @@ export const completeTicketDescriptionEnrichmentStep = async (
   }
 
   const endedAt = new Date().toISOString();
-
-  const savedExecution = await stepExecutionRepo.save(
-    new TicketDescriptionEnrichmentStepExecutionEntity(
-      existingExecution.pipelineId,
-      existingExecution.ticketId,
-      resolveStatus(input),
-      new TicketDescriptionEnrichmentStepResultEntity(
-        input.summaryOfInvestigation,
-        input.investigationReport,
-        input.whatHappened,
-        input.datadogQueryTerms,
-        input.datadogTimeRange,
-        input.keyIdentifiers,
-        input.exactEventTimes,
-        input.codeUnitsInvolved,
-        input.databaseFindings,
-        input.logFindings,
-        input.datadogSessionFindings,
-        input.investigationGaps,
-        input.recommendedNextQueries,
-        input.confidenceLevel,
-        {
-          ...input.rawResultJson,
-          summaryOfInvestigation: input.summaryOfInvestigation,
-          whatHappened: input.whatHappened,
-          datadogQueryTerms: input.datadogQueryTerms,
-          datadogTimeRange: input.datadogTimeRange,
-          keyIdentifiers: input.keyIdentifiers,
-          exactEventTimes: input.exactEventTimes,
-          codeUnitsInvolved: input.codeUnitsInvolved,
-          databaseFindings: input.databaseFindings,
-          logFindings: input.logFindings,
-          datadogSessionFindings: input.datadogSessionFindings,
-          investigationGaps: input.investigationGaps,
-          recommendedNextQueries: input.recommendedNextQueries,
-          investigationReport: input.investigationReport,
-          operationOutcome: input.operationOutcome,
-        },
-        input.agentStatus,
-        input.agentBranch,
-        input.operationOutcome,
-      ),
-      existingExecution.startedAt,
-      endedAt,
-      existingExecution.createdAt,
-      existingExecution.updatedAt,
-      existingExecution.id,
+  existingExecution.setResult({
+    status: resolveStatus(input),
+    endedAt,
+    result: new TicketDescriptionEnrichmentStepResultEntity(
+      input.summaryOfInvestigation,
+      input.investigationReport,
+      input.whatHappened,
+      input.datadogQueryTerms,
+      input.datadogTimeRange,
+      input.keyIdentifiers,
+      input.exactEventTimes,
+      input.codeUnitsInvolved,
+      input.databaseFindings,
+      input.logFindings,
+      input.datadogSessionFindings,
+      input.investigationGaps,
+      input.recommendedNextQueries,
+      input.confidenceLevel,
+      input.rawResultJson,
+      input.agentStatus,
+      input.agentBranch,
+      input.operationOutcome,
     ),
-  );
+  });
+  const savedExecution = await stepExecutionRepo.save(existingExecution);
 
   return completeTicketDescriptionEnrichmentStepResponseSchema.parse({
     ok: true,

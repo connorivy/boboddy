@@ -50,24 +50,28 @@ export const triggerTicketDescriptionQualityStep = async (
         description: ticket.description,
       });
 
-    execution.status = "succeeded";
-    execution.result = new TicketDescriptionQualityStepResultEntity(
-      aiResult.stepsToReproduceScore,
-      aiResult.expectedBehaviorScore,
-      aiResult.observedBehaviorScore,
-      aiResult.reasoning,
-      aiResult.rawResponse,
-    );
-    execution.endedAt = new Date().toISOString();
+    execution.setResult({
+      status: "succeeded",
+      endedAt: new Date().toISOString(),
+      result: new TicketDescriptionQualityStepResultEntity(
+        aiResult.stepsToReproduceScore,
+        aiResult.expectedBehaviorScore,
+        aiResult.observedBehaviorScore,
+        aiResult.reasoning,
+        aiResult.rawResponse,
+      ),
+    });
 
     await stepExecutionRepo.save(execution);
   } catch (error) {
     const errorMessage =
       error instanceof Error ? error.message : "Unknown error";
 
-    execution.failureReason = errorMessage;
-    execution.status = "failed";
-    execution.endedAt = new Date().toISOString();
+    execution.setResult({
+      status: "failed",
+      endedAt: new Date().toISOString(),
+      failureReason: errorMessage,
+    });
     await stepExecutionRepo.save(execution);
     throw error;
   }

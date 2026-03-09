@@ -4,7 +4,10 @@ import { TicketRepo } from "@/modules/tickets/application/jira-ticket-repo";
 import { GithubApiService } from "@/modules/step-executions/infra/github-copilot-coding-agent";
 import { TicketGitEnvironmentRepo } from "@/modules/environments/application/ticket-git-environment-repo";
 import { AppContext } from "@/lib/di";
-import { FailingTestReproStepExecutionEntity } from "@/modules/step-executions/domain/step-execution-entity";
+import {
+  FailingTestReproStepExecutionEntity,
+  FailingTestReproStepResultEntity,
+} from "@/modules/step-executions/domain/step-execution-entity";
 import { StepExecutionRepo } from "@/modules/step-executions/application/step-execution-repo";
 
 export async function mergeFailingTest(
@@ -79,6 +82,26 @@ export async function mergeFailingTest(
     stepExecution.githubPrTargetBranch,
     stepExecution.result.agentBranch,
   );
-  stepExecution.result.githubMergeStatus = "merged";
+  stepExecution.setResult({
+    status: stepExecution.status,
+    endedAt: stepExecution.endedAt,
+    result: new FailingTestReproStepResultEntity(
+      "merged",
+      stepExecution.result.githubIssueNumber,
+      stepExecution.result.githubIssueId,
+      stepExecution.result.agentStatus,
+      stepExecution.result.agentBranch,
+      stepExecution.result.outcome,
+      stepExecution.result.summaryOfFindings,
+      stepExecution.result.confidenceLevel,
+      stepExecution.result.githubAgentRunId,
+      stepExecution.result.failingTestPaths,
+      stepExecution.result.failingTestCommitSha,
+      stepExecution.result.failureReason,
+      stepExecution.result.rawResultJson,
+      stepExecution.result.feedbackRequest,
+    ),
+    githubPrTargetBranch: stepExecution.githubPrTargetBranch,
+  });
   await stepExecutionRepo.save(stepExecution);
 }

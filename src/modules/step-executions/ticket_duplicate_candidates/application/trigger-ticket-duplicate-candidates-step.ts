@@ -77,44 +77,29 @@ export const triggerTicketDuplicateCandidatesStep = async (
       minScore: DUPLICATE_MIN_SCORE,
     });
 
-    savedExecution = await stepExecutionRepo.save(
-      new TicketDuplicateCandidatesStepResultEntity(
-        savedExecution.pipelineId,
-        savedExecution.ticketId,
-        "succeeded",
-        new TicketDuplicateCandidatesResultEntity(
-          candidates.map(
-            (candidate) =>
-              new TicketDuplicateCandidateResultItemEntity(
-                candidate.candidateTicketId,
-                candidate.score,
-              ),
-          ),
-          [],
-          [],
+    savedExecution.setResult({
+      status: "succeeded",
+      endedAt: new Date().toISOString(),
+      result: new TicketDuplicateCandidatesResultEntity(
+        candidates.map(
+          (candidate) =>
+            new TicketDuplicateCandidateResultItemEntity(
+              candidate.candidateTicketId,
+              candidate.score,
+            ),
         ),
-        savedExecution.startedAt,
-        new Date().toISOString(),
-        savedExecution.createdAt,
-        savedExecution.updatedAt,
-        savedExecution.id,
+        [],
+        [],
       ),
-    );
+    });
+    savedExecution = await stepExecutionRepo.save(savedExecution);
   } catch (error) {
     if (!TERMINAL_STEP_EXECUTION_STATUSES.has(savedExecution.status)) {
-      await stepExecutionRepo.save(
-        new TicketDuplicateCandidatesStepResultEntity(
-          savedExecution.pipelineId,
-          savedExecution.ticketId,
-          "failed",
-          null,
-          savedExecution.startedAt,
-          new Date().toISOString(),
-          savedExecution.createdAt,
-          savedExecution.updatedAt,
-          savedExecution.id,
-        ),
-      );
+      savedExecution.setResult({
+        status: "failed",
+        endedAt: new Date().toISOString(),
+      });
+      await stepExecutionRepo.save(savedExecution);
     }
     throw error;
   }

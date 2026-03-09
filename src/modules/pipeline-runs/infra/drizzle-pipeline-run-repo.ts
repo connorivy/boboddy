@@ -20,8 +20,9 @@ export class DrizzlePipelineRunRepo implements PipelineRunRepo {
   async loadById(
     pipelineRunId: string,
     options?: LoadPipelineRunByIdOptions,
+    dbExecutor?: DbExecutor,
   ): Promise<PipelineRunEntity | null> {
-    const db = getDb();
+    const db = dbExecutor ?? getDb();
     const [row] = await db
       .select()
       .from(pipelineRuns)
@@ -39,6 +40,7 @@ export class DrizzlePipelineRunRepo implements PipelineRunRepo {
 
     const stepExecutions = await this.stepExecutionRepo.loadByPipelineId(
       pipelineRun.id,
+      dbExecutor,
     );
 
     return new PipelineRunEntity(
@@ -48,8 +50,11 @@ export class DrizzlePipelineRunRepo implements PipelineRunRepo {
     );
   }
 
-  async loadByTicketId(ticketId: string): Promise<PipelineRunEntity[]> {
-    const db = getDb();
+  async loadByTicketId(
+    ticketId: string,
+    dbExecutor?: DbExecutor,
+  ): Promise<PipelineRunEntity[]> {
+    const db = dbExecutor ?? getDb();
     const rows = await db
       .select()
       .from(pipelineRuns)

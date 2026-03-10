@@ -1,4 +1,5 @@
 import {
+  FinalizeFailingTestReproPrStepExecutionEntity,
   TicketDescriptionEnrichmentStepExecutionEntity,
   TicketDescriptionQualityStepExecutionEntity,
   FailingTestFixStepExecutionEntity,
@@ -9,6 +10,7 @@ import {
 import {
   failingTestFixStepResultContractSchema,
   failingTestReproStepResultContractSchema,
+  finalizeFailingTestReproPrStepResultContractSchema,
   stepExecutionContractSchema,
   ticketDescriptionEnrichmentResultContractSchema,
   ticketDuplicateCandidatesStepResultContractSchema,
@@ -183,6 +185,29 @@ function mapFailingTestFixResult(
   });
 }
 
+function mapFinalizeFailingTestReproPrResult(
+  stepExecution: FinalizeFailingTestReproPrStepExecutionEntity,
+): ReturnType<typeof finalizeFailingTestReproPrStepResultContractSchema.parse> {
+  if (!stepExecution.result) {
+    throw new Error(
+      "Cannot map finalize failing test repro PR result when execution has no result payload",
+    );
+  }
+  const result = stepExecution.result;
+
+  return finalizeFailingTestReproPrStepResultContractSchema.parse({
+    executionId: stepExecution.id,
+    stepName: stepExecution.stepName,
+    githubIssueNumber: result.githubIssueNumber,
+    githubIssueId: result.githubIssueId,
+    githubMergeStatus: result.githubMergeStatus,
+    githubPrTargetBranch: result.githubPrTargetBranch,
+    agentBranch: result.agentBranch,
+    createdAt: stepExecution.createdAt,
+    updatedAt: stepExecution.updatedAt,
+  });
+}
+
 export const stepExecutionEntityToContract = (
   stepExecution: TicketPipelineStepExecutionEntity,
 ): StepExecutionContract => {
@@ -201,6 +226,7 @@ export const stepExecutionEntityToContract = (
     | ReturnType<typeof ticketDuplicateCandidatesStepResultContractSchema.parse>
     | ReturnType<typeof failingTestReproStepResultContractSchema.parse>
     | ReturnType<typeof failingTestFixStepResultContractSchema.parse>
+    | ReturnType<typeof finalizeFailingTestReproPrStepResultContractSchema.parse>
     | null = null;
 
   if (
@@ -236,6 +262,13 @@ export const stepExecutionEntityToContract = (
     stepExecution.result
   ) {
     mappedResult = mapFailingTestFixResult(stepExecution);
+  }
+
+  if (
+    stepExecution instanceof FinalizeFailingTestReproPrStepExecutionEntity &&
+    stepExecution.result
+  ) {
+    mappedResult = mapFinalizeFailingTestReproPrResult(stepExecution);
   }
 
   return stepExecutionContractSchema.parse({

@@ -4,6 +4,7 @@ import { pipelineRuns, ticketStepExecutionsTph } from "@/lib/db/schema";
 import type { InProcessDomainEventBus } from "@/lib/domain-events/in-process-domain-event-bus";
 import {
   FAILING_TEST_FIX_STEP_NAME,
+  FINALIZE_FAILING_TEST_REPRO_PR_STEP_NAME,
   FAILING_TEST_REPRO_STEP_NAME,
   TICKET_INVESTIGATION_STEP_NAME,
   TICKET_DESCRIPTION_QUALITY_STEP_NAME,
@@ -16,6 +17,8 @@ import {
   FailingTestReproCancelledResultEntity,
   FailingTestReproNeedsUserFeedbackResultEntity,
   FailingTestReproNotReproducibleResultEntity,
+  FinalizeFailingTestReproPrStepExecutionEntity,
+  FinalizeFailingTestReproPrStepResultEntity,
   TicketDescriptionEnrichmentStepExecutionEntity,
   TicketDescriptionEnrichmentStepResultEntity,
   TicketDescriptionQualityStepExecutionEntity,
@@ -340,6 +343,28 @@ function mapFailingTestFixResultOrNull(
   );
 }
 
+function mapFinalizeFailingTestReproPrResultOrNull(
+  row: typeof ticketStepExecutionsTph.$inferSelect,
+): FinalizeFailingTestReproPrStepResultEntity | null {
+  const context = `${FINALIZE_FAILING_TEST_REPRO_PR_STEP_NAME} (execution ${row.id})`;
+  const hasResult = Boolean(row.agentBranch);
+  if (!hasResult) {
+    return null;
+  }
+
+  return new FinalizeFailingTestReproPrStepResultEntity(
+    requiredTruthyField(row.githubMergeStatus, "githubMergeStatus", context),
+    requiredTruthyField(row.githubIssueNumber, "githubIssueNumber", context),
+    requiredNonEmptyString(row.githubIssueId, "githubIssueId", context),
+    requiredNonEmptyString(
+      row.githubPrTargetBranch,
+      "githubPrTargetBranch",
+      context,
+    ),
+    requiredNonEmptyString(row.agentBranch, "agentBranch", context),
+  );
+}
+
 function mapDescriptionQualityResultOrNull(
   row: typeof ticketStepExecutionsTph.$inferSelect,
 ): TicketDescriptionQualityStepResultEntity | null {
@@ -584,6 +609,21 @@ export class DrizzleStepExecutionRepo implements StepExecutionRepo {
         ticketId,
         row.status,
         mapFailingTestFixResultOrNull(row),
+        row.startedAt.toISOString(),
+        row.endedAt?.toISOString(),
+        row.createdAt.toISOString(),
+        row.updatedAt.toISOString(),
+        row.id,
+        row.failureReason ?? undefined,
+      );
+    }
+
+    if (row.type === FINALIZE_FAILING_TEST_REPRO_PR_STEP_NAME) {
+      return new FinalizeFailingTestReproPrStepExecutionEntity(
+        row.pipelineId,
+        ticketId,
+        row.status,
+        mapFinalizeFailingTestReproPrResultOrNull(row),
         row.startedAt.toISOString(),
         row.endedAt?.toISOString(),
         row.createdAt.toISOString(),
@@ -1122,6 +1162,35 @@ export class DrizzleStepExecutionRepo implements StepExecutionRepo {
     );
   }
 
+  private saveFinalizeFailingTestReproPrExecution(
+    tx: DbExecutor,
+    pipeline: FinalizeFailingTestReproPrStepExecutionEntity,
+    startedAt: Date,
+    endedAt: Date | null,
+    now: Date,
+  ): Promise<TicketPipelineStepExecutionEntity> {
+    const result = pipeline.result;
+    const fields = {
+      ...this.buildDiscriminatorResetFields(),
+      githubIssueNumber: result?.githubIssueNumber ?? null,
+      githubIssueId: result?.githubIssueId ?? null,
+      githubMergeStatus: result?.githubMergeStatus ?? "draft",
+      githubPrTargetBranch: result?.githubPrTargetBranch ?? null,
+      agentBranch: result?.agentBranch ?? null,
+      completedAt: endedAt,
+      lastPolledAt: now,
+    };
+
+    return this.saveStepExecution(
+      tx,
+      pipeline,
+      startedAt,
+      endedAt,
+      now,
+      fields,
+    );
+  }
+
   async save(
     pipeline: TicketPipelineStepExecutionEntity,
     dbExecutor?: DbExecutor,
@@ -1207,6 +1276,16 @@ export class DrizzleStepExecutionRepo implements StepExecutionRepo {
       );
     } else if (pipeline instanceof FailingTestFixStepExecutionEntity) {
       savedExecution = await this.saveFailingTestFixExecution(
+        dbExecutor,
+        pipeline,
+        startedAt,
+        endedAt,
+        now,
+      );
+    } else if (
+      pipeline instanceof FinalizeFailingTestReproPrStepExecutionEntity
+    ) {
+      savedExecution = await this.saveFinalizeFailingTestReproPrExecution(
         dbExecutor,
         pipeline,
         startedAt,

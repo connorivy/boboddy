@@ -2,6 +2,7 @@ import { v7 as uuidv7 } from "uuid";
 import type { DomainEvent } from "@/lib/domain-events/domain-event";
 import {
   FAILING_TEST_FIX_STEP_NAME,
+  FINALIZE_FAILING_TEST_REPRO_PR_STEP_NAME,
   FAILING_TEST_REPRO_STEP_NAME,
   StepExecutionStatus,
   TERMINAL_STEP_EXECUTION_STATUSES,
@@ -562,6 +563,45 @@ export class FailingTestFixStepExecutionEntity extends TicketPipelineStepExecuti
       pipelineId,
       ticketId,
       FAILING_TEST_FIX_STEP_NAME,
+      status,
+      result,
+      startedAt,
+      endedAt,
+      id,
+      createdAt,
+      updatedAt,
+      failureReason,
+    );
+  }
+}
+
+export class FinalizeFailingTestReproPrStepResultEntity {
+  constructor(
+    public githubMergeStatus: "draft" | "open" | "closed" | "merged",
+    public githubIssueNumber: number,
+    public githubIssueId: string,
+    public githubPrTargetBranch: string,
+    public agentBranch: string,
+  ) {}
+}
+
+export class FinalizeFailingTestReproPrStepExecutionEntity extends TicketPipelineStepExecutionEntity<FinalizeFailingTestReproPrStepResultEntity> {
+  constructor(
+    pipelineId: string | null | undefined,
+    ticketId: string,
+    status: StepExecutionStatus,
+    result: FinalizeFailingTestReproPrStepResultEntity | null,
+    startedAt: string,
+    endedAt?: string,
+    createdAt?: string,
+    updatedAt?: string,
+    id?: string,
+    failureReason?: string,
+  ) {
+    super(
+      pipelineId,
+      ticketId,
+      FINALIZE_FAILING_TEST_REPRO_PR_STEP_NAME,
       status,
       result,
       startedAt,

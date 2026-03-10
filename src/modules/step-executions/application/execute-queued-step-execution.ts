@@ -11,12 +11,14 @@ import { TicketPipelineStepExecutionEntity } from "@/modules/step-executions/dom
 import {
   type StepExecutionStepName,
   FAILING_TEST_FIX_STEP_NAME,
+  FINALIZE_FAILING_TEST_REPRO_PR_STEP_NAME,
   FAILING_TEST_REPRO_STEP_NAME,
   TICKET_DESCRIPTION_QUALITY_STEP_NAME,
   TICKET_DUPLICATE_CANDIDATES_STEP_NAME,
   TICKET_INVESTIGATION_STEP_NAME,
 } from "@/modules/step-executions/domain/step-execution.types";
 import { triggerTicketFailingTestFixStep } from "@/modules/step-executions/github_fix_failing_test/application/trigger-ticket-failing-test-fix-step";
+import { triggerFinalizeFailingTestReproPrStep } from "@/modules/step-executions/github_finalize_failing_test_repro_pr/application/trigger-finalize-failing-test-repro-pr-step";
 import { triggerTicketFailingTestReproStep } from "@/modules/step-executions/github_repro_failing_test/application/trigger-ticket-failing-test-repro-step";
 import { triggerTicketDescriptionEnrichmentStep } from "@/modules/step-executions/ticket_description_enrichment/application/trigger-ticket-description-enrichment-step";
 import { triggerTicketDescriptionQualityStep } from "@/modules/step-executions/ticket_description_quality_rank/application/trigger-ticket-description-quality-step";
@@ -186,6 +188,15 @@ async function processClaimedStepExecution(
           pipelineRunRepo: AppContext.pipelineRunRepo,
           githubService: AppContext.githubService,
           stepExecutionRepo,
+        },
+      );
+      return;
+    case FINALIZE_FAILING_TEST_REPRO_PR_STEP_NAME:
+      await triggerFinalizeFailingTestReproPrStep(
+        { ticketId },
+        {
+          stepExecutionRepo,
+          githubService: AppContext.githubService,
         },
       );
       return;

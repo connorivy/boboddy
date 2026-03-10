@@ -1,6 +1,7 @@
 import { z } from "zod";
 import {
   FAILING_TEST_FIX_STEP_NAME,
+  FINALIZE_FAILING_TEST_REPRO_PR_STEP_NAME,
   FAILING_TEST_REPRO_STEP_NAME,
   TICKET_INVESTIGATION_STEP_NAME,
   TICKET_DESCRIPTION_QUALITY_STEP_NAME,
@@ -127,12 +128,25 @@ export const failingTestFixStepResultContractSchema = z.object({
   updatedAt: z.iso.datetime().optional(),
 });
 
+export const finalizeFailingTestReproPrStepResultContractSchema = z.object({
+  executionId: uuidV7Schema,
+  stepName: z.literal(FINALIZE_FAILING_TEST_REPRO_PR_STEP_NAME),
+  githubIssueNumber: z.number().int(),
+  githubIssueId: z.string().min(1),
+  githubMergeStatus: z.enum(["draft", "open", "closed", "merged"]),
+  githubPrTargetBranch: z.string().min(1),
+  agentBranch: z.string().min(1),
+  createdAt: z.iso.datetime().optional(),
+  updatedAt: z.iso.datetime().optional(),
+});
+
 export const stepExecutionResultContractSchema = z.union([
   ticketDescriptionQualityResultContractSchema,
   ticketDescriptionEnrichmentResultContractSchema,
   ticketDuplicateCandidatesStepResultContractSchema,
   failingTestReproStepResultContractSchema,
   failingTestFixStepResultContractSchema,
+  finalizeFailingTestReproPrStepResultContractSchema,
 ]);
 
 export const stepExecutionStatusEnumSchema = z.enum([
@@ -183,6 +197,10 @@ export type FailingTestReproStepResultContract = z.infer<
 
 export type FailingTestFixStepResultContract = z.infer<
   typeof failingTestFixStepResultContractSchema
+>;
+
+export type FinalizeFailingTestReproPrStepResultContract = z.infer<
+  typeof finalizeFailingTestReproPrStepResultContractSchema
 >;
 
 export type StepExecutionContract = z.infer<typeof stepExecutionContractSchema>;

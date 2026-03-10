@@ -10,7 +10,6 @@ import { loadTicketDetail } from "@/modules/tickets/application/get-tickets";
 import { completeTicketDescriptionEnrichmentStep } from "@/modules/step-executions/ticket_description_enrichment/application/complete-ticket-description-enrichment-step";
 import { completeTicketFailingTestReproStep } from "@/modules/step-executions/github_repro_failing_test/application/complete-ticket-failing-test-repro-step";
 import { completeTicketFailingTestFixStep } from "@/modules/step-executions/github_fix_failing_test/application/complete-ticket-failing-test-fix-step";
-import { FailingTestReproStepExecutionEntity } from "@/modules/step-executions/domain/step-execution-entity";
 import type {
   IngestTicketsRequest,
   TicketIngestInput,
@@ -24,6 +23,8 @@ const hoisted = vi.hoisted(() => ({
   unassignCopilotMock: vi.fn(),
   assignCopilotMock: vi.fn(),
   upsertFileMock: vi.fn(),
+  markPullRequestReadyForReviewMock: vi.fn(),
+  mergePullRequestMock: vi.fn(),
 }));
 
 vi.mock(
@@ -40,6 +41,8 @@ vi.spyOn(AppContext, "githubService", "get").mockReturnValue({
   unassignCopilot: hoisted.unassignCopilotMock,
   assignCopilot: hoisted.assignCopilotMock,
   upsertFile: hoisted.upsertFileMock,
+  markPullRequestReadyForReview: hoisted.markPullRequestReadyForReviewMock,
+  mergePullRequest: hoisted.mergePullRequestMock,
 } as unknown as (typeof AppContext)["githubService"]);
 
 const UUID_PATTERN =
@@ -270,13 +273,13 @@ async function assertReproStepRunning(pipelineId: string) {
   assertNamedStepExecutionSnapshot(stepExecutions[0], "running repro step");
 }
 
-async function assertCompletedReproAndQueuedFix(pipelineId: string) {
+async function assertCompletedReproAndQueuedFinalize(pipelineId: string) {
   const stepExecutions = await loadPipelineStepExecutions(pipelineId);
   expect(stepExecutions).toHaveLength(4);
 
   assertNamedStepExecutionSnapshot(
     stepExecutions[0],
-    "queued fix step after repro completion",
+    "queued finalize repro pr step after repro completion",
   );
   assertNamedStepExecutionSnapshot(
     stepExecutions[1],
@@ -284,16 +287,30 @@ async function assertCompletedReproAndQueuedFix(pipelineId: string) {
   );
 }
 
+async function assertCompletedFinalizeAndQueuedFix(pipelineId: string) {
+  const stepExecutions = await loadPipelineStepExecutions(pipelineId);
+  expect(stepExecutions).toHaveLength(5);
+
+  assertNamedStepExecutionSnapshot(
+    stepExecutions[0],
+    "queued fix step after finalize repro pr completion",
+  );
+  assertNamedStepExecutionSnapshot(
+    stepExecutions[1],
+    "completed finalize repro pr step result",
+  );
+}
+
 async function assertFixStepRunning(pipelineId: string) {
   const stepExecutions = await loadPipelineStepExecutions(pipelineId);
-  expect(stepExecutions).toHaveLength(4);
+  expect(stepExecutions).toHaveLength(5);
 
   assertNamedStepExecutionSnapshot(stepExecutions[0], "running fix step");
 }
 
 async function assertCompletedFixStep(pipelineId: string) {
   const stepExecutions = await loadPipelineStepExecutions(pipelineId);
-  expect(stepExecutions).toHaveLength(4);
+  expect(stepExecutions).toHaveLength(5);
 
   assertNamedStepExecutionSnapshot(
     stepExecutions[0],
@@ -384,32 +401,15 @@ async function completeInvestigationStepAndAssert(
   await assertCompletedInvestigationAndQueuedRepro(pipelineId);
 }
 
-async function markReproStepAsMerged(stepExecutionId: string) {
-  const stepExecution =
-    await AppContext.stepExecutionRepo.load(stepExecutionId);
-  expect(stepExecution).toBeDefined();
-  expect(stepExecution?.result).toBeDefined();
-
-  if (
-    !stepExecution ||
-    !(stepExecution instanceof FailingTestReproStepExecutionEntity) ||
-    !stepExecution.result
-  ) {
-    throw new Error("Expected repro step to have a result payload");
-  }
-
-  stepExecution.result.githubMergeStatus = "merged";
-  await AppContext.stepExecutionRepo.save(stepExecution);
-}
-
 describe("AI pipeline flow (integration)", () => {
   beforeEach(async () => {
-    await truncateTestTables();
     hoisted.rankTicketDescriptionMock.mockReset();
     hoisted.createIssueMock.mockReset();
     hoisted.unassignCopilotMock.mockReset();
     hoisted.assignCopilotMock.mockReset();
     hoisted.upsertFileMock.mockReset();
+    hoisted.markPullRequestReadyForReviewMock.mockReset();
+    hoisted.mergePullRequestMock.mockReset();
     hoisted.createIssueMock.mockResolvedValue({
       issueNumber: 123,
       issueId: "issue_123",
@@ -417,6 +417,8 @@ describe("AI pipeline flow (integration)", () => {
     hoisted.unassignCopilotMock.mockResolvedValue(undefined);
     hoisted.assignCopilotMock.mockResolvedValue(undefined);
     hoisted.upsertFileMock.mockResolvedValue(undefined);
+    hoisted.markPullRequestReadyForReviewMock.mockResolvedValue(undefined);
+    hoisted.mergePullRequestMock.mockResolvedValue(undefined);
   });
 
   it("walks through the AI pipeline happy path from ticket ingest through pipeline advancement", async () => {
@@ -510,9 +512,26 @@ describe("AI pipeline flow (integration)", () => {
         feedbackRequest: null,
       });
 
-      await assertCompletedReproAndQueuedFix(initialState.pipelineId);
+      await assertCompletedReproAndQueuedFinalize(initialState.pipelineId);
+    });
 
-      await markReproStepAsMerged(stepExecutionId);
+    await runStep("execute finalize repro pr step", async () => {
+      const stepExecutionId = await getPipelineRun(
+        initialState.pipelineId,
+      ).then((pipeline) => pipeline?.stepExecutions?.[0]?.id);
+      if (!stepExecutionId) {
+        throw new Error("No step execution found for finalize repro pr step");
+      }
+
+      await executeQueuedStepExecution({
+        stepExecutionId,
+      });
+
+      expect(hoisted.markPullRequestReadyForReviewMock).toHaveBeenCalledTimes(
+        1,
+      );
+      expect(hoisted.mergePullRequestMock).toHaveBeenCalledTimes(1);
+      await assertCompletedFinalizeAndQueuedFix(initialState.pipelineId);
     });
 
     await runStep("execute fix step", async () => {

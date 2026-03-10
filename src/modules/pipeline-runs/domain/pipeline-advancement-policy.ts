@@ -2,6 +2,7 @@ import { httpError } from "@/lib/api/http";
 import type { PipelineRunEntity } from "@/modules/pipeline-runs/domain/pipeline-run-aggregate";
 import {
   FailingTestFixStepExecutionEntity,
+  FinalizeFailingTestReproPrStepExecutionEntity,
   FailingTestReproStepExecutionEntity,
   TicketDescriptionEnrichmentStepExecutionEntity,
   TicketDescriptionQualityStepExecutionEntity,
@@ -10,6 +11,7 @@ import {
 } from "@/modules/step-executions/domain/step-execution-entity";
 import {
   FAILING_TEST_FIX_STEP_NAME,
+  FINALIZE_FAILING_TEST_REPRO_PR_STEP_NAME,
   FAILING_TEST_REPRO_STEP_NAME,
   TICKET_INVESTIGATION_STEP_NAME,
   TICKET_DESCRIPTION_QUALITY_STEP_NAME,
@@ -22,6 +24,7 @@ const PIPELINE_STEP_SEQUENCE: ReadonlyArray<StepExecutionStepName> = [
   // TICKET_DUPLICATE_CANDIDATES_STEP_NAME,
   TICKET_INVESTIGATION_STEP_NAME,
   FAILING_TEST_REPRO_STEP_NAME,
+  FINALIZE_FAILING_TEST_REPRO_PR_STEP_NAME,
   FAILING_TEST_FIX_STEP_NAME,
 ];
 
@@ -158,6 +161,12 @@ export class PipelineAdvancementPolicy {
 
         return result.confidenceLevel >= REPRO_CONFIDENCE_ADVANCEMENT_THRESHOLD;
       }
+      case FINALIZE_FAILING_TEST_REPRO_PR_STEP_NAME:
+        return (
+          latestStepExecution instanceof
+            FinalizeFailingTestReproPrStepExecutionEntity &&
+          latestStepExecution.result?.githubMergeStatus === "merged"
+        );
       case FAILING_TEST_FIX_STEP_NAME:
         return latestStepExecution instanceof FailingTestFixStepExecutionEntity;
       default:
@@ -220,6 +229,14 @@ export class PipelineAdvancementPolicy {
           ticketId,
           "queued",
           null,
+          null,
+          now,
+        );
+      case FINALIZE_FAILING_TEST_REPRO_PR_STEP_NAME:
+        return new FinalizeFailingTestReproPrStepExecutionEntity(
+          pipelineId,
+          ticketId,
+          "queued",
           null,
           now,
         );

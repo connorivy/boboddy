@@ -6,6 +6,7 @@ import type { StepExecutionRepo } from "@/modules/step-executions/application/st
 import type { StepExecutionCompletedDomainEvent } from "@/modules/step-executions/domain/step-execution-completed.domain-event";
 import {
   FailingTestFixStepExecutionEntity,
+  FinalizeFailingTestReproPrStepExecutionEntity,
   FailingTestReproStepExecutionEntity,
   TicketDescriptionEnrichmentStepExecutionEntity,
   TicketDescriptionQualityStepExecutionEntity,
@@ -14,6 +15,7 @@ import {
 } from "@/modules/step-executions/domain/step-execution-entity";
 import {
   FAILING_TEST_FIX_STEP_NAME,
+  FINALIZE_FAILING_TEST_REPRO_PR_STEP_NAME,
   FAILING_TEST_REPRO_STEP_NAME,
   TICKET_DESCRIPTION_QUALITY_STEP_NAME,
   TICKET_DUPLICATE_CANDIDATES_STEP_NAME,
@@ -130,6 +132,18 @@ export class QueueNextPipelineStepOnStepExecutionCompleted implements DomainEven
           ticketId,
           status,
           null,
+          null,
+          startedAt,
+          endedAt,
+          undefined,
+          undefined,
+          stepExecutionId,
+        );
+      case FINALIZE_FAILING_TEST_REPRO_PR_STEP_NAME:
+        return new FinalizeFailingTestReproPrStepExecutionEntity(
+          pipelineId,
+          ticketId,
+          status,
           null,
           startedAt,
           endedAt,

@@ -26,6 +26,32 @@ exports[`AI pipeline flow (integration) > walks through the AI pipeline happy pa
 }
 `;
 
+exports[`AI pipeline flow (integration) > walks through the AI pipeline happy path from ticket ingest through pipeline advancement > completed finalize repro pr step result 1`] = `
+{
+  "createdAt": "<iso-timestamp>",
+  "endedAt": "<iso-timestamp>",
+  "failureReason": null,
+  "id": "<uuid>",
+  "pipelineId": "<uuid>",
+  "result": {
+    "agentBranch": "ticket/CV-612-repro",
+    "createdAt": "<iso-timestamp>",
+    "executionId": "<uuid>",
+    "githubIssueId": "issue_123",
+    "githubIssueNumber": 123,
+    "githubMergeStatus": "merged",
+    "githubPrTargetBranch": "ticket-cv-612-dev",
+    "stepName": "github_finalize_repro_pr",
+    "updatedAt": "<iso-timestamp>",
+  },
+  "startedAt": "<iso-timestamp>",
+  "status": "succeeded",
+  "stepName": "github_finalize_repro_pr",
+  "ticketId": "CV-612",
+  "updatedAt": "<iso-timestamp>",
+}
+`;
+
 exports[`AI pipeline flow (integration) > walks through the AI pipeline happy path from ticket ingest through pipeline advancement > completed fix step result 1`] = `
 {
   "createdAt": "<iso-timestamp>",
@@ -324,7 +350,23 @@ exports[`AI pipeline flow (integration) > walks through the AI pipeline happy pa
 }
 `;
 
-exports[`AI pipeline flow (integration) > walks through the AI pipeline happy path from ticket ingest through pipeline advancement > queued fix step after repro completion 1`] = `
+exports[`AI pipeline flow (integration) > walks through the AI pipeline happy path from ticket ingest through pipeline advancement > queued finalize repro pr step after repro completion 1`] = `
+{
+  "createdAt": "<iso-timestamp>",
+  "endedAt": null,
+  "failureReason": null,
+  "id": "<uuid>",
+  "pipelineId": "<uuid>",
+  "result": null,
+  "startedAt": "<iso-timestamp>",
+  "status": "queued",
+  "stepName": "github_finalize_repro_pr",
+  "ticketId": "CV-612",
+  "updatedAt": "<iso-timestamp>",
+}
+`;
+
+exports[`AI pipeline flow (integration) > walks through the AI pipeline happy path from ticket ingest through pipeline advancement > queued fix step after finalize repro pr completion 1`] = `
 {
   "createdAt": "<iso-timestamp>",
   "endedAt": null,

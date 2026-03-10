@@ -10,8 +10,12 @@ import type { StepExecutionStatus } from "@/modules/tickets/contracts/ticket-con
 import { httpError } from "@/lib/api/http";
 import { AppContext } from "@/lib/di";
 import {
+  FailingTestReproAgentErrorResultEntity,
+  FailingTestReproCancelledResultEntity,
+  FailingTestReproNeedsUserFeedbackResultEntity,
+  FailingTestReproNotReproducibleResultEntity,
   FailingTestReproStepExecutionEntity,
-  FailingTestReproStepResultEntity,
+  FailingTestReproSucceededResultEntity,
 } from "@/modules/step-executions/domain/step-execution-entity";
 import { TicketRepo } from "@/modules/tickets/application/jira-ticket-repo";
 import { StepExecutionRepo } from "@/modules/step-executions/application/step-execution-repo";
@@ -23,23 +27,15 @@ const resolveStatus = (
     return "waiting_for_user_feedback";
   }
 
-  if (input.agentStatus === "complete") {
-    return "succeeded";
-  }
-
-  if (input.agentStatus === "timeout") {
-    return "failed_timeout";
-  }
-
-  if (input.agentStatus !== null) {
-    return "failed";
-  }
-
   if (
     input.reproduceOperationOutcome === "reproduced" ||
     input.reproduceOperationOutcome === "not_reproducible"
   ) {
     return "succeeded";
+  }
+
+  if (input.agentStatus === "timeout") {
+    return "failed_timeout";
   }
 
   return "failed";
@@ -92,27 +88,88 @@ export const completeTicketFailingTestReproStep = async (
     ...(existingExecution.result?.rawResultJson ?? {}),
     feedbackRequest: input.feedbackRequest ?? null,
   };
+  const githubMergeStatus =
+    existingExecution.result?.githubMergeStatus ?? "draft";
+  const githubAgentRunId = existingExecution.result?.githubAgentRunId;
+  const failingTestCommitSha = existingExecution.result?.failingTestCommitSha;
+
+  const nextResult = (() => {
+    switch (input.reproduceOperationOutcome) {
+      case "reproduced":
+        return new FailingTestReproSucceededResultEntity(
+          githubMergeStatus,
+          ticket.githubIssue.githubIssueNumber,
+          ticket.githubIssue.githubIssueId,
+          input.agentStatus,
+          input.agentBranch,
+          input.summaryOfFindings,
+          input.confidenceLevel,
+          input.failingTestPaths,
+          githubAgentRunId,
+          failingTestCommitSha,
+          rawResultJson,
+        );
+      case "not_reproducible":
+        return new FailingTestReproNotReproducibleResultEntity(
+          githubMergeStatus,
+          ticket.githubIssue.githubIssueNumber,
+          ticket.githubIssue.githubIssueId,
+          input.agentStatus,
+          input.agentBranch,
+          input.summaryOfFindings,
+          input.confidenceLevel,
+          githubAgentRunId,
+          failingTestCommitSha,
+          rawResultJson,
+        );
+      case "needs_user_feedback":
+        return new FailingTestReproNeedsUserFeedbackResultEntity(
+          githubMergeStatus,
+          ticket.githubIssue.githubIssueNumber,
+          ticket.githubIssue.githubIssueId,
+          input.agentStatus,
+          input.agentBranch,
+          input.summaryOfFindings,
+          input.feedbackRequest,
+          githubAgentRunId,
+          failingTestCommitSha,
+          rawResultJson,
+        );
+      case "agent_error":
+        return new FailingTestReproAgentErrorResultEntity(
+          githubMergeStatus,
+          ticket.githubIssue.githubIssueNumber,
+          ticket.githubIssue.githubIssueId,
+          input.agentStatus,
+          input.agentBranch,
+          input.summaryOfFindings,
+          existingExecution.failureReason ??
+            "Agent reported an error while attempting reproduction",
+          githubAgentRunId,
+          failingTestCommitSha,
+          rawResultJson,
+        );
+      case "cancelled":
+        return new FailingTestReproCancelledResultEntity(
+          githubMergeStatus,
+          ticket.githubIssue.githubIssueNumber,
+          ticket.githubIssue.githubIssueId,
+          input.agentStatus,
+          input.agentBranch,
+          input.summaryOfFindings,
+          existingExecution.failureReason,
+          githubAgentRunId,
+          failingTestCommitSha,
+          rawResultJson,
+        );
+    }
+  })();
 
   existingExecution.setResult({
     status: nextStatus,
     endedAt: shouldRemainOpen ? undefined : endedAt,
-    result: new FailingTestReproStepResultEntity(
-      existingExecution.result?.githubMergeStatus ?? "draft",
-      ticket.githubIssue.githubIssueNumber,
-      ticket.githubIssue.githubIssueId,
-      input.agentStatus,
-      input.agentBranch,
-      input.reproduceOperationOutcome,
-      input.summaryOfFindings,
-      input.confidenceLevel,
-      existingExecution.result?.githubAgentRunId,
-      input.failingTestPaths ?? undefined,
-      existingExecution.result?.failingTestCommitSha,
-      existingExecution.result?.failureReason,
-      rawResultJson,
-      input.feedbackRequest ?? undefined,
-    ),
-    githubPrTargetBranch: existingExecution.githubPrTargetBranch ?? input.agentBranch,
+    result: nextResult,
+    githubPrTargetBranch: existingExecution.githubPrTargetBranch,
   });
 
   const savedExecution = await stepExecutionRepo.save(existingExecution);

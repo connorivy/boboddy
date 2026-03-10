@@ -8,7 +8,6 @@ import {
 import { stepExecutionEntityToContract } from "@/modules/step-executions/application/step-execution-entity-to-contract";
 import {
   FAILING_TEST_REPRO_STEP_NAME,
-  TERMINAL_STEP_EXECUTION_STATUSES,
   TICKET_INVESTIGATION_STEP_NAME,
 } from "@/modules/step-executions/domain/step-execution.types";
 import type { GithubApiService } from "@/modules/step-executions/infra/github-copilot-coding-agent";
@@ -34,17 +33,9 @@ import { PipelineRunEntity } from "@/modules/pipeline-runs/domain/pipeline-run-a
 
 const WEBHOOK_PAYLOAD_PATH = "tmp/copilot-repro-webhook-payload.json";
 
-function buildCustomInstructions(
-  ticketId: string,
-  pipelineId: string,
-  enrichmentContext: string | null,
-): string {
-  const jsonSchema = completeTicketFailingTestReproStepRequestBodySchema
-    .extend({
-      ticketId: z.literal(ticketId),
-      pipelineId: z.literal(pipelineId),
-    })
-    .toJSONSchema();
+function buildCustomInstructions(enrichmentContext: string | null): string {
+  const jsonSchema =
+    completeTicketFailingTestReproStepRequestBodySchema.toJSONSchema();
   const jsonSchemaText = JSON.stringify(jsonSchema, null, 2);
   return `You are reproducing a bug from the linked GitHub issue.
 
@@ -229,11 +220,7 @@ export const triggerTicketFailingTestReproStep = async (
     await githubService.assignCopilot({
       issueNumber: githubIssue.githubIssueNumber,
       baseBranch,
-      customInstructions: buildCustomInstructions(
-        input.ticketId,
-        pipelineId,
-        enrichmentContext,
-      ),
+      customInstructions: buildCustomInstructions(enrichmentContext),
     });
 
     if (!(savedExecution instanceof FailingTestReproStepExecutionEntity)) {

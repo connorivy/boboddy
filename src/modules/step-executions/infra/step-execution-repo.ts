@@ -12,6 +12,10 @@ import {
 import type { PipelineStepExecutionsQuery } from "@/modules/step-executions/contracts/get-pipeline-step-executions-contracts";
 import {
   type FailingTestReproFeedbackRequestEntity,
+  FailingTestReproAgentErrorResultEntity,
+  FailingTestReproCancelledResultEntity,
+  FailingTestReproNeedsUserFeedbackResultEntity,
+  FailingTestReproNotReproducibleResultEntity,
   TicketDescriptionEnrichmentStepExecutionEntity,
   TicketDescriptionEnrichmentStepResultEntity,
   TicketDescriptionQualityStepExecutionEntity,
@@ -20,6 +24,7 @@ import {
   FailingTestFixStepResultEntity,
   FailingTestReproStepExecutionEntity,
   FailingTestReproStepResultEntity,
+  FailingTestReproSucceededResultEntity,
   TicketDuplicateCandidateResultItemEntity,
   TicketDuplicateCandidatesResultEntity,
   TicketDescriptionQualityStepResultEntity,
@@ -180,22 +185,108 @@ function mapFailingTestReproResultOrNull(
       ? (row.rawResultJson as Record<string, unknown>)
       : undefined;
 
-  return new FailingTestReproStepResultEntity(
-    requiredTruthyField(row.githubMergeStatus, "githubMergeStatus", context),
-    requiredTruthyField(row.githubIssueNumber, "githubIssueNumber", context),
-    requiredNonEmptyString(row.githubIssueId, "githubIssueId", context),
-    requiredTruthyField(row.agentStatus, "agentStatus", context),
-    requiredNonEmptyString(row.agentBranch, "agentBranch", context),
-    requiredTruthyField(row.outcome, "outcome", context),
-    requiredNonEmptyString(row.summaryOfFindings, "summaryOfFindings", context),
-    row.confidenceLevel ?? null,
-    row.githubAgentRunId ?? undefined,
-    parseFailingTestPaths(row.failingTestPath),
-    row.failingTestCommitSha ?? undefined,
-    row.failureReason ?? undefined,
-    rawResultJson,
-    parseFeedbackRequest(rawResultJson),
+  const githubMergeStatus = requiredTruthyField(
+    row.githubMergeStatus,
+    "githubMergeStatus",
+    context,
   );
+  const githubIssueNumber = requiredTruthyField(
+    row.githubIssueNumber,
+    "githubIssueNumber",
+    context,
+  );
+  const githubIssueId = requiredNonEmptyString(
+    row.githubIssueId,
+    "githubIssueId",
+    context,
+  );
+  const agentStatus = requiredTruthyField(row.agentStatus, "agentStatus", context);
+  const agentBranch = requiredNonEmptyString(
+    row.agentBranch,
+    "agentBranch",
+    context,
+  );
+  const summaryOfFindings = requiredNonEmptyString(
+    row.summaryOfFindings,
+    "summaryOfFindings",
+    context,
+  );
+  const githubAgentRunId = row.githubAgentRunId ?? undefined;
+  const failingTestCommitSha = row.failingTestCommitSha ?? undefined;
+
+  switch (requiredTruthyField(row.outcome, "outcome", context)) {
+    case "reproduced":
+      return new FailingTestReproSucceededResultEntity(
+        githubMergeStatus,
+        githubIssueNumber,
+        githubIssueId,
+        agentStatus,
+        agentBranch,
+        summaryOfFindings,
+        requiredTruthyField(row.confidenceLevel, "confidenceLevel", context),
+        parseFailingTestPaths(row.failingTestPath) ?? [],
+        githubAgentRunId,
+        failingTestCommitSha,
+        rawResultJson,
+      );
+    case "not_reproducible":
+      return new FailingTestReproNotReproducibleResultEntity(
+        githubMergeStatus,
+        githubIssueNumber,
+        githubIssueId,
+        agentStatus,
+        agentBranch,
+        summaryOfFindings,
+        requiredTruthyField(row.confidenceLevel, "confidenceLevel", context),
+        githubAgentRunId,
+        failingTestCommitSha,
+        rawResultJson,
+      );
+    case "needs_user_feedback": {
+      const feedbackRequest = parseFeedbackRequest(rawResultJson);
+      if (!feedbackRequest) {
+        throw new Error(`Missing feedbackRequest for ${context}`);
+      }
+      return new FailingTestReproNeedsUserFeedbackResultEntity(
+        githubMergeStatus,
+        githubIssueNumber,
+        githubIssueId,
+        agentStatus,
+        agentBranch,
+        summaryOfFindings,
+        feedbackRequest,
+        githubAgentRunId,
+        failingTestCommitSha,
+        rawResultJson,
+      );
+    }
+    case "agent_error":
+      return new FailingTestReproAgentErrorResultEntity(
+        githubMergeStatus,
+        githubIssueNumber,
+        githubIssueId,
+        agentStatus,
+        agentBranch,
+        summaryOfFindings,
+        requiredNonEmptyString(row.failureReason, "failureReason", context),
+        githubAgentRunId,
+        failingTestCommitSha,
+        rawResultJson,
+      );
+    case "cancelled":
+      return new FailingTestReproCancelledResultEntity(
+        githubMergeStatus,
+        githubIssueNumber,
+        githubIssueId,
+        agentStatus,
+        agentBranch,
+        summaryOfFindings,
+        row.failureReason ?? undefined,
+        githubAgentRunId,
+        failingTestCommitSha,
+        rawResultJson,
+      );
+  }
 }
 
 function mapFailingTestFixResultOrNull(
@@ -946,6 +1037,20 @@ export class DrizzleStepExecutionRepo implements StepExecutionRepo {
     now: Date,
   ): Promise<TicketPipelineStepExecutionEntity> {
     const reproResult = pipeline.result;
+    const confidenceLevel =
+      reproResult?.outcome === "reproduced" ||
+      reproResult?.outcome === "not_reproducible"
+        ? reproResult.confidenceLevel
+        : null;
+    const failingTestPaths =
+      reproResult?.outcome === "reproduced"
+        ? reproResult.failingTestPaths
+        : undefined;
+    const failureReason =
+      reproResult?.outcome === "agent_error" ||
+      reproResult?.outcome === "cancelled"
+        ? reproResult.failureReason
+        : null;
     const fields = {
       ...this.buildDiscriminatorResetFields(),
       githubIssueNumber: reproResult?.githubIssueNumber ?? null,
@@ -956,14 +1061,14 @@ export class DrizzleStepExecutionRepo implements StepExecutionRepo {
       githubPrTargetBranch: pipeline.githubPrTargetBranch,
       agentBranch: reproResult?.agentBranch ?? null,
       failingTestCommitSha: reproResult?.failingTestCommitSha ?? null,
-      failureReason: reproResult?.failureReason ?? null,
+      failureReason,
       rawResultJson: reproResult?.rawResultJson ?? null,
       completedAt: endedAt,
       lastPolledAt: now,
       outcome: reproResult?.outcome ?? null,
-      failingTestPath: serializeFailingTestPaths(reproResult?.failingTestPaths),
+      failingTestPath: serializeFailingTestPaths(failingTestPaths),
       summaryOfFindings: reproResult?.summaryOfFindings ?? null,
-      confidenceLevel: reproResult?.confidenceLevel ?? null,
+      confidenceLevel,
     };
 
     return this.saveStepExecution(

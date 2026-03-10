@@ -128,9 +128,11 @@ export const triggerTicketFailingTestFixStep = async (
     })[0];
 
   const failingTestPaths =
-    reproStep?.result?.failingTestPaths?.filter(
-      (path) => path.trim().length > 0,
-    ) ?? [];
+    reproStep?.result?.outcome === "reproduced"
+      ? reproStep.result.failingTestPaths.filter(
+          (path: string) => path.trim().length > 0,
+        )
+      : [];
   if (failingTestPaths.length === 0) {
     throw new Error(
       `Could not find failing test paths from ${FAILING_TEST_REPRO_STEP_NAME} for branch ${ticketGitEnvironment.devBranch}`,

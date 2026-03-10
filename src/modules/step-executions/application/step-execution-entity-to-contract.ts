@@ -126,13 +126,22 @@ function mapFailingTestReproResult(
     githubPrTargetBranch: stepExecution.githubPrTargetBranch,
     agentStatus: result.agentStatus ?? null,
     agentBranch: result.agentBranch ?? null,
-    failingTestPaths: result.failingTestPaths ?? null,
+    failingTestPaths:
+      result.outcome === "reproduced" ? result.failingTestPaths : null,
     failingTestCommitSha: result.failingTestCommitSha ?? null,
     outcome: result.outcome ?? null,
     summaryOfFindings: result.summaryOfFindings ?? null,
-    confidenceLevel: result.confidenceLevel ?? null,
-    feedbackRequest: result.feedbackRequest ?? null,
-    failureReason: result.failureReason ?? null,
+    confidenceLevel:
+      result.outcome === "reproduced" ||
+      result.outcome === "not_reproducible"
+        ? result.confidenceLevel
+        : null,
+    feedbackRequest:
+      result.outcome === "needs_user_feedback" ? result.feedbackRequest : null,
+    failureReason:
+      result.outcome === "agent_error" || result.outcome === "cancelled"
+        ? result.failureReason ?? null
+        : null,
     rawResultJson: result.rawResultJson ?? null,
     createdAt: stepExecution.createdAt,
     updatedAt: stepExecution.updatedAt,

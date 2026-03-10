@@ -16,64 +16,68 @@ export const failingTestReproFeedbackRequestSchema = z.object({
   assumptions: z.array(z.string().trim().min(1).max(500)).max(10),
 });
 
-export const completeTicketFailingTestReproStepRequestBodySchema = z.object({
-  reproduceOperationOutcome: z.enum([
-    "reproduced",
-    "not_reproducible",
-    "needs_user_feedback",
-    "agent_error",
-    "cancelled",
-  ]),
+const completeTicketFailingTestReproStepBaseBodySchema = z.object({
   summaryOfFindings: z.string().trim().min(1).max(2000),
-  confidenceLevel: z.number().min(0).max(1).nullable(),
-  failingTestPaths: z.array(z.string().trim().min(1)).min(1).nullable(),
-  feedbackRequest: failingTestReproFeedbackRequestSchema.nullable(),
 });
+
+const reproducedRequestBodySchema =
+  completeTicketFailingTestReproStepBaseBodySchema.extend({
+    reproduceOperationOutcome: z.literal("reproduced"),
+    confidenceLevel: z.number().min(0).max(1),
+    failingTestPaths: z.array(z.string().trim().min(1)).min(1),
+    feedbackRequest: z.null(),
+  });
+
+const notReproducibleRequestBodySchema =
+  completeTicketFailingTestReproStepBaseBodySchema.extend({
+    reproduceOperationOutcome: z.literal("not_reproducible"),
+    confidenceLevel: z.number().min(0).max(1),
+    failingTestPaths: z.null(),
+    feedbackRequest: z.null(),
+  });
+
+const needsUserFeedbackRequestBodySchema =
+  completeTicketFailingTestReproStepBaseBodySchema.extend({
+    reproduceOperationOutcome: z.literal("needs_user_feedback"),
+    confidenceLevel: z.null(),
+    failingTestPaths: z.null(),
+    feedbackRequest: failingTestReproFeedbackRequestSchema,
+  });
+
+const agentErrorRequestBodySchema =
+  completeTicketFailingTestReproStepBaseBodySchema.extend({
+    reproduceOperationOutcome: z.literal("agent_error"),
+    confidenceLevel: z.null(),
+    failingTestPaths: z.null(),
+    feedbackRequest: z.null(),
+  });
+
+const cancelledRequestBodySchema =
+  completeTicketFailingTestReproStepBaseBodySchema.extend({
+    reproduceOperationOutcome: z.literal("cancelled"),
+    confidenceLevel: z.null(),
+    failingTestPaths: z.null(),
+    feedbackRequest: z.null(),
+  });
+
+export const completeTicketFailingTestReproStepRequestBodySchema =
+  z.discriminatedUnion("reproduceOperationOutcome", [
+    reproducedRequestBodySchema,
+    notReproducibleRequestBodySchema,
+    needsUserFeedbackRequestBodySchema,
+    agentErrorRequestBodySchema,
+    cancelledRequestBodySchema,
+  ]);
+
 export const completeTicketFailingTestReproStepRequestQuerySchema = z.object({
   agentStatus: agentStatusEnum,
   agentBranch: z.string().trim().min(1),
   stepExecutionId: z.string(),
 });
 export const completeTicketFailingTestReproStepRequestSchema =
-  completeTicketFailingTestReproStepRequestBodySchema
-    .extend(completeTicketFailingTestReproStepRequestQuerySchema.shape)
-    .superRefine((value, ctx) => {
-      if (
-        value.reproduceOperationOutcome === "reproduced" &&
-        (!value.failingTestPaths || value.failingTestPaths.length === 0)
-      ) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          path: ["failingTestPaths"],
-          message:
-            "failingTestPaths must include at least one path when outcome is reproduced",
-        });
-      }
-
-      if (
-        value.reproduceOperationOutcome === "needs_user_feedback" &&
-        !value.feedbackRequest
-      ) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          path: ["feedbackRequest"],
-          message:
-            "feedbackRequest must be provided when outcome is needs_user_feedback",
-        });
-      }
-
-      if (
-        value.reproduceOperationOutcome !== "needs_user_feedback" &&
-        value.feedbackRequest !== null
-      ) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          path: ["feedbackRequest"],
-          message:
-            "feedbackRequest must be null unless outcome is needs_user_feedback",
-        });
-      }
-    });
+  completeTicketFailingTestReproStepRequestBodySchema.and(
+    completeTicketFailingTestReproStepRequestQuerySchema,
+  );
 
 export const completeTicketFailingTestReproStepResponseSchema = z.object({
   ok: z.literal(true),

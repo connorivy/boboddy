@@ -34,7 +34,7 @@ export type FailingTestReproFeedbackRequestEntity = {
 
 type SetStepExecutionResultInput<TResult> = {
   status: StepExecutionStatus;
-  endedAt: string;
+  endedAt?: string;
   failureReason?: string;
   result?: TResult | null;
 };
@@ -82,17 +82,19 @@ export abstract class TicketPipelineStepExecutionEntity<TResult = unknown> {
     if (result !== undefined) {
       this.result = result;
     }
-    this.addDomainEvent(
-      new StepExecutionCompletedDomainEvent({
-        stepExecutionId: this.id,
-        pipelineId: this.pipelineId,
-        ticketId: this.ticketId,
-        stepName: this.stepName,
-        status: this.status,
-        startedAt: this.startedAt,
-        endedAt: this.endedAt,
-      }),
-    );
+    if (this.endedAt && TERMINAL_STEP_EXECUTION_STATUSES.has(this.status)) {
+      this.addDomainEvent(
+        new StepExecutionCompletedDomainEvent({
+          stepExecutionId: this.id,
+          pipelineId: this.pipelineId,
+          ticketId: this.ticketId,
+          stepName: this.stepName,
+          status: this.status,
+          startedAt: this.startedAt,
+          endedAt: this.endedAt,
+        }),
+      );
+    }
   }
 
   updateStatus(newStatus: StepExecutionStatus): void {
@@ -261,34 +263,197 @@ export class TicketDuplicateCandidatesStepResultEntity extends TicketPipelineSte
   }
 }
 
-export class FailingTestReproStepResultEntity {
+export type FailingTestReproAgentStatus =
+  | "complete"
+  | "error"
+  | "abort"
+  | "timeout"
+  | "user_exit";
+
+export type FailingTestReproOutcome =
+  | "reproduced"
+  | "not_reproducible"
+  | "needs_user_feedback"
+  | "agent_error"
+  | "cancelled";
+
+abstract class FailingTestReproStepResultBaseEntity {
   constructor(
     public githubMergeStatus: "draft" | "open" | "closed" | "merged",
     public githubIssueNumber: number,
     public githubIssueId: string,
-    public agentStatus:
-      | "complete"
-      | "error"
-      | "abort"
-      | "timeout"
-      | "user_exit",
+    public agentStatus: FailingTestReproAgentStatus,
     public agentBranch: string,
-    public outcome:
-      | "reproduced"
-      | "not_reproducible"
-      | "needs_user_feedback"
-      | "agent_error"
-      | "cancelled",
+    public outcome: FailingTestReproOutcome,
     public summaryOfFindings: string,
-    public confidenceLevel: number | null,
     public githubAgentRunId?: string,
-    public failingTestPaths?: string[],
     public failingTestCommitSha?: string,
-    public failureReason?: string,
     public rawResultJson?: Record<string, unknown>,
-    public feedbackRequest?: FailingTestReproFeedbackRequestEntity,
   ) {}
 }
+
+export class FailingTestReproSucceededResultEntity extends FailingTestReproStepResultBaseEntity {
+  public readonly outcome: "reproduced";
+
+  constructor(
+    githubMergeStatus: "draft" | "open" | "closed" | "merged",
+    githubIssueNumber: number,
+    githubIssueId: string,
+    agentStatus: FailingTestReproAgentStatus,
+    agentBranch: string,
+    public summaryOfFindings: string,
+    public confidenceLevel: number,
+    public failingTestPaths: string[],
+    githubAgentRunId?: string,
+    failingTestCommitSha?: string,
+    rawResultJson?: Record<string, unknown>,
+  ) {
+    super(
+      githubMergeStatus,
+      githubIssueNumber,
+      githubIssueId,
+      agentStatus,
+      agentBranch,
+      "reproduced",
+      summaryOfFindings,
+      githubAgentRunId,
+      failingTestCommitSha,
+      rawResultJson,
+    );
+    this.outcome = "reproduced";
+  }
+}
+
+export class FailingTestReproNotReproducibleResultEntity extends FailingTestReproStepResultBaseEntity {
+  public readonly outcome: "not_reproducible";
+
+  constructor(
+    githubMergeStatus: "draft" | "open" | "closed" | "merged",
+    githubIssueNumber: number,
+    githubIssueId: string,
+    agentStatus: FailingTestReproAgentStatus,
+    agentBranch: string,
+    public summaryOfFindings: string,
+    public confidenceLevel: number,
+    githubAgentRunId?: string,
+    failingTestCommitSha?: string,
+    rawResultJson?: Record<string, unknown>,
+  ) {
+    super(
+      githubMergeStatus,
+      githubIssueNumber,
+      githubIssueId,
+      agentStatus,
+      agentBranch,
+      "not_reproducible",
+      summaryOfFindings,
+      githubAgentRunId,
+      failingTestCommitSha,
+      rawResultJson,
+    );
+    this.outcome = "not_reproducible";
+  }
+}
+
+export class FailingTestReproNeedsUserFeedbackResultEntity extends FailingTestReproStepResultBaseEntity {
+  public readonly outcome: "needs_user_feedback";
+
+  constructor(
+    githubMergeStatus: "draft" | "open" | "closed" | "merged",
+    githubIssueNumber: number,
+    githubIssueId: string,
+    agentStatus: FailingTestReproAgentStatus,
+    agentBranch: string,
+    public summaryOfFindings: string,
+    public feedbackRequest: FailingTestReproFeedbackRequestEntity,
+    githubAgentRunId?: string,
+    failingTestCommitSha?: string,
+    rawResultJson?: Record<string, unknown>,
+  ) {
+    super(
+      githubMergeStatus,
+      githubIssueNumber,
+      githubIssueId,
+      agentStatus,
+      agentBranch,
+      "needs_user_feedback",
+      summaryOfFindings,
+      githubAgentRunId,
+      failingTestCommitSha,
+      rawResultJson,
+    );
+    this.outcome = "needs_user_feedback";
+  }
+}
+
+export class FailingTestReproAgentErrorResultEntity extends FailingTestReproStepResultBaseEntity {
+  public readonly outcome: "agent_error";
+
+  constructor(
+    githubMergeStatus: "draft" | "open" | "closed" | "merged",
+    githubIssueNumber: number,
+    githubIssueId: string,
+    agentStatus: FailingTestReproAgentStatus,
+    agentBranch: string,
+    public summaryOfFindings: string,
+    public failureReason: string,
+    githubAgentRunId?: string,
+    failingTestCommitSha?: string,
+    rawResultJson?: Record<string, unknown>,
+  ) {
+    super(
+      githubMergeStatus,
+      githubIssueNumber,
+      githubIssueId,
+      agentStatus,
+      agentBranch,
+      "agent_error",
+      summaryOfFindings,
+      githubAgentRunId,
+      failingTestCommitSha,
+      rawResultJson,
+    );
+    this.outcome = "agent_error";
+  }
+}
+
+export class FailingTestReproCancelledResultEntity extends FailingTestReproStepResultBaseEntity {
+  public readonly outcome: "cancelled";
+
+  constructor(
+    githubMergeStatus: "draft" | "open" | "closed" | "merged",
+    githubIssueNumber: number,
+    githubIssueId: string,
+    agentStatus: FailingTestReproAgentStatus,
+    agentBranch: string,
+    public summaryOfFindings: string,
+    public failureReason?: string,
+    githubAgentRunId?: string,
+    failingTestCommitSha?: string,
+    rawResultJson?: Record<string, unknown>,
+  ) {
+    super(
+      githubMergeStatus,
+      githubIssueNumber,
+      githubIssueId,
+      agentStatus,
+      agentBranch,
+      "cancelled",
+      summaryOfFindings,
+      githubAgentRunId,
+      failingTestCommitSha,
+      rawResultJson,
+    );
+    this.outcome = "cancelled";
+  }
+}
+
+export type FailingTestReproStepResultEntity =
+  | FailingTestReproSucceededResultEntity
+  | FailingTestReproNotReproducibleResultEntity
+  | FailingTestReproNeedsUserFeedbackResultEntity
+  | FailingTestReproAgentErrorResultEntity
+  | FailingTestReproCancelledResultEntity;
 
 export class FailingTestReproStepExecutionEntity extends TicketPipelineStepExecutionEntity<FailingTestReproStepResultEntity> {
   constructor(
@@ -326,7 +491,7 @@ export class FailingTestReproStepExecutionEntity extends TicketPipelineStepExecu
     result,
     githubPrTargetBranch,
   }: SetStepExecutionResultInput<FailingTestReproStepResultEntity> & {
-    githubPrTargetBranch?: string;
+    githubPrTargetBranch?: string | null;
   }): void {
     super.setResult({ status, endedAt, failureReason, result });
     this.githubPrTargetBranch = githubPrTargetBranch ?? null;

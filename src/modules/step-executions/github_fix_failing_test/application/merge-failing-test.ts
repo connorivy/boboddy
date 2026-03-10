@@ -5,8 +5,12 @@ import { GithubApiService } from "@/modules/step-executions/infra/github-copilot
 import { TicketGitEnvironmentRepo } from "@/modules/environments/application/ticket-git-environment-repo";
 import { AppContext } from "@/lib/di";
 import {
+  FailingTestReproAgentErrorResultEntity,
+  FailingTestReproCancelledResultEntity,
+  FailingTestReproNeedsUserFeedbackResultEntity,
+  FailingTestReproNotReproducibleResultEntity,
   FailingTestReproStepExecutionEntity,
-  FailingTestReproStepResultEntity,
+  FailingTestReproSucceededResultEntity,
 } from "@/modules/step-executions/domain/step-execution-entity";
 import { StepExecutionRepo } from "@/modules/step-executions/application/step-execution-repo";
 
@@ -82,25 +86,80 @@ export async function mergeFailingTest(
     stepExecution.githubPrTargetBranch,
     stepExecution.result.agentBranch,
   );
+  const mergedResult = (() => {
+    switch (stepExecution.result.outcome) {
+      case "reproduced":
+        return new FailingTestReproSucceededResultEntity(
+          "merged",
+          stepExecution.result.githubIssueNumber,
+          stepExecution.result.githubIssueId,
+          stepExecution.result.agentStatus,
+          stepExecution.result.agentBranch,
+          stepExecution.result.summaryOfFindings,
+          stepExecution.result.confidenceLevel,
+          stepExecution.result.failingTestPaths,
+          stepExecution.result.githubAgentRunId,
+          stepExecution.result.failingTestCommitSha,
+          stepExecution.result.rawResultJson,
+        );
+      case "not_reproducible":
+        return new FailingTestReproNotReproducibleResultEntity(
+          "merged",
+          stepExecution.result.githubIssueNumber,
+          stepExecution.result.githubIssueId,
+          stepExecution.result.agentStatus,
+          stepExecution.result.agentBranch,
+          stepExecution.result.summaryOfFindings,
+          stepExecution.result.confidenceLevel,
+          stepExecution.result.githubAgentRunId,
+          stepExecution.result.failingTestCommitSha,
+          stepExecution.result.rawResultJson,
+        );
+      case "needs_user_feedback":
+        return new FailingTestReproNeedsUserFeedbackResultEntity(
+          "merged",
+          stepExecution.result.githubIssueNumber,
+          stepExecution.result.githubIssueId,
+          stepExecution.result.agentStatus,
+          stepExecution.result.agentBranch,
+          stepExecution.result.summaryOfFindings,
+          stepExecution.result.feedbackRequest,
+          stepExecution.result.githubAgentRunId,
+          stepExecution.result.failingTestCommitSha,
+          stepExecution.result.rawResultJson,
+        );
+      case "agent_error":
+        return new FailingTestReproAgentErrorResultEntity(
+          "merged",
+          stepExecution.result.githubIssueNumber,
+          stepExecution.result.githubIssueId,
+          stepExecution.result.agentStatus,
+          stepExecution.result.agentBranch,
+          stepExecution.result.summaryOfFindings,
+          stepExecution.result.failureReason,
+          stepExecution.result.githubAgentRunId,
+          stepExecution.result.failingTestCommitSha,
+          stepExecution.result.rawResultJson,
+        );
+      case "cancelled":
+        return new FailingTestReproCancelledResultEntity(
+          "merged",
+          stepExecution.result.githubIssueNumber,
+          stepExecution.result.githubIssueId,
+          stepExecution.result.agentStatus,
+          stepExecution.result.agentBranch,
+          stepExecution.result.summaryOfFindings,
+          stepExecution.result.failureReason,
+          stepExecution.result.githubAgentRunId,
+          stepExecution.result.failingTestCommitSha,
+          stepExecution.result.rawResultJson,
+        );
+    }
+  })();
   stepExecution.setResult({
     status: stepExecution.status,
     endedAt: stepExecution.endedAt,
-    result: new FailingTestReproStepResultEntity(
-      "merged",
-      stepExecution.result.githubIssueNumber,
-      stepExecution.result.githubIssueId,
-      stepExecution.result.agentStatus,
-      stepExecution.result.agentBranch,
-      stepExecution.result.outcome,
-      stepExecution.result.summaryOfFindings,
-      stepExecution.result.confidenceLevel,
-      stepExecution.result.githubAgentRunId,
-      stepExecution.result.failingTestPaths,
-      stepExecution.result.failingTestCommitSha,
-      stepExecution.result.failureReason,
-      stepExecution.result.rawResultJson,
-      stepExecution.result.feedbackRequest,
-    ),
+    result: mergedResult,
     githubPrTargetBranch: stepExecution.githubPrTargetBranch,
   });
   await stepExecutionRepo.save(stepExecution);

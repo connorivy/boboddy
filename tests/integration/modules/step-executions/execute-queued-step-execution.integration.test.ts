@@ -10,6 +10,7 @@ import { loadTicketDetail } from "@/modules/tickets/application/get-tickets";
 import { completeTicketDescriptionEnrichmentStep } from "@/modules/step-executions/ticket_description_enrichment/application/complete-ticket-description-enrichment-step";
 import { completeTicketFailingTestReproStep } from "@/modules/step-executions/github_repro_failing_test/application/complete-ticket-failing-test-repro-step";
 import { completeTicketFailingTestFixStep } from "@/modules/step-executions/github_fix_failing_test/application/complete-ticket-failing-test-fix-step";
+import { FailingTestReproStepExecutionEntity } from "@/modules/step-executions/domain/step-execution-entity";
 import type {
   IngestTicketsRequest,
   TicketIngestInput,
@@ -380,7 +381,11 @@ async function markReproStepAsMerged(stepExecutionId: string) {
   expect(stepExecution).toBeDefined();
   expect(stepExecution?.result).toBeDefined();
 
-  if (!stepExecution?.result) {
+  if (
+    !stepExecution ||
+    !(stepExecution instanceof FailingTestReproStepExecutionEntity) ||
+    !stepExecution.result
+  ) {
     throw new Error("Expected repro step to have a result payload");
   }
 

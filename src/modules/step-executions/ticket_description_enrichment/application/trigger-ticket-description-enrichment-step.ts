@@ -7,10 +7,7 @@ import {
 } from "@/modules/step-executions/ticket_description_enrichment/contracts/trigger-ticket-description-enrichment-step-contracts";
 import { completeTicketDescriptionEnrichmentStepRequestBodySchema } from "@/modules/step-executions/ticket_description_enrichment/contracts/complete-ticket-description-enrichment-step-contracts";
 import { stepExecutionEntityToContract } from "@/modules/step-executions/application/step-execution-entity-to-contract";
-import {
-  TICKET_INVESTIGATION_STEP_NAME,
-  TERMINAL_STEP_EXECUTION_STATUSES,
-} from "@/modules/step-executions/domain/step-execution.types";
+import { TICKET_INVESTIGATION_STEP_NAME } from "@/modules/step-executions/domain/step-execution.types";
 import type { GithubApiService } from "@/modules/step-executions/infra/github-copilot-coding-agent";
 import { AppContext } from "@/lib/di";
 import { TicketDescriptionEnrichmentStepExecutionEntity } from "@/modules/step-executions/domain/step-execution-entity";
@@ -28,16 +25,12 @@ import { PipelineRunEntity } from "@/modules/pipeline-runs/domain/pipeline-run-a
 import { v7 as uuidv7 } from "uuid";
 
 const WEBHOOK_PAYLOAD_PATH =
-  "tmp/copilot-ticket-description-enrichment-webhook-payload.json";
-const TICKET_INVESTIGATION_AGENT = "ticket-description-enrichment-agent";
+  "tmp/copilot-ticket-investigation-webhook-payload.json";
+const TICKET_INVESTIGATION_AGENT = "ticket-investigation-agent";
 
-function buildCustomInstructions(ticketId: string, pipelineId: string): string {
-  const jsonSchema = completeTicketDescriptionEnrichmentStepRequestBodySchema
-    .extend({
-      ticketId: z.literal(ticketId),
-      pipelineId: z.literal(pipelineId),
-    })
-    .toJSONSchema();
+function buildCustomInstructions(): string {
+  const jsonSchema =
+    completeTicketDescriptionEnrichmentStepRequestBodySchema.toJSONSchema();
   const jsonSchemaText = JSON.stringify(jsonSchema, null, 2);
 
   return `You are investigating a support ticket to determine what actually happened.
@@ -200,7 +193,7 @@ export const triggerTicketDescriptionEnrichmentStep = async (
       issueNumber: githubIssue.githubIssueNumber,
       baseBranch: ticketGitEnvironment.devBranch,
       customAgent: TICKET_INVESTIGATION_AGENT,
-      customInstructions: buildCustomInstructions(input.ticketId, pipelineId),
+      customInstructions: buildCustomInstructions(),
     });
   } catch (error) {
     // get error message

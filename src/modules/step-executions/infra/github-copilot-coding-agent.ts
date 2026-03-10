@@ -175,6 +175,42 @@ export class GithubApiService {
     );
   }
 
+  async markPullRequestReadyForReview(
+    base: string,
+    target: string,
+  ): Promise<void> {
+    const pull = await this.findOpenPullRequestByBranches(base, target);
+
+    if (!pull) {
+      throw new Error(
+        `No open PR found for base branch "${base}" and target branch "${target}"`,
+      );
+    }
+
+    if (!pull.draft) {
+      return;
+    }
+
+    await this.octokit.graphql(
+      `
+        mutation MarkPullRequestReadyForReview($pullRequestId: ID!) {
+          markPullRequestReadyForReview(input: { pullRequestId: $pullRequestId }) {
+            pullRequest {
+              id
+              isDraft
+            }
+          }
+        }
+      `,
+      {
+        pullRequestId: pull.node_id,
+        headers: {
+          "x-github-api-version": "2022-11-28",
+        },
+      },
+    );
+  }
+
   async commentOnIssue(issueNum: number, message: string): Promise<void> {
     await this.octokit.request(
       "POST /repos/{owner}/{repo}/issues/{issue_number}/comments",

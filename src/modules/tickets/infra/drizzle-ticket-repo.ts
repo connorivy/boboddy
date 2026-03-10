@@ -21,8 +21,12 @@ import { TicketGithubIssueEntity } from "@/modules/tickets/domain/ticket-github-
 import type { DbExecutor } from "@/lib/db/db-executor";
 import { TicketGitEnvironmentAggregate } from "@/modules/environments/domain/ticket-git-environment-aggregate";
 
-const toDateOrNull = (value: string | null) => {
+const toDateOrNull = (value: string | Date | null) => {
   if (!value) return null;
+
+  if (value instanceof Date) {
+    return value;
+  }
 
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) {
@@ -120,8 +124,8 @@ export class DrizzleTicketRepo implements TicketRepo {
   ): TicketAggregate {
     return TicketAggregate.rehydrate({
       ...row,
-      jiraCreatedAt: row.jiraCreatedAt?.toISOString() ?? null,
-      jiraUpdatedAt: row.jiraUpdatedAt?.toISOString() ?? null,
+      jiraCreatedAt: row.jiraCreatedAt,
+      jiraUpdatedAt: row.jiraUpdatedAt,
       defaultGitEnvironmentId: row.defaultGitEnvironmentId ?? undefined,
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,
@@ -152,8 +156,8 @@ export class DrizzleTicketRepo implements TicketRepo {
           row.githubIssueNumber,
           row.githubIssueId,
           row.id,
-          row.createdAt.toISOString(),
-          row.updatedAt.toISOString(),
+          row.createdAt,
+          row.updatedAt,
         ),
       ]),
     );
@@ -481,8 +485,8 @@ export class DrizzleTicketRepo implements TicketRepo {
       row.githubIssueNumber,
       row.githubIssueId,
       row.id,
-      row.createdAt.toISOString(),
-      row.updatedAt.toISOString(),
+      row.createdAt,
+      row.updatedAt,
     );
   }
 

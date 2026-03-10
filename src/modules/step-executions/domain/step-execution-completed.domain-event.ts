@@ -13,8 +13,8 @@ export type StepExecutionCompletedDomainEventPayload = {
   ticketId: string;
   stepName: StepExecutionStepName;
   status: StepExecutionStatus;
-  startedAt: string;
-  endedAt: string;
+  startedAt: Date;
+  endedAt: Date;
 };
 
 export class StepExecutionCompletedDomainEvent
@@ -29,7 +29,7 @@ export class StepExecutionCompletedDomainEvent
 
   constructor(
     readonly payload: StepExecutionCompletedDomainEventPayload,
-    occurredAt = new Date(payload.endedAt),
+    occurredAt = payload.endedAt,
   ) {
     this.occurredAt = occurredAt;
   }

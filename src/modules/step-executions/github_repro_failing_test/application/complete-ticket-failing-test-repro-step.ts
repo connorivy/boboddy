@@ -81,7 +81,7 @@ export const completeTicketFailingTestReproStep = async (
     );
   }
 
-  const endedAt = AppContext.timeProvider.nowIso();
+  const endedAt = AppContext.timeProvider.now();
   const nextStatus = resolveStatus(input);
   const shouldRemainOpen = nextStatus === "waiting_for_user_feedback";
   const rawResultJson = {

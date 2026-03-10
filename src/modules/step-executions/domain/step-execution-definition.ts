@@ -22,7 +22,7 @@ export type StepExecutionDefinition<
   createQueuedExecution(args: {
     pipelineId: string;
     ticketId: string;
-    now?: string;
+    now?: Date;
   }): TExecution;
   deserializeExecution(row: StepExecutionRow, ticketId?: string): TExecution;
   serializeExecution(args: {

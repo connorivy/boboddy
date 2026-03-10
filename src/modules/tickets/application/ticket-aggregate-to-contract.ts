@@ -33,8 +33,8 @@ export function ticketAggregateToContract(
     dueDate: ticket.dueDate,
     reporter: ticket.reporter,
     assignee: ticket.assignee,
-    jiraCreatedAt: ticket.jiraCreatedAt,
-    jiraUpdatedAt: ticket.jiraUpdatedAt,
+    jiraCreatedAt: ticket.jiraCreatedAt?.toISOString() ?? null,
+    jiraUpdatedAt: ticket.jiraUpdatedAt?.toISOString() ?? null,
     defaultGitEnvironmentId: ticket.defaultGitEnvironmentId,
     defaultGitEnvironment: ticket.ticketGitEnvironmentAggregate
       ? ticketGitEnvironmentAggregateToContract(

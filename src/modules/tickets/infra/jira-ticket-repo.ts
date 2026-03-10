@@ -110,7 +110,7 @@ const mapUser = (user: unknown) => {
   );
 };
 
-const toIsoDateTimeOrNull = (value: string | undefined) => {
+const toDateTimeOrNull = (value: string | undefined) => {
   if (!value) {
     return null;
   }
@@ -120,7 +120,7 @@ const toIsoDateTimeOrNull = (value: string | undefined) => {
     return null;
   }
 
-  return parsed.toISOString();
+  return parsed;
 };
 
 const toJqlDate = (value: Date): string => value.toISOString().slice(0, 10);
@@ -272,12 +272,8 @@ export class JiraTicketRepoByHttpClient implements JiraTicketRepo {
           dueDate,
           reporter: mapUser(fields.reporter) ?? "unknown@jira",
           assignee: mapUser(fields.assignee),
-          jiraCreatedAt: toIsoDateTimeOrNull(
-            asStringOrNull(fields.created) ?? undefined,
-          ),
-          jiraUpdatedAt: toIsoDateTimeOrNull(
-            asStringOrNull(fields.updated) ?? undefined,
-          ),
+          jiraCreatedAt: toDateTimeOrNull(asStringOrNull(fields.created) ?? undefined),
+          jiraUpdatedAt: toDateTimeOrNull(asStringOrNull(fields.updated) ?? undefined),
         }),
       ];
     });

@@ -21,8 +21,8 @@ export type TicketAggregateProps = {
   dueDate: string | null;
   reporter: string;
   assignee: string | null;
-  jiraCreatedAt: string | null;
-  jiraUpdatedAt: string | null;
+  jiraCreatedAt: Date | string | null;
+  jiraUpdatedAt: Date | string | null;
   id?: string;
   createdAt?: Date;
   updatedAt?: Date;
@@ -30,6 +30,27 @@ export type TicketAggregateProps = {
   pipelineSteps?: TicketPipelineStepExecutionEntity[];
   githubIssue?: TicketGithubIssueEntity | null;
   ticketGitEnvironmentAggregate?: TicketGitEnvironmentAggregate | null;
+};
+
+const normalizeDate = (value: Date | string | null | undefined) => {
+  if (value === undefined) {
+    return undefined;
+  }
+
+  if (value === null) {
+    return null;
+  }
+
+  if (value instanceof Date) {
+    return value;
+  }
+
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) {
+    throw new Error(`Invalid date value: ${value}`);
+  }
+
+  return parsed;
 };
 
 const mapPipelineStepToContract = (
@@ -47,10 +68,10 @@ const mapPipelineStepToContract = (
     ticketId: step.ticketId,
     stepName: step.stepName,
     status: step.status,
-    startedAt: step.startedAt,
-    endedAt: step.endedAt ?? null,
-    createdAt: step.createdAt,
-    updatedAt: step.updatedAt,
+    startedAt: step.startedAt.toISOString(),
+    endedAt: step.endedAt?.toISOString() ?? null,
+    createdAt: step.createdAt.toISOString(),
+    updatedAt: step.updatedAt.toISOString(),
     failureReason: step.failureReason ?? null,
     result: null,
   };
@@ -90,8 +111,8 @@ export class TicketAggregate {
   public readonly dueDate: string | null;
   public readonly reporter: string;
   public readonly assignee: string | null;
-  public readonly jiraCreatedAt: string | null;
-  public readonly jiraUpdatedAt: string | null;
+  public readonly jiraCreatedAt: Date | null;
+  public readonly jiraUpdatedAt: Date | null;
   public readonly id?: string;
   public readonly createdAt?: Date;
   public readonly updatedAt?: Date;
@@ -113,8 +134,8 @@ export class TicketAggregate {
     this.dueDate = props.dueDate;
     this.reporter = props.reporter;
     this.assignee = props.assignee;
-    this.jiraCreatedAt = props.jiraCreatedAt;
-    this.jiraUpdatedAt = props.jiraUpdatedAt;
+    this.jiraCreatedAt = normalizeDate(props.jiraCreatedAt) ?? null;
+    this.jiraUpdatedAt = normalizeDate(props.jiraUpdatedAt) ?? null;
     this.id = props.id;
     this.createdAt = props.createdAt;
     this.updatedAt = props.updatedAt;
@@ -221,8 +242,7 @@ export class TicketAggregate {
       ?.filter((step) => step.stepName === stepName)
       .sort(
         (a, b) =>
-          new Date(b.endedAt ?? 0).getTime() -
-          new Date(a.endedAt ?? 0).getTime(),
+          (b.endedAt?.getTime() ?? 0) - (a.endedAt?.getTime() ?? 0),
       )[0];
   }
 
@@ -246,8 +266,8 @@ export class TicketAggregate {
       dueDate: this.dueDate,
       reporter: this.reporter,
       assignee: this.assignee,
-      jiraCreatedAt: this.jiraCreatedAt,
-      jiraUpdatedAt: this.jiraUpdatedAt,
+      jiraCreatedAt: this.jiraCreatedAt?.toISOString() ?? null,
+      jiraUpdatedAt: this.jiraUpdatedAt?.toISOString() ?? null,
       defaultGitEnvironmentId: this.defaultGitEnvironmentId,
       defaultGitEnvironment: mapDefaultGitEnvironmentToContract(
         this.ticketGitEnvironmentAggregate,

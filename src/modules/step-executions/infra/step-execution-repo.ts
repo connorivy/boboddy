@@ -8,7 +8,6 @@ import type { PipelineStepExecutionsQuery } from "@/modules/step-executions/cont
 import {
   getStepExecutionDefinition,
   getStepExecutionDefinitionForExecution,
-  parseIsoDateOrThrow,
 } from "@/modules/step-executions/domain/step-execution-registry";
 import { TicketPipelineStepExecutionEntity } from "@/modules/step-executions/domain/step-execution-entity";
 import { StepExecutionRepo } from "../application/step-execution-repo";
@@ -239,8 +238,8 @@ export class DrizzleStepExecutionRepo implements StepExecutionRepo {
 
     if (updated) {
       pipeline.id = updated.id;
-      pipeline.createdAt = updated.createdAt.toISOString();
-      pipeline.updatedAt = updated.updatedAt.toISOString();
+      pipeline.createdAt = updated.createdAt;
+      pipeline.updatedAt = updated.updatedAt;
       return pipeline;
     }
 
@@ -256,9 +255,7 @@ export class DrizzleStepExecutionRepo implements StepExecutionRepo {
         idempotencyKey: pipeline.id,
         startedAt,
         endedAt,
-        createdAt: pipeline.createdAt
-          ? parseIsoDateOrThrow(pipeline.createdAt, "createdAt")
-          : now,
+        createdAt: pipeline.createdAt ?? now,
         updatedAt: now,
         failureReason: pipeline.failureReason,
         ...fields,
@@ -270,8 +267,8 @@ export class DrizzleStepExecutionRepo implements StepExecutionRepo {
       });
 
     pipeline.id = inserted.id;
-    pipeline.createdAt = inserted.createdAt.toISOString();
-    pipeline.updatedAt = inserted.updatedAt.toISOString();
+    pipeline.createdAt = inserted.createdAt;
+    pipeline.updatedAt = inserted.updatedAt;
     return pipeline;
   }
 
@@ -318,10 +315,8 @@ export class DrizzleStepExecutionRepo implements StepExecutionRepo {
     dbExecutor: DbExecutor,
   ): Promise<TicketPipelineStepExecutionEntity> {
     const now = appTimeProvider.current.now();
-    const startedAt = parseIsoDateOrThrow(pipeline.startedAt, "startedAt");
-    const endedAt = pipeline.endedAt
-      ? parseIsoDateOrThrow(pipeline.endedAt, "endedAt")
-      : null;
+    const startedAt = pipeline.startedAt;
+    const endedAt = pipeline.endedAt ?? null;
 
     const savedExecution = await this.saveStepExecution(
       dbExecutor,

@@ -59,7 +59,7 @@ export class PipelineAdvancementPolicy {
 
     const latestStepExecution =
       [...(pipelineRun.pipelineSteps ?? [])].sort((a, b) => {
-        const startedAtDiff = Date.parse(b.startedAt) - Date.parse(a.startedAt);
+        const startedAtDiff = b.startedAt.getTime() - a.startedAt.getTime();
         if (startedAtDiff !== 0) {
           return startedAtDiff;
         }
@@ -110,7 +110,7 @@ export class PipelineAdvancementPolicy {
     return getStepExecutionDefinition(stepName).createQueuedExecution({
       pipelineId,
       ticketId,
-      now: appTimeProvider.current.nowIso(),
+      now: appTimeProvider.current.now(),
     });
   }
 }

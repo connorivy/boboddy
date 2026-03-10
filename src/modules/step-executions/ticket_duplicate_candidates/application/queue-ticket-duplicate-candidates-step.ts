@@ -30,7 +30,7 @@ export const queueTicketDuplicateCandidatesStep = async (
     throw new Error(`Ticket with ID ${input.ticketId} not found`);
   }
 
-  const queuedAt = AppContext.timeProvider.nowIso();
+  const queuedAt = AppContext.timeProvider.now();
   const execution = new TicketDuplicateCandidatesStepResultEntity(
     null,
     input.ticketId,

@@ -15,6 +15,9 @@ import {
 } from "../contracts/ticket-contracts";
 import { DbExecutor } from "@/lib/db/db-executor";
 
+const toDateOrNull = (value: string | null): Date | null =>
+  value ? new Date(value) : null;
+
 type TicketIngestDeps = {
   ticketRepo: TicketRepo;
   jiraTicketRepo: JiraTicketRepo;
@@ -71,7 +74,11 @@ export async function ingestTicketContracts(
 ) {
   const request = ingestTicketsRequestSchema.parse(rawRequest);
   const tickets = request.tickets.map((ticket) =>
-    TicketAggregate.create(ticket),
+    TicketAggregate.create({
+      ...ticket,
+      jiraCreatedAt: toDateOrNull(ticket.jiraCreatedAt),
+      jiraUpdatedAt: toDateOrNull(ticket.jiraUpdatedAt),
+    }),
   );
 
   return await getDb().transaction(async (tx) => {

@@ -29,7 +29,7 @@ export const queueTicketDescriptionQualityStep = async (
     throw new Error(`Ticket with ID ${input.ticketId} not found`);
   }
 
-  const queuedAt = AppContext.timeProvider.nowIso();
+  const queuedAt = AppContext.timeProvider.now();
   const execution = new TicketDescriptionQualityStepExecutionEntity(
     null,
     input.ticketId,

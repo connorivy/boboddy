@@ -46,7 +46,7 @@ export const triggerTicketDuplicateCandidatesStep = async (
     throw new Error(`Ticket with ID ${input.ticketId} not found`);
   }
 
-  const now = AppContext.timeProvider.nowIso();
+  const now = AppContext.timeProvider.now();
   const execution = new TicketDuplicateCandidatesStepResultEntity(
     input.ticketId,
     input.ticketId,
@@ -79,7 +79,7 @@ export const triggerTicketDuplicateCandidatesStep = async (
 
     savedExecution.setResult({
       status: "succeeded",
-      endedAt: AppContext.timeProvider.nowIso(),
+      endedAt: AppContext.timeProvider.now(),
       result: new TicketDuplicateCandidatesResultEntity(
         candidates.map(
           (candidate) =>
@@ -97,7 +97,7 @@ export const triggerTicketDuplicateCandidatesStep = async (
     if (!TERMINAL_STEP_EXECUTION_STATUSES.has(savedExecution.status)) {
       savedExecution.setResult({
         status: "failed",
-        endedAt: AppContext.timeProvider.nowIso(),
+        endedAt: AppContext.timeProvider.now(),
       });
       await stepExecutionRepo.save(savedExecution);
     }

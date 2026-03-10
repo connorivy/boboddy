@@ -28,7 +28,7 @@ export class PipelineRunEntity {
     ).createQueuedExecution({
       pipelineId: id,
       ticketId,
-      now: queuedAt.toISOString(),
+      now: queuedAt,
     });
 
     return new PipelineRunEntity(id, ticketId, autoAdvance, [firstStep]);

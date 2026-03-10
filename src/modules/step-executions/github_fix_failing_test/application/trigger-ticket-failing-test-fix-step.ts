@@ -120,7 +120,7 @@ export const triggerTicketFailingTestFixStep = async (
         run.githubPrTargetBranch?.trim() === ticketGitEnvironment.devBranch.trim(),
     )
     .sort((a, b) => {
-      const startedAtDiff = Date.parse(b.startedAt) - Date.parse(a.startedAt);
+      const startedAtDiff = b.startedAt.getTime() - a.startedAt.getTime();
       if (startedAtDiff !== 0) {
         return startedAtDiff;
       }
@@ -139,7 +139,7 @@ export const triggerTicketFailingTestFixStep = async (
     );
   }
 
-  const now = AppContext.timeProvider.nowIso();
+  const now = AppContext.timeProvider.now();
   const execution = new FailingTestFixStepExecutionEntity(
     null,
     ticket.id,
@@ -216,7 +216,7 @@ export const triggerTicketFailingTestFixStep = async (
     if (!TERMINAL_STEP_EXECUTION_STATUSES.has(savedExecution.status)) {
       execution.setResult({
         status: "failed",
-        endedAt: AppContext.timeProvider.nowIso(),
+        endedAt: AppContext.timeProvider.now(),
       });
       await stepExecutionRepo.save(execution);
     }

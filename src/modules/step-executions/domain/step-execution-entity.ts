@@ -26,6 +26,23 @@ const assertNormalizedScore = (value: number, fieldName: string): number => {
   return value;
 };
 
+const normalizeDate = (value: Date | string | undefined): Date | undefined => {
+  if (value === undefined) {
+    return undefined;
+  }
+
+  if (value instanceof Date) {
+    return value;
+  }
+
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) {
+    throw new Error(`Invalid date value: ${value}`);
+  }
+
+  return parsed;
+};
+
 export type FailingTestReproFeedbackRequestEntity = {
   requestId: string;
   reason: string;
@@ -35,7 +52,7 @@ export type FailingTestReproFeedbackRequestEntity = {
 
 type SetStepExecutionResultInput<TResult> = {
   status: StepExecutionStatus;
-  endedAt?: string;
+  endedAt?: Date | string;
   failureReason?: string;
   result?: TResult | null;
 };
@@ -50,18 +67,26 @@ export abstract class TicketPipelineStepExecutionEntity<TResult = unknown> {
     public stepName: string,
     public status: StepExecutionStatus,
     public result: TResult | null,
-    public startedAt: string,
-    public endedAt?: string,
+    startedAt: Date | string,
+    endedAt?: Date | string,
     id?: string,
-    public createdAt?: string,
-    public updatedAt?: string,
+    createdAt?: Date | string,
+    updatedAt?: Date | string,
     public failureReason?: string,
   ) {
     this.pipelineId = pipelineId ?? null;
     this.id = id ?? uuidv7();
+    this.startedAt = normalizeDate(startedAt) as Date;
+    this.endedAt = normalizeDate(endedAt);
+    this.createdAt = normalizeDate(createdAt);
+    this.updatedAt = normalizeDate(updatedAt);
   }
 
   public pipelineId: string | null;
+  public startedAt: Date;
+  public endedAt?: Date;
+  public createdAt?: Date;
+  public updatedAt?: Date;
 
   pullDomainEvents(): DomainEvent[] {
     const events = [...this.domainEvents];
@@ -76,7 +101,7 @@ export abstract class TicketPipelineStepExecutionEntity<TResult = unknown> {
     result,
   }: SetStepExecutionResultInput<TResult>): void {
     this.status = status;
-    this.endedAt = endedAt;
+    this.endedAt = normalizeDate(endedAt);
     if (failureReason !== undefined) {
       this.failureReason = failureReason;
     }
@@ -168,10 +193,10 @@ export class TicketDescriptionEnrichmentStepExecutionEntity extends TicketPipeli
     ticketId: string,
     status: StepExecutionStatus,
     result: TicketDescriptionEnrichmentStepResultEntity | null,
-    startedAt: string,
-    endedAt?: string,
-    createdAt?: string,
-    updatedAt?: string,
+    startedAt: Date | string,
+    endedAt?: Date | string,
+    createdAt?: Date | string,
+    updatedAt?: Date | string,
     id?: string,
     failureReason?: string,
   ) {
@@ -197,10 +222,10 @@ export class TicketDescriptionQualityStepExecutionEntity extends TicketPipelineS
     ticketId: string,
     status: StepExecutionStatus,
     result: TicketDescriptionQualityStepResultEntity | null,
-    startedAt: string,
-    endedAt?: string,
-    createdAt?: string,
-    updatedAt?: string,
+    startedAt: Date | string,
+    endedAt?: Date | string,
+    createdAt?: Date | string,
+    updatedAt?: Date | string,
     id?: string,
     failureReason?: string,
   ) {
@@ -241,10 +266,10 @@ export class TicketDuplicateCandidatesStepResultEntity extends TicketPipelineSte
     ticketId: string,
     status: StepExecutionStatus,
     result: TicketDuplicateCandidatesResultEntity | null,
-    startedAt: string,
-    endedAt?: string,
-    createdAt?: string,
-    updatedAt?: string,
+    startedAt: Date | string,
+    endedAt?: Date | string,
+    createdAt?: Date | string,
+    updatedAt?: Date | string,
     id?: string,
     failureReason?: string,
   ) {
@@ -463,10 +488,10 @@ export class FailingTestReproStepExecutionEntity extends TicketPipelineStepExecu
     status: StepExecutionStatus,
     result: FailingTestReproStepResultEntity | null,
     public githubPrTargetBranch: string | null,
-    startedAt: string,
-    endedAt?: string,
-    createdAt?: string,
-    updatedAt?: string,
+    startedAt: Date | string,
+    endedAt?: Date | string,
+    createdAt?: Date | string,
+    updatedAt?: Date | string,
     id?: string,
     failureReason?: string,
   ) {
@@ -552,10 +577,10 @@ export class FailingTestFixStepExecutionEntity extends TicketPipelineStepExecuti
     ticketId: string,
     status: StepExecutionStatus,
     result: FailingTestFixStepResultEntity | null,
-    startedAt: string,
-    endedAt?: string,
-    createdAt?: string,
-    updatedAt?: string,
+    startedAt: Date | string,
+    endedAt?: Date | string,
+    createdAt?: Date | string,
+    updatedAt?: Date | string,
     id?: string,
     failureReason?: string,
   ) {
@@ -591,10 +616,10 @@ export class FinalizeFailingTestReproPrStepExecutionEntity extends TicketPipelin
     ticketId: string,
     status: StepExecutionStatus,
     result: FinalizeFailingTestReproPrStepResultEntity | null,
-    startedAt: string,
-    endedAt?: string,
-    createdAt?: string,
-    updatedAt?: string,
+    startedAt: Date | string,
+    endedAt?: Date | string,
+    createdAt?: Date | string,
+    updatedAt?: Date | string,
     id?: string,
     failureReason?: string,
   ) {

@@ -42,7 +42,7 @@ export const ticketDescriptionQualityStepDefinition: StepExecutionDefinition<Tic
         ticketId,
         "queued",
         null,
-        now ?? new Date().toISOString(),
+        now ?? new Date(),
       ),
     deserializeExecution: (row, ticketId = row.ticketId) =>
       new TicketDescriptionQualityStepExecutionEntity(
@@ -50,10 +50,10 @@ export const ticketDescriptionQualityStepDefinition: StepExecutionDefinition<Tic
         ticketId,
         row.status,
         deserializeResult(row),
-        row.startedAt.toISOString(),
-        row.endedAt?.toISOString(),
-        row.createdAt.toISOString(),
-        row.updatedAt.toISOString(),
+        row.startedAt,
+        row.endedAt ?? undefined,
+        row.createdAt,
+        row.updatedAt,
         row.id,
         row.failureReason ?? undefined,
       ),
@@ -112,8 +112,8 @@ export const ticketDescriptionQualityStepDefinition: StepExecutionDefinition<Tic
         observedBehaviorScore: execution.result.observedBehaviorScore,
         reasoning: execution.result.reasoning,
         rawResponse: execution.result.rawResponse,
-        createdAt: execution.createdAt,
-        updatedAt: execution.updatedAt,
+        createdAt: execution.createdAt?.toISOString(),
+        updatedAt: execution.updatedAt?.toISOString(),
       });
     },
     shouldAdvance: (execution) => {

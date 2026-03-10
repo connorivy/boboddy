@@ -29,7 +29,7 @@ export const queueTicketFailingTestReproStep = async (
     throw new Error(`Ticket with ID ${input.ticketId} not found`);
   }
 
-  const queuedAt = AppContext.timeProvider.nowIso();
+  const queuedAt = AppContext.timeProvider.now();
   const execution = new FailingTestReproStepExecutionEntity(
     null,
     input.ticketId,

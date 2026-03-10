@@ -153,7 +153,7 @@ export const failingTestReproStepDefinition: StepExecutionDefinition<FailingTest
         "queued",
         null,
         null,
-        now ?? new Date().toISOString(),
+        now ?? new Date(),
       ),
     deserializeExecution: (row, ticketId = row.ticketId) =>
       new FailingTestReproStepExecutionEntity(
@@ -162,10 +162,10 @@ export const failingTestReproStepDefinition: StepExecutionDefinition<FailingTest
         row.status,
         deserializeResult(row),
         row.githubPrTargetBranch ?? null,
-        row.startedAt.toISOString(),
-        row.endedAt?.toISOString(),
-        row.createdAt.toISOString(),
-        row.updatedAt.toISOString(),
+        row.startedAt,
+        row.endedAt ?? undefined,
+        row.createdAt,
+        row.updatedAt,
         row.id,
         row.failureReason ?? undefined,
       ),
@@ -243,8 +243,8 @@ export const failingTestReproStepDefinition: StepExecutionDefinition<FailingTest
             ? execution.result.failureReason ?? null
             : null,
         rawResultJson: execution.result.rawResultJson ?? null,
-        createdAt: execution.createdAt,
-        updatedAt: execution.updatedAt,
+        createdAt: execution.createdAt?.toISOString(),
+        updatedAt: execution.updatedAt?.toISOString(),
       });
     },
     shouldAdvance: (execution) => {

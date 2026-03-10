@@ -32,7 +32,7 @@ export const triggerTicketDescriptionQualityStep = async (
     throw new Error(`Ticket with ID ${input.ticketId} not found`);
   }
 
-  const now = AppContext.timeProvider.nowIso();
+  const now = AppContext.timeProvider.now();
   const execution = new TicketDescriptionQualityStepExecutionEntity(
     null,
     input.ticketId,
@@ -52,7 +52,7 @@ export const triggerTicketDescriptionQualityStep = async (
 
     execution.setResult({
       status: "succeeded",
-      endedAt: AppContext.timeProvider.nowIso(),
+      endedAt: AppContext.timeProvider.now(),
       result: new TicketDescriptionQualityStepResultEntity(
         aiResult.stepsToReproduceScore,
         aiResult.expectedBehaviorScore,
@@ -69,7 +69,7 @@ export const triggerTicketDescriptionQualityStep = async (
 
     execution.setResult({
       status: "failed",
-      endedAt: AppContext.timeProvider.nowIso(),
+      endedAt: AppContext.timeProvider.now(),
       failureReason: errorMessage,
     });
     await stepExecutionRepo.save(execution);

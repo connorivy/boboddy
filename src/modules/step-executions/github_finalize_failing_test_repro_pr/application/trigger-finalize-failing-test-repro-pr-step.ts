@@ -1,6 +1,7 @@
 "use server";
 
 import { AppContext } from "@/lib/di";
+import type { TimeProvider } from "@/lib/time-provider";
 import { stepExecutionEntityToContract } from "@/modules/step-executions/application/step-execution-entity-to-contract";
 import type { StepExecutionRepo } from "@/modules/step-executions/application/step-execution-repo";
 import { mergeFailingTest } from "@/modules/step-executions/github_fix_failing_test/application/merge-failing-test";
@@ -23,15 +24,17 @@ export const triggerFinalizeFailingTestReproPrStep = async (
   {
     stepExecutionRepo,
     githubService,
+    timeProvider,
   }: {
     stepExecutionRepo: StepExecutionRepo;
     githubService: GithubApiService;
+    timeProvider: TimeProvider;
   } = AppContext,
 ): Promise<TriggerFinalizeFailingTestReproPrStepResponse> => {
   const input =
     triggerFinalizeFailingTestReproPrStepRequestSchema.parse(rawInput);
 
-  const now = AppContext.timeProvider.now();
+  const now = timeProvider.now();
   const execution = new FinalizeFailingTestReproPrStepExecutionEntity(
     null,
     input.ticketId,
@@ -92,7 +95,7 @@ export const triggerFinalizeFailingTestReproPrStep = async (
 
     savedExecution.setResult({
       status: "succeeded",
-      endedAt: AppContext.timeProvider.now(),
+      endedAt: timeProvider.now(),
       result: new FinalizeFailingTestReproPrStepResultEntity(
         "merged",
         reproStep.result.githubIssueNumber,
@@ -108,7 +111,7 @@ export const triggerFinalizeFailingTestReproPrStep = async (
         error instanceof Error ? error.message : "Unknown error";
       savedExecution.setResult({
         status: "failed",
-        endedAt: AppContext.timeProvider.now(),
+        endedAt: timeProvider.now(),
         failureReason: errorMessage,
       });
       await stepExecutionRepo.save(savedExecution);

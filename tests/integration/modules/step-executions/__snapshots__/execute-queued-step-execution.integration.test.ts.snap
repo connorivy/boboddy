@@ -2,13 +2,13 @@
 
 exports[`AI pipeline flow (integration) > walks through the AI pipeline happy path from ticket ingest through pipeline advancement > completed description step result 1`] = `
 {
-  "createdAt": "2026-03-11T12:00:00.000Z",
-  "endedAt": "2026-03-11T12:00:00.000Z",
+  "createdAt": "2026-03-08T12:00:00.000Z",
+  "endedAt": "2026-03-08T12:00:00.000Z",
   "failureReason": null,
   "id": "<uuid1>",
   "pipelineId": "<uuid2>",
   "result": {
-    "createdAt": "2026-03-11T12:00:00.000Z",
+    "createdAt": "2026-03-08T12:00:00.000Z",
     "executionId": "<uuid1>",
     "expectedBehaviorScore": 0.45,
     "observedBehaviorScore": 0.9,
@@ -16,46 +16,46 @@ exports[`AI pipeline flow (integration) > walks through the AI pipeline happy pa
     "reasoning": "Observed behavior is clear, but expected behavior is thin.",
     "stepName": "ticket_description_quality_rank",
     "stepsToReproduceScore": 0.8,
-    "updatedAt": "2026-03-11T12:00:00.000Z",
+    "updatedAt": "2026-03-08T12:00:00.000Z",
   },
-  "startedAt": "2026-03-11T12:00:00.000Z",
+  "startedAt": "2026-03-08T12:00:00.000Z",
   "status": "succeeded",
   "stepName": "ticket_description_quality_rank",
   "ticketId": "CV-612",
-  "updatedAt": "2026-03-11T12:00:00.000Z",
+  "updatedAt": "2026-03-08T12:00:00.000Z",
 }
 `;
 
 exports[`AI pipeline flow (integration) > walks through the AI pipeline happy path from ticket ingest through pipeline advancement > completed finalize repro pr step result 1`] = `
 {
-  "createdAt": "2026-03-11T12:00:00.000Z",
-  "endedAt": "2026-03-11T12:00:00.000Z",
+  "createdAt": "2026-03-08T12:00:00.000Z",
+  "endedAt": "2026-03-08T12:00:00.000Z",
   "failureReason": null,
   "id": "<uuid5>",
   "pipelineId": "<uuid2>",
   "result": {
     "agentBranch": "ticket/CV-612-repro",
-    "createdAt": "2026-03-11T12:00:00.000Z",
+    "createdAt": "2026-03-08T12:00:00.000Z",
     "executionId": "<uuid5>",
     "githubIssueId": "issue_123",
     "githubIssueNumber": 123,
     "githubMergeStatus": "merged",
     "githubPrTargetBranch": "ticket-cv-612-dev",
     "stepName": "github_finalize_repro_pr",
-    "updatedAt": "2026-03-11T12:00:00.000Z",
+    "updatedAt": "2026-03-08T12:00:00.000Z",
   },
-  "startedAt": "2026-03-11T12:00:00.000Z",
+  "startedAt": "2026-03-08T12:00:00.000Z",
   "status": "succeeded",
   "stepName": "github_finalize_repro_pr",
   "ticketId": "CV-612",
-  "updatedAt": "2026-03-11T12:00:00.000Z",
+  "updatedAt": "2026-03-08T12:00:00.000Z",
 }
 `;
 
 exports[`AI pipeline flow (integration) > walks through the AI pipeline happy path from ticket ingest through pipeline advancement > completed fix step result 1`] = `
 {
-  "createdAt": "2026-03-11T12:00:00.000Z",
-  "endedAt": "2026-03-11T12:00:00.000Z",
+  "createdAt": "2026-03-08T12:00:00.000Z",
+  "endedAt": "2026-03-08T12:00:00.000Z",
   "failureReason": null,
   "id": "<uuid6>",
   "pipelineId": "<uuid2>",
@@ -63,7 +63,7 @@ exports[`AI pipeline flow (integration) > walks through the AI pipeline happy pa
     "agentBranch": "ticket/CV-612-fix",
     "agentStatus": "complete",
     "agentSummary": null,
-    "createdAt": "2026-03-11T12:00:00.000Z",
+    "createdAt": "2026-03-08T12:00:00.000Z",
     "executionId": "<uuid6>",
     "failingTestCommitSha": undefined,
     "failureReason": null,
@@ -78,20 +78,20 @@ exports[`AI pipeline flow (integration) > walks through the AI pipeline happy pa
     "rawResultJson": null,
     "stepName": "github_fix_failing_test",
     "summaryOfFix": "Updated session restore to rehydrate saved filters before rendering restored tabs, which makes the reproduced integration test pass.",
-    "updatedAt": "2026-03-11T12:00:00.000Z",
+    "updatedAt": "2026-03-08T12:00:00.000Z",
   },
-  "startedAt": "2026-03-11T12:00:00.000Z",
+  "startedAt": "2026-03-08T12:00:00.000Z",
   "status": "succeeded",
   "stepName": "github_fix_failing_test",
   "ticketId": "CV-612",
-  "updatedAt": "2026-03-11T12:00:00.000Z",
+  "updatedAt": "2026-03-08T12:00:00.000Z",
 }
 `;
 
 exports[`AI pipeline flow (integration) > walks through the AI pipeline happy path from ticket ingest through pipeline advancement > completed investigation step result 1`] = `
 {
-  "createdAt": "2026-03-11T12:00:00.000Z",
-  "endedAt": "2026-03-11T12:00:00.000Z",
+  "createdAt": "2026-03-08T12:00:00.000Z",
+  "endedAt": "2026-03-08T12:00:00.000Z",
   "failureReason": null,
   "id": "<uuid3>",
   "pipelineId": "<uuid2>",
@@ -112,7 +112,7 @@ exports[`AI pipeline flow (integration) > walks through the AI pipeline happy pa
       },
     ],
     "confidenceLevel": 0.87,
-    "createdAt": "2026-03-11T12:00:00.000Z",
+    "createdAt": "2026-03-08T12:00:00.000Z",
     "databaseFindings": [
       {
         "comparisonNotes": [
@@ -147,19 +147,19 @@ exports[`AI pipeline flow (integration) > walks through the AI pipeline happy pa
               "ticketId": "CV-612",
             },
             "route": "/session/restore",
-            "timestamp": "2026-03-11T10:05:00.000Z",
+            "timestamp": "2026-03-08T10:05:00.000Z",
             "type": "action",
           },
         ],
         "notes": [],
         "sessionId": "session-restore",
-        "timeWindow": "2026-03-11T10:04:00.000Z/2026-03-11T10:05:10.000Z",
+        "timeWindow": "2026-03-08T10:04:00.000Z/2026-03-11T10:05:10.000Z",
         "userIdentifier": "reporter@acme.test",
       },
     ],
-    "datadogTimeRange": "2026-03-11T10:00:00.000Z/2026-03-11T10:05:10.000Z",
+    "datadogTimeRange": "2026-03-08T10:00:00.000Z/2026-03-11T10:05:10.000Z",
     "exactEventTimes": [
-      "2026-03-11T10:05:00.000Z",
+      "2026-03-08T10:05:00.000Z",
     ],
     "executionId": "<uuid3>",
     "investigationGaps": [],
@@ -181,7 +181,7 @@ exports[`AI pipeline flow (integration) > walks through the AI pipeline happy pa
         "queryOrFilter": "ticket:CV-612",
         "routeOrCodePath": "/session/restore",
         "source": "application_log",
-        "timestamp": "2026-03-11T10:05:00.000Z",
+        "timestamp": "2026-03-08T10:05:00.000Z",
       },
     ],
     "operationOutcome": "findings_recorded",
@@ -233,19 +233,19 @@ exports[`AI pipeline flow (integration) > walks through the AI pipeline happy pa
                 "ticketId": "CV-612",
               },
               "route": "/session/restore",
-              "timestamp": "2026-03-11T10:05:00.000Z",
+              "timestamp": "2026-03-08T10:05:00.000Z",
               "type": "action",
             },
           ],
           "notes": [],
           "sessionId": "session-restore",
-          "timeWindow": "2026-03-11T10:04:00.000Z/2026-03-11T10:05:10.000Z",
+          "timeWindow": "2026-03-08T10:04:00.000Z/2026-03-11T10:05:10.000Z",
           "userIdentifier": "reporter@acme.test",
         },
       ],
-      "datadogTimeRange": "2026-03-11T10:00:00.000Z/2026-03-11T10:05:10.000Z",
+      "datadogTimeRange": "2026-03-08T10:00:00.000Z/2026-03-11T10:05:10.000Z",
       "exactEventTimes": [
-        "2026-03-11T10:05:00.000Z",
+        "2026-03-08T10:05:00.000Z",
       ],
       "investigationGaps": [],
       "investigationReport": "Investigation found filter state is not persisted during session restore.",
@@ -266,7 +266,7 @@ exports[`AI pipeline flow (integration) > walks through the AI pipeline happy pa
           "queryOrFilter": "ticket:CV-612",
           "routeOrCodePath": "/session/restore",
           "source": "application_log",
-          "timestamp": "2026-03-11T10:05:00.000Z",
+          "timestamp": "2026-03-08T10:05:00.000Z",
         },
       ],
       "mocked": true,
@@ -283,21 +283,21 @@ exports[`AI pipeline flow (integration) > walks through the AI pipeline happy pa
     ],
     "stepName": "ticket_investigation",
     "summaryOfInvestigation": "Session restore reopens tabs but does not restore filters.",
-    "updatedAt": "2026-03-11T12:00:00.000Z",
+    "updatedAt": "2026-03-08T12:00:00.000Z",
     "whatHappened": "The restore flow rehydrates tabs but omits the saved filter payload.",
   },
-  "startedAt": "2026-03-11T12:00:00.000Z",
+  "startedAt": "2026-03-08T12:00:00.000Z",
   "status": "succeeded",
   "stepName": "ticket_investigation",
   "ticketId": "CV-612",
-  "updatedAt": "2026-03-11T12:00:00.000Z",
+  "updatedAt": "2026-03-08T12:00:00.000Z",
 }
 `;
 
 exports[`AI pipeline flow (integration) > walks through the AI pipeline happy path from ticket ingest through pipeline advancement > completed repro step result 1`] = `
 {
-  "createdAt": "2026-03-11T12:00:00.000Z",
-  "endedAt": "2026-03-11T12:00:00.000Z",
+  "createdAt": "2026-03-08T12:00:00.000Z",
+  "endedAt": "2026-03-08T12:00:00.000Z",
   "failureReason": null,
   "id": "<uuid4>",
   "pipelineId": "<uuid2>",
@@ -305,7 +305,7 @@ exports[`AI pipeline flow (integration) > walks through the AI pipeline happy pa
     "agentBranch": "ticket/CV-612-repro",
     "agentStatus": "complete",
     "confidenceLevel": 0.91,
-    "createdAt": "2026-03-11T12:00:00.000Z",
+    "createdAt": "2026-03-08T12:00:00.000Z",
     "executionId": "<uuid4>",
     "failingTestCommitSha": null,
     "failingTestPaths": [
@@ -324,99 +324,99 @@ exports[`AI pipeline flow (integration) > walks through the AI pipeline happy pa
     },
     "stepName": "github_repro_failing_test",
     "summaryOfFindings": "Added a failing integration test that confirms session restore drops saved filters.",
-    "updatedAt": "2026-03-11T12:00:00.000Z",
+    "updatedAt": "2026-03-08T12:00:00.000Z",
   },
-  "startedAt": "2026-03-11T12:00:00.000Z",
+  "startedAt": "2026-03-08T12:00:00.000Z",
   "status": "succeeded",
   "stepName": "github_repro_failing_test",
   "ticketId": "CV-612",
-  "updatedAt": "2026-03-11T12:00:00.000Z",
+  "updatedAt": "2026-03-08T12:00:00.000Z",
 }
 `;
 
 exports[`AI pipeline flow (integration) > walks through the AI pipeline happy path from ticket ingest through pipeline advancement > initial queued description step 1`] = `
 {
-  "createdAt": "2026-03-11T12:00:00.000Z",
+  "createdAt": "2026-03-08T12:00:00.000Z",
   "endedAt": null,
   "failureReason": null,
   "id": "<uuid1>",
   "pipelineId": "<uuid2>",
   "result": null,
-  "startedAt": "2026-03-11T12:00:00.000Z",
+  "startedAt": "2026-03-08T12:00:00.000Z",
   "status": "queued",
   "stepName": "ticket_description_quality_rank",
   "ticketId": "CV-612",
-  "updatedAt": "2026-03-11T12:00:00.000Z",
+  "updatedAt": "2026-03-08T12:00:00.000Z",
 }
 `;
 
 exports[`AI pipeline flow (integration) > walks through the AI pipeline happy path from ticket ingest through pipeline advancement > queued finalize repro pr step after repro completion 1`] = `
 {
-  "createdAt": "2026-03-11T12:00:00.000Z",
+  "createdAt": "2026-03-08T12:00:00.000Z",
   "endedAt": null,
   "failureReason": null,
   "id": "<uuid5>",
   "pipelineId": "<uuid2>",
   "result": null,
-  "startedAt": "2026-03-11T12:00:00.000Z",
+  "startedAt": "2026-03-08T12:00:00.000Z",
   "status": "queued",
   "stepName": "github_finalize_repro_pr",
   "ticketId": "CV-612",
-  "updatedAt": "2026-03-11T12:00:00.000Z",
+  "updatedAt": "2026-03-08T12:00:00.000Z",
 }
 `;
 
 exports[`AI pipeline flow (integration) > walks through the AI pipeline happy path from ticket ingest through pipeline advancement > queued fix step after finalize repro pr completion 1`] = `
 {
-  "createdAt": "2026-03-11T12:00:00.000Z",
+  "createdAt": "2026-03-08T12:00:00.000Z",
   "endedAt": null,
   "failureReason": null,
   "id": "<uuid6>",
   "pipelineId": "<uuid2>",
   "result": null,
-  "startedAt": "2026-03-11T12:00:00.000Z",
+  "startedAt": "2026-03-08T12:00:00.000Z",
   "status": "queued",
   "stepName": "github_fix_failing_test",
   "ticketId": "CV-612",
-  "updatedAt": "2026-03-11T12:00:00.000Z",
+  "updatedAt": "2026-03-08T12:00:00.000Z",
 }
 `;
 
 exports[`AI pipeline flow (integration) > walks through the AI pipeline happy path from ticket ingest through pipeline advancement > queued investigation step after description completion 1`] = `
 {
-  "createdAt": "2026-03-11T12:00:00.000Z",
+  "createdAt": "2026-03-08T12:00:00.000Z",
   "endedAt": null,
   "failureReason": null,
   "id": "<uuid3>",
   "pipelineId": "<uuid2>",
   "result": null,
-  "startedAt": "2026-03-11T12:00:00.000Z",
+  "startedAt": "2026-03-08T12:00:00.000Z",
   "status": "queued",
   "stepName": "ticket_investigation",
   "ticketId": "CV-612",
-  "updatedAt": "2026-03-11T12:00:00.000Z",
+  "updatedAt": "2026-03-08T12:00:00.000Z",
 }
 `;
 
 exports[`AI pipeline flow (integration) > walks through the AI pipeline happy path from ticket ingest through pipeline advancement > queued repro step after investigation completion 1`] = `
 {
-  "createdAt": "2026-03-11T12:00:00.000Z",
+  "createdAt": "2026-03-08T12:00:00.000Z",
   "endedAt": null,
   "failureReason": null,
   "id": "<uuid4>",
   "pipelineId": "<uuid2>",
   "result": null,
-  "startedAt": "2026-03-11T12:00:00.000Z",
+  "startedAt": "2026-03-08T12:00:00.000Z",
   "status": "queued",
   "stepName": "github_repro_failing_test",
   "ticketId": "CV-612",
-  "updatedAt": "2026-03-11T12:00:00.000Z",
+  "updatedAt": "2026-03-08T12:00:00.000Z",
 }
 `;
 
 exports[`AI pipeline flow (integration) > walks through the AI pipeline happy path from ticket ingest through pipeline advancement > running fix step 1`] = `
 {
-  "createdAt": "2026-03-11T12:00:00.000Z",
+  "createdAt": "2026-03-08T12:00:00.000Z",
   "endedAt": null,
   "failureReason": null,
   "id": "<uuid6>",
@@ -425,7 +425,7 @@ exports[`AI pipeline flow (integration) > walks through the AI pipeline happy pa
     "agentBranch": null,
     "agentStatus": null,
     "agentSummary": null,
-    "createdAt": "2026-03-11T12:00:00.000Z",
+    "createdAt": "2026-03-08T12:00:00.000Z",
     "executionId": "<uuid6>",
     "failingTestCommitSha": undefined,
     "failureReason": null,
@@ -440,44 +440,44 @@ exports[`AI pipeline flow (integration) > walks through the AI pipeline happy pa
     "rawResultJson": null,
     "stepName": "github_fix_failing_test",
     "summaryOfFix": null,
-    "updatedAt": "2026-03-11T12:00:00.000Z",
+    "updatedAt": "2026-03-08T12:00:00.000Z",
   },
-  "startedAt": "2026-03-11T12:00:00.000Z",
+  "startedAt": "2026-03-08T12:00:00.000Z",
   "status": "running",
   "stepName": "github_fix_failing_test",
   "ticketId": "CV-612",
-  "updatedAt": "2026-03-11T12:00:00.000Z",
+  "updatedAt": "2026-03-08T12:00:00.000Z",
 }
 `;
 
 exports[`AI pipeline flow (integration) > walks through the AI pipeline happy path from ticket ingest through pipeline advancement > running investigation step 1`] = `
 {
-  "createdAt": "2026-03-11T12:00:00.000Z",
+  "createdAt": "2026-03-08T12:00:00.000Z",
   "endedAt": null,
   "failureReason": null,
   "id": "<uuid3>",
   "pipelineId": "<uuid2>",
   "result": null,
-  "startedAt": "2026-03-11T12:00:00.000Z",
+  "startedAt": "2026-03-08T12:00:00.000Z",
   "status": "running",
   "stepName": "ticket_investigation",
   "ticketId": "CV-612",
-  "updatedAt": "2026-03-11T12:00:00.000Z",
+  "updatedAt": "2026-03-08T12:00:00.000Z",
 }
 `;
 
 exports[`AI pipeline flow (integration) > walks through the AI pipeline happy path from ticket ingest through pipeline advancement > running repro step 1`] = `
 {
-  "createdAt": "2026-03-11T12:00:00.000Z",
+  "createdAt": "2026-03-08T12:00:00.000Z",
   "endedAt": null,
   "failureReason": null,
   "id": "<uuid4>",
   "pipelineId": "<uuid2>",
   "result": null,
-  "startedAt": "2026-03-11T12:00:00.000Z",
+  "startedAt": "2026-03-08T12:00:00.000Z",
   "status": "running",
   "stepName": "github_repro_failing_test",
   "ticketId": "CV-612",
-  "updatedAt": "2026-03-11T12:00:00.000Z",
+  "updatedAt": "2026-03-08T12:00:00.000Z",
 }
 `;

@@ -11,6 +11,7 @@ import {
 } from "@/modules/step-executions/domain/step-execution.types";
 import { TicketDuplicateSemanticSearchService } from "@/modules/step-executions/ticket_duplicate_candidates/infra/ticket-duplicate-semantic-search";
 import { AppContext } from "@/lib/di";
+import type { TimeProvider } from "@/lib/time-provider";
 import {
   TicketDuplicateCandidateResultItemEntity,
   TicketDuplicateCandidatesResultEntity,
@@ -29,6 +30,7 @@ export const triggerTicketDuplicateCandidatesStep = async (
     ticketRepo,
     stepExecutionRepo,
     ticketVectorRepo,
+    timeProvider,
   }: {
     ticketRepo: Pick<TicketRepo, "loadById">;
     stepExecutionRepo: StepExecutionRepo;
@@ -36,6 +38,7 @@ export const triggerTicketDuplicateCandidatesStep = async (
       DrizzleTicketVectorRepo,
       "saveTicketEmbedding" | "findNearestNeighbors"
     >;
+    timeProvider: TimeProvider;
   } = AppContext,
 ): Promise<TriggerTicketDuplicateCandidatesStepResponse> => {
   const input =
@@ -46,7 +49,7 @@ export const triggerTicketDuplicateCandidatesStep = async (
     throw new Error(`Ticket with ID ${input.ticketId} not found`);
   }
 
-  const now = AppContext.timeProvider.now();
+  const now = timeProvider.now();
   const execution = new TicketDuplicateCandidatesStepResultEntity(
     input.ticketId,
     input.ticketId,
@@ -79,7 +82,7 @@ export const triggerTicketDuplicateCandidatesStep = async (
 
     savedExecution.setResult({
       status: "succeeded",
-      endedAt: AppContext.timeProvider.now(),
+      endedAt: timeProvider.now(),
       result: new TicketDuplicateCandidatesResultEntity(
         candidates.map(
           (candidate) =>
@@ -97,7 +100,7 @@ export const triggerTicketDuplicateCandidatesStep = async (
     if (!TERMINAL_STEP_EXECUTION_STATUSES.has(savedExecution.status)) {
       savedExecution.setResult({
         status: "failed",
-        endedAt: AppContext.timeProvider.now(),
+        endedAt: timeProvider.now(),
       });
       await stepExecutionRepo.save(savedExecution);
     }

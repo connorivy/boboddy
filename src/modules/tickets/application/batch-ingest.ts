@@ -3,6 +3,7 @@
 import { randomUUID } from "node:crypto";
 import { ticketAggregateToContract } from "./ticket-aggregate-to-contract";
 import { AppContext } from "@/lib/di";
+import type { TimeProvider } from "@/lib/time-provider";
 import { JiraTicketRepo, TicketRepo } from "./jira-ticket-repo";
 import { getDb } from "@/lib/db";
 import type { PipelineRunRepo } from "@/modules/pipeline-runs/application/pipeline-run-repo";
@@ -23,6 +24,7 @@ type TicketIngestDeps = {
   jiraTicketRepo: JiraTicketRepo;
   pipelineRunRepo: PipelineRunRepo;
   stepExecutionRepo: StepExecutionRepo;
+  timeProvider: TimeProvider;
 };
 
 type TicketIngestFromBoardsDeps = TicketIngestDeps & {
@@ -92,6 +94,7 @@ export async function ingestTicketsFromBoards({
   jiraTicketRepo,
   pipelineRunRepo,
   stepExecutionRepo,
+  timeProvider,
 }: TicketIngestFromBoardsDeps = AppContext) {
   const lastModifiedTicketDate = (await ticketRepo.loadMostRecentlyModified())
     .updatedAt;
@@ -108,12 +111,13 @@ export async function ingestTicketsFromBoards({
       [...admTickets, ...vocTickets],
       tx,
     );
-    // await persistTicketsAndPipelines(
-    //   persistedTickets,
-    //   pipelineRunRepo,
-    //   stepExecutionRepo,
-    //   tx,
-    // );
+    await persistTicketsAndPipelines(
+      persistedTickets,
+      pipelineRunRepo,
+      stepExecutionRepo,
+      timeProvider,
+      tx,
+    );
     return persistedTickets.map((t) => ticketAggregateToContract(t.entity));
   });
 }
@@ -125,20 +129,21 @@ async function persistTicketsAndPipelines(
   }[],
   pipelineRunRepo: PipelineRunRepo,
   stepExecutionRepo: StepExecutionRepo,
+  timeProvider: TimeProvider,
   tx: DbExecutor,
 ) {
   if (persistedTickets.length === 0) {
     return [];
   }
 
-  const queuedAt = AppContext.timeProvider.now();
+  const queuedAt = timeProvider.now();
   const pipelineRuns = persistedTickets
     .filter((ticket) => ticket.persistenceStatus === "created")
     .map((ticket) =>
       PipelineRunEntity.createAndQueueFirstStep({
         ticketId: ticket.entity.id ?? ticket.entity.ticketNumber,
         queuedAt,
-        autoAdvance: true,
+        autoAdvance: false,
       }),
     );
 

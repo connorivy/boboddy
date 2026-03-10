@@ -15,7 +15,7 @@ export const advancePipelineStepRequestSchema = z.object({
 
 export const createPipelineRunRequestSchema = z.object({
   ticketId: z.string().trim().min(1),
-  autoAdvance: z.boolean().optional().default(true),
+  autoAdvance: z.boolean().optional().default(false),
 });
 
 export const createPipelineRunsRequestSchema = z.object({

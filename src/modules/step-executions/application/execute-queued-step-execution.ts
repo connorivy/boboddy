@@ -1,4 +1,5 @@
 import { AppContext } from "@/lib/di";
+import type { TimeProvider } from "@/lib/time-provider";
 import { stepExecutionEntityToContract } from "@/modules/step-executions/application/step-execution-entity-to-contract";
 import type { StepExecutionRepo } from "@/modules/step-executions/application/step-execution-repo";
 import {
@@ -135,9 +136,18 @@ async function resolveTicketId(
 
 async function processClaimedStepExecution(
   claimedExecution: TicketPipelineStepExecutionEntity,
+  deps: Pick<
+    typeof AppContext,
+    | "ticketRepo"
+    | "environmentRepo"
+    | "ticketGitEnvironmentRepo"
+    | "pipelineRunRepo"
+    | "ticketVectorRepo"
+    | "githubService"
+  > & { stepExecutionRepo: StepExecutionRepo; timeProvider: TimeProvider },
 ): Promise<void> {
   const stepExecutionRepo = new ClaimedExecutionStepRepo(
-    AppContext.stepExecutionRepo,
+    deps.stepExecutionRepo,
     claimedExecution,
   );
   const ticketId = await resolveTicketId(
@@ -150,8 +160,9 @@ async function processClaimedStepExecution(
       await triggerTicketDescriptionQualityStep(
         { ticketId },
         {
-          ticketRepo: AppContext.ticketRepo,
+          ticketRepo: deps.ticketRepo,
           stepExecutionRepo,
+          timeProvider: deps.timeProvider,
         },
       );
       return;
@@ -159,12 +170,13 @@ async function processClaimedStepExecution(
       await triggerTicketDescriptionEnrichmentStep(
         { ticketId },
         {
-          ticketRepo: AppContext.ticketRepo,
-          environmentRepo: AppContext.environmentRepo,
-          ticketGitEnvironmentRepo: AppContext.ticketGitEnvironmentRepo,
-          pipelineRunRepo: AppContext.pipelineRunRepo,
-          githubService: AppContext.githubService,
+          ticketRepo: deps.ticketRepo,
+          environmentRepo: deps.environmentRepo,
+          ticketGitEnvironmentRepo: deps.ticketGitEnvironmentRepo,
+          pipelineRunRepo: deps.pipelineRunRepo,
+          githubService: deps.githubService,
           stepExecutionRepo,
+          timeProvider: deps.timeProvider,
         },
       );
       return;
@@ -172,9 +184,10 @@ async function processClaimedStepExecution(
       await triggerTicketDuplicateCandidatesStep(
         { ticketId },
         {
-          ticketRepo: AppContext.ticketRepo,
-          ticketVectorRepo: AppContext.ticketVectorRepo,
+          ticketRepo: deps.ticketRepo,
+          ticketVectorRepo: deps.ticketVectorRepo,
           stepExecutionRepo,
+          timeProvider: deps.timeProvider,
         },
       );
       return;
@@ -182,12 +195,13 @@ async function processClaimedStepExecution(
       await triggerTicketFailingTestReproStep(
         { ticketId },
         {
-          ticketRepo: AppContext.ticketRepo,
-          environmentRepo: AppContext.environmentRepo,
-          ticketGitEnvironmentRepo: AppContext.ticketGitEnvironmentRepo,
-          pipelineRunRepo: AppContext.pipelineRunRepo,
-          githubService: AppContext.githubService,
+          ticketRepo: deps.ticketRepo,
+          environmentRepo: deps.environmentRepo,
+          ticketGitEnvironmentRepo: deps.ticketGitEnvironmentRepo,
+          pipelineRunRepo: deps.pipelineRunRepo,
+          githubService: deps.githubService,
           stepExecutionRepo,
+          timeProvider: deps.timeProvider,
         },
       );
       return;
@@ -196,12 +210,13 @@ async function processClaimedStepExecution(
         { ticketId },
         {
           stepExecutionRepo,
-          githubService: AppContext.githubService,
+          githubService: deps.githubService,
+          timeProvider: deps.timeProvider,
         },
       );
       return;
     case FAILING_TEST_FIX_STEP_NAME: {
-      const ticket = await AppContext.ticketRepo.loadById(ticketId, {
+      const ticket = await deps.ticketRepo.loadById(ticketId, {
         loadTicketGitEnvironmentAggregate: true,
       });
       if (!ticket) {
@@ -224,11 +239,12 @@ async function processClaimedStepExecution(
           ticketGitEnvironmentId,
         },
         {
-          ticketRepo: AppContext.ticketRepo,
-          environmentRepo: AppContext.environmentRepo,
-          ticketGitEnvironmentRepo: AppContext.ticketGitEnvironmentRepo,
-          githubService: AppContext.githubService,
+          ticketRepo: deps.ticketRepo,
+          environmentRepo: deps.environmentRepo,
+          ticketGitEnvironmentRepo: deps.ticketGitEnvironmentRepo,
+          githubService: deps.githubService,
           stepExecutionRepo,
+          timeProvider: deps.timeProvider,
         },
       );
       return;
@@ -244,8 +260,22 @@ export async function executeQueuedStepExecution(
   rawInput: ExecuteQueuedStepExecutionRequest,
   {
     stepExecutionRepo,
+    timeProvider,
+    ticketRepo,
+    environmentRepo,
+    ticketGitEnvironmentRepo,
+    pipelineRunRepo,
+    ticketVectorRepo,
+    githubService,
   }: {
-    stepExecutionRepo: Pick<StepExecutionRepo, "claimQueued" | "load">;
+    stepExecutionRepo: StepExecutionRepo;
+    timeProvider: TimeProvider;
+    ticketRepo: (typeof AppContext)["ticketRepo"];
+    environmentRepo: (typeof AppContext)["environmentRepo"];
+    ticketGitEnvironmentRepo: (typeof AppContext)["ticketGitEnvironmentRepo"];
+    pipelineRunRepo: (typeof AppContext)["pipelineRunRepo"];
+    ticketVectorRepo: (typeof AppContext)["ticketVectorRepo"];
+    githubService: (typeof AppContext)["githubService"];
   } = AppContext,
 ): Promise<ExecuteQueuedStepExecutionResponse> {
   const input = executeQueuedStepExecutionRequestSchema.parse(rawInput);
@@ -262,7 +292,16 @@ export async function executeQueuedStepExecution(
     });
   }
 
-  await processClaimedStepExecution(claimedExecution);
+  await processClaimedStepExecution(claimedExecution, {
+    stepExecutionRepo,
+    timeProvider,
+    ticketRepo,
+    environmentRepo,
+    ticketGitEnvironmentRepo,
+    pipelineRunRepo,
+    ticketVectorRepo,
+    githubService,
+  });
 
   const persistedExecution =
     (await stepExecutionRepo.load(claimedExecution.id)) ?? claimedExecution;

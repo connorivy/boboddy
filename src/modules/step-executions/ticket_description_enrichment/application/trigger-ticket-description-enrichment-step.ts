@@ -10,6 +10,7 @@ import { stepExecutionEntityToContract } from "@/modules/step-executions/applica
 import { TICKET_INVESTIGATION_STEP_NAME } from "@/modules/step-executions/domain/step-execution.types";
 import type { GithubApiService } from "@/modules/step-executions/infra/github-copilot-coding-agent";
 import { AppContext } from "@/lib/di";
+import type { TimeProvider } from "@/lib/time-provider";
 import { TicketDescriptionEnrichmentStepExecutionEntity } from "@/modules/step-executions/domain/step-execution-entity";
 import { TicketGithubIssueEntity } from "@/modules/tickets/domain/ticket-github-issue.entity";
 import { assignDefaultEnvironment } from "@/modules/environments/application/assign-environment";
@@ -82,6 +83,7 @@ export const triggerTicketDescriptionEnrichmentStep = async (
     ticketGitEnvironmentRepo,
     pipelineRunRepo = AppContext.pipelineRunRepo,
     githubService,
+    timeProvider,
   }: {
     ticketRepo: TicketRepo;
     stepExecutionRepo: StepExecutionRepo;
@@ -89,6 +91,7 @@ export const triggerTicketDescriptionEnrichmentStep = async (
     ticketGitEnvironmentRepo: TicketGitEnvironmentRepo;
     pipelineRunRepo?: PipelineRunRepo;
     githubService: GithubApiService;
+    timeProvider: TimeProvider;
   } = AppContext,
 ): Promise<TriggerTicketDescriptionEnrichmentStepResponse> => {
   const input =
@@ -102,7 +105,7 @@ export const triggerTicketDescriptionEnrichmentStep = async (
     throw new Error(`Ticket with ID ${input.ticketId} not found`);
   }
 
-  const now = AppContext.timeProvider.now();
+  const now = timeProvider.now();
   const pipelineId = uuidv7();
   await pipelineRunRepo.save(new PipelineRunEntity(pipelineId, input.ticketId));
   const execution = new TicketDescriptionEnrichmentStepExecutionEntity(
@@ -202,7 +205,7 @@ export const triggerTicketDescriptionEnrichmentStep = async (
 
     savedExecution.setResult({
       status: "failed",
-      endedAt: AppContext.timeProvider.now(),
+      endedAt: timeProvider.now(),
       failureReason: errorMessage,
     });
     await stepExecutionRepo.save(savedExecution);

@@ -9,6 +9,8 @@ import { FAILING_TEST_FIX_STEP_NAME } from "@/modules/step-executions/domain/ste
 import type { StepExecutionStatus } from "@/modules/tickets/contracts/ticket-contracts";
 import { httpError } from "@/lib/api/http";
 import { AppContext } from "@/lib/di";
+import type { TimeProvider } from "@/lib/time-provider";
+import type { StepExecutionRepo } from "@/modules/step-executions/application/step-execution-repo";
 import {
   FailingTestFixStepCompletionResultEntity,
   FailingTestFixStepExecutionEntity,
@@ -42,7 +44,13 @@ const resolveStatus = (
 
 export const completeTicketFailingTestFixStep = async (
   rawInput: CompleteTicketFailingTestFixStepRequest,
-  { stepExecutionRepo } = AppContext,
+  {
+    stepExecutionRepo,
+    timeProvider,
+  }: {
+    stepExecutionRepo: StepExecutionRepo;
+    timeProvider: TimeProvider;
+  } = AppContext,
 ): Promise<CompleteTicketFailingTestFixStepResponse> => {
   const input = completeTicketFailingTestFixStepRequestSchema.parse(rawInput);
 
@@ -71,7 +79,7 @@ export const completeTicketFailingTestFixStep = async (
     );
   }
 
-  const endedAt = AppContext.timeProvider.now();
+  const endedAt = timeProvider.now();
 
   existingExecution.setResult({
     status: resolveStatus(input),

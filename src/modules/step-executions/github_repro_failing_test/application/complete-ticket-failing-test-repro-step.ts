@@ -9,6 +9,7 @@ import { FAILING_TEST_REPRO_STEP_NAME } from "@/modules/step-executions/domain/s
 import type { StepExecutionStatus } from "@/modules/tickets/contracts/ticket-contracts";
 import { httpError } from "@/lib/api/http";
 import { AppContext } from "@/lib/di";
+import type { TimeProvider } from "@/lib/time-provider";
 import {
   FailingTestReproAgentErrorResultEntity,
   FailingTestReproCancelledResultEntity,
@@ -46,9 +47,11 @@ export const completeTicketFailingTestReproStep = async (
   {
     stepExecutionRepo,
     ticketRepo,
+    timeProvider,
   }: {
     stepExecutionRepo: StepExecutionRepo;
     ticketRepo: TicketRepo;
+    timeProvider: TimeProvider;
   } = AppContext,
 ): Promise<CompleteTicketFailingTestReproStepResponse> => {
   const input = completeTicketFailingTestReproStepRequestSchema.parse(rawInput);
@@ -81,7 +84,7 @@ export const completeTicketFailingTestReproStep = async (
     );
   }
 
-  const endedAt = AppContext.timeProvider.now();
+  const endedAt = timeProvider.now();
   const nextStatus = resolveStatus(input);
   const shouldRemainOpen = nextStatus === "waiting_for_user_feedback";
   const rawResultJson = {

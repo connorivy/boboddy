@@ -1,6 +1,6 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { AppContext } from "@/lib/di";
-import { systemTimeProvider } from "@/lib/time-provider";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { AppContext, createAppContext } from "@/lib/di";
+import type { TimeProvider } from "@/lib/time-provider";
 import { assignDefaultEnvironment } from "@/modules/environments/application/assign-environment";
 import { EnvironmentAggregate } from "@/modules/environments/domain/environment-aggregate";
 import { TicketGitEnvironmentAggregate } from "@/modules/environments/domain/ticket-git-environment-aggregate";
@@ -16,6 +16,7 @@ import type {
   TicketIngestInput,
 } from "@/modules/tickets/contracts/ticket-contracts";
 import { createPipelineRuns } from "@/modules/pipeline-runs/application/create-pipeline-runs";
+import type { AppContext as AppContextDeps } from "@/lib/di";
 
 const hoisted = vi.hoisted(() => ({
   rankTicketDescriptionMock: vi.fn(),
@@ -47,7 +48,13 @@ vi.spyOn(AppContext, "githubService", "get").mockReturnValue({
 
 const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-const FIXED_NOW = new Date("2026-03-11T12:00:00.000Z");
+const FIXED_NOW = new Date("2026-03-08T12:00:00.000Z");
+const FIXED_TIME_PROVIDER: TimeProvider = {
+  now: () => new Date(FIXED_NOW),
+  nowIso: () => FIXED_NOW.toISOString(),
+};
+
+let testAppContext: AppContextDeps;
 
 function createSnapshotNormalizer() {
   const aliasesByKind = {
@@ -123,21 +130,24 @@ const makeTicket = (
       dueDate: null,
       reporter: "reporter@acme.test",
       assignee: "owner@acme.test",
-      jiraCreatedAt: "2026-03-11T10:00:00.000Z",
-      jiraUpdatedAt: "2026-03-11T10:05:00.000Z",
+      jiraCreatedAt: "2026-03-08T10:00:00.000Z",
+      jiraUpdatedAt: "2026-03-08T10:05:00.000Z",
       ...overrides,
     },
   ],
 });
 
-async function ingestTicketAndLoadDetail() {
-  const [ticket] = await ingestTicketContracts(makeTicket());
+async function ingestTicketAndLoadDetail(appContext: AppContextDeps) {
+  const [ticket] = await ingestTicketContracts(makeTicket(), appContext);
   expect(ticket).toBeDefined();
 
-  await createPipelineRuns({
-    pipelineRuns: [{ ticketId: ticket.id }],
-  });
-  const ticketDetail = await loadTicketDetail(ticket.id);
+  await createPipelineRuns(
+    {
+      pipelineRuns: [{ ticketId: ticket.id, autoAdvance: true }],
+    },
+    appContext,
+  );
+  const ticketDetail = await loadTicketDetail(ticket.id, appContext);
   const [firstStepExecution] = ticketDetail.pipeline.stepExecutions;
 
   expect(firstStepExecution).toBeDefined();
@@ -151,8 +161,11 @@ async function ingestTicketAndLoadDetail() {
   };
 }
 
-async function provisionDefaultTicketEnvironment(ticketId: string) {
-  await AppContext.environmentRepo.save(
+async function provisionDefaultTicketEnvironment(
+  ticketId: string,
+  appContext: AppContextDeps,
+) {
+  await appContext.environmentRepo.save(
     new EnvironmentAggregate(
       "adm-1",
       "adm",
@@ -160,18 +173,24 @@ async function provisionDefaultTicketEnvironment(ticketId: string) {
       "us",
       "postgres://example.test:5432/app",
       0,
-      new Date("2026-03-11T09:59:00.000Z"),
+      new Date("2026-03-08T09:59:00.000Z"),
     ),
   );
 
-  const ticketGitEnvironment = await AppContext.ticketGitEnvironmentRepo.save(
+  const ticketGitEnvironment = await appContext.ticketGitEnvironmentRepo.save(
     new TicketGitEnvironmentAggregate(ticketId, "adm-1", "ticket-cv-612-dev"),
   );
+  if (!ticketGitEnvironment.id) {
+    throw new Error("Failed to create ticket git environment");
+  }
 
-  await assignDefaultEnvironment({
-    ticketId,
-    ticketGitEnvironmentId: ticketGitEnvironment.id!,
-  });
+  await assignDefaultEnvironment(
+    {
+      ticketId,
+      ticketGitEnvironmentId: ticketGitEnvironment.id,
+    },
+    appContext,
+  );
 }
 
 async function runStep<T>(label: string, fn: () => Promise<T>): Promise<T> {
@@ -184,8 +203,11 @@ async function runStep<T>(label: string, fn: () => Promise<T>): Promise<T> {
   }
 }
 
-async function loadPipelineStepExecutions(pipelineId: string) {
-  const pipeline = await getPipelineRun(pipelineId);
+async function loadPipelineStepExecutions(
+  pipelineId: string,
+  appContext: AppContextDeps,
+) {
+  const pipeline = await getPipelineRun(pipelineId, appContext);
   expect(pipeline).not.toBeNull();
   expect(pipeline?.stepExecutions).not.toBeNull();
 
@@ -210,22 +232,23 @@ async function assertInitialQueuedStepSnapshot(ticketDetail: {
     "initial queued description step",
   );
 
-  expect(snapshotNormalizer.normalizeValue(ticketDetail)).toMatchInlineSnapshot(`
+  expect(snapshotNormalizer.normalizeValue(ticketDetail))
+    .toMatchInlineSnapshot(`
     {
       "pipeline": {
         "stepExecutions": [
           {
-            "createdAt": "2026-03-11T12:00:00.000Z",
+            "createdAt": "2026-03-08T12:00:00.000Z",
             "endedAt": null,
             "failureReason": null,
             "id": "<uuid1>",
             "pipelineId": "<uuid2>",
             "result": null,
-            "startedAt": "2026-03-11T12:00:00.000Z",
+            "startedAt": "2026-03-08T12:00:00.000Z",
             "status": "queued",
             "stepName": "ticket_description_quality_rank",
             "ticketId": "CV-612",
-            "updatedAt": "2026-03-11T12:00:00.000Z",
+            "updatedAt": "2026-03-08T12:00:00.000Z",
           },
         ],
       },
@@ -234,7 +257,7 @@ async function assertInitialQueuedStepSnapshot(ticketDetail: {
         "companyNames": [
           "Acme Co",
         ],
-        "createdAt": "2026-03-11T12:00:00.000Z",
+        "createdAt": "2026-03-08T12:00:00.000Z",
         "defaultGitEnvironment": undefined,
         "defaultGitEnvironmentId": undefined,
         "description": "Restoring a saved session reopens tabs but loses filters.",
@@ -243,8 +266,8 @@ async function assertInitialQueuedStepSnapshot(ticketDetail: {
           "reporter@acme.test",
         ],
         "id": "CV-612",
-        "jiraCreatedAt": "2026-03-11T10:00:00.000Z",
-        "jiraUpdatedAt": "2026-03-11T10:05:00.000Z",
+        "jiraCreatedAt": "2026-03-08T10:00:00.000Z",
+        "jiraUpdatedAt": "2026-03-08T10:05:00.000Z",
         "pipelineSteps": undefined,
         "priority": "medium",
         "reporter": "reporter@acme.test",
@@ -253,14 +276,17 @@ async function assertInitialQueuedStepSnapshot(ticketDetail: {
         "ticketNumber": "CV-612",
         "ticketType": "bug",
         "title": "Session restore misses expected state",
-        "updatedAt": "2026-03-11T12:00:00.000Z",
+        "updatedAt": "2026-03-08T12:00:00.000Z",
       },
     }
   `);
 }
 
 async function assertDescriptionStepAndQueuedInvestigation(pipelineId: string) {
-  const stepExecutions = await loadPipelineStepExecutions(pipelineId);
+  const stepExecutions = await loadPipelineStepExecutions(
+    pipelineId,
+    testAppContext,
+  );
   expect(stepExecutions).toHaveLength(2);
 
   assertNamedStepExecutionSnapshot(
@@ -274,7 +300,10 @@ async function assertDescriptionStepAndQueuedInvestigation(pipelineId: string) {
 }
 
 async function assertInvestigationStepRunning(pipelineId: string) {
-  const stepExecutions = await loadPipelineStepExecutions(pipelineId);
+  const stepExecutions = await loadPipelineStepExecutions(
+    pipelineId,
+    testAppContext,
+  );
   expect(stepExecutions).toHaveLength(2);
 
   assertNamedStepExecutionSnapshot(
@@ -284,7 +313,10 @@ async function assertInvestigationStepRunning(pipelineId: string) {
 }
 
 async function assertCompletedInvestigationAndQueuedRepro(pipelineId: string) {
-  const stepExecutions = await loadPipelineStepExecutions(pipelineId);
+  const stepExecutions = await loadPipelineStepExecutions(
+    pipelineId,
+    testAppContext,
+  );
   expect(stepExecutions).toHaveLength(3);
 
   assertNamedStepExecutionSnapshot(
@@ -298,14 +330,20 @@ async function assertCompletedInvestigationAndQueuedRepro(pipelineId: string) {
 }
 
 async function assertReproStepRunning(pipelineId: string) {
-  const stepExecutions = await loadPipelineStepExecutions(pipelineId);
+  const stepExecutions = await loadPipelineStepExecutions(
+    pipelineId,
+    testAppContext,
+  );
   expect(stepExecutions).toHaveLength(3);
 
   assertNamedStepExecutionSnapshot(stepExecutions[0], "running repro step");
 }
 
 async function assertCompletedReproAndQueuedFinalize(pipelineId: string) {
-  const stepExecutions = await loadPipelineStepExecutions(pipelineId);
+  const stepExecutions = await loadPipelineStepExecutions(
+    pipelineId,
+    testAppContext,
+  );
   expect(stepExecutions).toHaveLength(4);
 
   assertNamedStepExecutionSnapshot(
@@ -319,7 +357,10 @@ async function assertCompletedReproAndQueuedFinalize(pipelineId: string) {
 }
 
 async function assertCompletedFinalizeAndQueuedFix(pipelineId: string) {
-  const stepExecutions = await loadPipelineStepExecutions(pipelineId);
+  const stepExecutions = await loadPipelineStepExecutions(
+    pipelineId,
+    testAppContext,
+  );
   expect(stepExecutions).toHaveLength(5);
 
   assertNamedStepExecutionSnapshot(
@@ -333,14 +374,20 @@ async function assertCompletedFinalizeAndQueuedFix(pipelineId: string) {
 }
 
 async function assertFixStepRunning(pipelineId: string) {
-  const stepExecutions = await loadPipelineStepExecutions(pipelineId);
+  const stepExecutions = await loadPipelineStepExecutions(
+    pipelineId,
+    testAppContext,
+  );
   expect(stepExecutions).toHaveLength(5);
 
   assertNamedStepExecutionSnapshot(stepExecutions[0], "running fix step");
 }
 
 async function assertCompletedFixStep(pipelineId: string) {
-  const stepExecutions = await loadPipelineStepExecutions(pipelineId);
+  const stepExecutions = await loadPipelineStepExecutions(
+    pipelineId,
+    testAppContext,
+  );
   expect(stepExecutions).toHaveLength(5);
 
   assertNamedStepExecutionSnapshot(
@@ -352,92 +399,108 @@ async function assertCompletedFixStep(pipelineId: string) {
 async function completeInvestigationStepAndAssert(
   stepExecutionId: string,
   pipelineId: string,
+  appContext: AppContextDeps,
 ) {
-  await completeTicketDescriptionEnrichmentStep({
-    stepExecutionId,
-    agentStatus: "complete",
-    agentBranch: "ticket/CV-612-investigation",
-    operationOutcome: "findings_recorded",
-    summaryOfInvestigation:
-      "Session restore reopens tabs but does not restore filters.",
-    investigationReport:
-      "Investigation found filter state is not persisted during session restore.",
-    whatHappened:
-      "The restore flow rehydrates tabs but omits the saved filter payload.",
-    datadogQueryTerms: ["CV-612", "session restore", "filters"],
-    datadogTimeRange: "2026-03-11T10:00:00.000Z/2026-03-11T10:05:10.000Z",
-    keyIdentifiers: ["CV-612", "session-restore"],
-    exactEventTimes: ["2026-03-11T10:05:00.000Z"],
-    codeUnitsInvolved: [
-      {
-        kind: "function",
-        name: "restoreSession",
-        filePath: "src/modules/session/restore-session.ts",
-        symbol: "restoreSession",
-        relevance: "Restores tab state but not filters.",
-        evidence: ["Tab restoration occurs without filter payload hydration."],
-        notes: [],
+  await completeTicketDescriptionEnrichmentStep(
+    {
+      stepExecutionId,
+      agentStatus: "complete",
+      agentBranch: "ticket/CV-612-investigation",
+      operationOutcome: "findings_recorded",
+      summaryOfInvestigation:
+        "Session restore reopens tabs but does not restore filters.",
+      investigationReport:
+        "Investigation found filter state is not persisted during session restore.",
+      whatHappened:
+        "The restore flow rehydrates tabs but omits the saved filter payload.",
+      datadogQueryTerms: ["CV-612", "session restore", "filters"],
+      datadogTimeRange: "2026-03-08T10:00:00.000Z/2026-03-11T10:05:10.000Z",
+      keyIdentifiers: ["CV-612", "session-restore"],
+      exactEventTimes: ["2026-03-08T10:05:00.000Z"],
+      codeUnitsInvolved: [
+        {
+          kind: "function",
+          name: "restoreSession",
+          filePath: "src/modules/session/restore-session.ts",
+          symbol: "restoreSession",
+          relevance: "Restores tab state but not filters.",
+          evidence: [
+            "Tab restoration occurs without filter payload hydration.",
+          ],
+          notes: [],
+        },
+      ],
+      databaseFindings: [
+        {
+          entityType: "saved_session",
+          relationToTicket:
+            "Captured session state for the affected restore flow.",
+          identifiers: ["CV-612", "session-restore"],
+          records: [{ id: "session-restore", filters: null }],
+          comparisonNotes: [
+            "Saved session record did not contain filter data.",
+          ],
+          notes: [],
+        },
+      ],
+      logFindings: [
+        {
+          source: "application_log",
+          routeOrCodePath: "/session/restore",
+          queryOrFilter: "ticket:CV-612",
+          timestamp: "2026-03-08T10:05:00.000Z",
+          message: "restoreSession completed without filter state",
+          identifiers: ["CV-612"],
+          evidence: ["Log confirms filter payload was empty at restore time."],
+          notes: [],
+        },
+      ],
+      datadogSessionFindings: [
+        {
+          userIdentifier: "reporter@acme.test",
+          sessionId: "session-restore",
+          timeWindow: "2026-03-08T10:04:00.000Z/2026-03-11T10:05:10.000Z",
+          events: [
+            {
+              timestamp: "2026-03-08T10:05:00.000Z",
+              type: "action",
+              description:
+                "User restored a saved session and filters were absent.",
+              route: "/session/restore",
+              metadata: { ticketId: "CV-612" },
+            },
+          ],
+          notes: [],
+        },
+      ],
+      investigationGaps: [],
+      recommendedNextQueries: [
+        "Inspect filter serialization during save flow.",
+      ],
+      confidenceLevel: 0.87,
+      rawResultJson: {
+        mocked: true,
+        ticketId: "CV-612",
       },
-    ],
-    databaseFindings: [
-      {
-        entityType: "saved_session",
-        relationToTicket:
-          "Captured session state for the affected restore flow.",
-        identifiers: ["CV-612", "session-restore"],
-        records: [{ id: "session-restore", filters: null }],
-        comparisonNotes: ["Saved session record did not contain filter data."],
-        notes: [],
-      },
-    ],
-    logFindings: [
-      {
-        source: "application_log",
-        routeOrCodePath: "/session/restore",
-        queryOrFilter: "ticket:CV-612",
-        timestamp: "2026-03-11T10:05:00.000Z",
-        message: "restoreSession completed without filter state",
-        identifiers: ["CV-612"],
-        evidence: ["Log confirms filter payload was empty at restore time."],
-        notes: [],
-      },
-    ],
-    datadogSessionFindings: [
-      {
-        userIdentifier: "reporter@acme.test",
-        sessionId: "session-restore",
-        timeWindow: "2026-03-11T10:04:00.000Z/2026-03-11T10:05:10.000Z",
-        events: [
-          {
-            timestamp: "2026-03-11T10:05:00.000Z",
-            type: "action",
-            description:
-              "User restored a saved session and filters were absent.",
-            route: "/session/restore",
-            metadata: { ticketId: "CV-612" },
-          },
-        ],
-        notes: [],
-      },
-    ],
-    investigationGaps: [],
-    recommendedNextQueries: ["Inspect filter serialization during save flow."],
-    confidenceLevel: 0.87,
-    rawResultJson: {
-      mocked: true,
-      ticketId: "CV-612",
     },
-  });
+    appContext,
+  );
 
   await assertCompletedInvestigationAndQueuedRepro(pipelineId);
 }
 
 describe("AI pipeline flow (integration)", () => {
+  testAppContext = createAppContext(FIXED_TIME_PROVIDER);
   beforeEach(async () => {
-    AppContext.timeProvider = {
-      now: () => new Date(FIXED_NOW),
-      nowIso: () => FIXED_NOW.toISOString(),
-    };
+    vi.spyOn(testAppContext, "githubService", "get").mockReturnValue({
+      createIssue: hoisted.createIssueMock,
+      unassignCopilot: hoisted.unassignCopilotMock,
+      assignCopilot: hoisted.assignCopilotMock,
+      upsertFile: hoisted.upsertFileMock,
+      markPullRequestReadyForReview: hoisted.markPullRequestReadyForReviewMock,
+      mergePullRequest: hoisted.mergePullRequestMock,
+    } as unknown as AppContextDeps["githubService"]);
+
     snapshotNormalizer.reset();
     hoisted.rankTicketDescriptionMock.mockReset();
     hoisted.createIssueMock.mockReset();
@@ -457,16 +520,15 @@ describe("AI pipeline flow (integration)", () => {
     hoisted.mergePullRequestMock.mockResolvedValue(undefined);
   });
 
-  afterEach(() => {
-    AppContext.timeProvider = systemTimeProvider;
-  });
-
   it("walks through the AI pipeline happy path from ticket ingest through pipeline advancement", async () => {
     const initialState = await runStep(
       "assert initial queued step snapshot",
       async () => {
-        const state = await ingestTicketAndLoadDetail();
-        await provisionDefaultTicketEnvironment(state.ticket.id);
+        const state = await ingestTicketAndLoadDetail(testAppContext);
+        await provisionDefaultTicketEnvironment(
+          state.ticket.id,
+          testAppContext,
+        );
         await assertInitialQueuedStepSnapshot(state.ticketDetail);
         return state;
       },
@@ -475,6 +537,7 @@ describe("AI pipeline flow (integration)", () => {
     await runStep("execute description step", async () => {
       const stepExecutionId = await getPipelineRun(
         initialState.pipelineId,
+        testAppContext,
       ).then((pipeline) => pipeline?.stepExecutions?.[0]?.id);
       if (!stepExecutionId) {
         throw new Error("No step execution found for description step");
@@ -487,9 +550,7 @@ describe("AI pipeline flow (integration)", () => {
         rawResponse: '{"mocked":true}',
       });
 
-      await executeQueuedStepExecution({
-        stepExecutionId,
-      });
+      await executeQueuedStepExecution({ stepExecutionId }, testAppContext);
       await assertDescriptionStepAndQueuedInvestigation(
         initialState.pipelineId,
       );
@@ -501,13 +562,12 @@ describe("AI pipeline flow (integration)", () => {
     await runStep("execute investigation step", async () => {
       const stepExecutionId = await getPipelineRun(
         initialState.pipelineId,
+        testAppContext,
       ).then((pipeline) => pipeline?.stepExecutions?.[0]?.id);
       if (!stepExecutionId) {
         throw new Error("No step execution found for investigation step");
       }
-      await executeQueuedStepExecution({
-        stepExecutionId,
-      });
+      await executeQueuedStepExecution({ stepExecutionId }, testAppContext);
       expect(hoisted.createIssueMock).toHaveBeenCalledTimes(1);
       expect(hoisted.upsertFileMock).toHaveBeenCalledTimes(1);
       expect(hoisted.assignCopilotMock).toHaveBeenCalledTimes(1);
@@ -516,20 +576,20 @@ describe("AI pipeline flow (integration)", () => {
       await completeInvestigationStepAndAssert(
         stepExecutionId,
         initialState.pipelineId,
+        testAppContext,
       );
     });
 
     await runStep("execute repro step", async () => {
       const stepExecutionId = await getPipelineRun(
         initialState.pipelineId,
+        testAppContext,
       ).then((pipeline) => pipeline?.stepExecutions?.[0]?.id);
       if (!stepExecutionId) {
         throw new Error("No step execution found for repro step");
       }
 
-      await executeQueuedStepExecution({
-        stepExecutionId,
-      });
+      await executeQueuedStepExecution({ stepExecutionId }, testAppContext);
 
       expect(hoisted.createIssueMock).toHaveBeenCalledTimes(1);
       expect(hoisted.unassignCopilotMock).toHaveBeenCalledTimes(1);
@@ -538,19 +598,22 @@ describe("AI pipeline flow (integration)", () => {
 
       await assertReproStepRunning(initialState.pipelineId);
 
-      await completeTicketFailingTestReproStep({
-        stepExecutionId,
-        agentStatus: "complete",
-        agentBranch: "ticket/CV-612-repro",
-        reproduceOperationOutcome: "reproduced",
-        summaryOfFindings:
-          "Added a failing integration test that confirms session restore drops saved filters.",
-        confidenceLevel: 0.91,
-        failingTestPaths: [
-          "tests/integration/modules/session/restore-session.integration.test.ts",
-        ],
-        feedbackRequest: null,
-      });
+      await completeTicketFailingTestReproStep(
+        {
+          stepExecutionId,
+          agentStatus: "complete",
+          agentBranch: "ticket/CV-612-repro",
+          reproduceOperationOutcome: "reproduced",
+          summaryOfFindings:
+            "Added a failing integration test that confirms session restore drops saved filters.",
+          confidenceLevel: 0.91,
+          failingTestPaths: [
+            "tests/integration/modules/session/restore-session.integration.test.ts",
+          ],
+          feedbackRequest: null,
+        },
+        testAppContext,
+      );
 
       await assertCompletedReproAndQueuedFinalize(initialState.pipelineId);
     });
@@ -558,14 +621,13 @@ describe("AI pipeline flow (integration)", () => {
     await runStep("execute finalize repro pr step", async () => {
       const stepExecutionId = await getPipelineRun(
         initialState.pipelineId,
+        testAppContext,
       ).then((pipeline) => pipeline?.stepExecutions?.[0]?.id);
       if (!stepExecutionId) {
         throw new Error("No step execution found for finalize repro pr step");
       }
 
-      await executeQueuedStepExecution({
-        stepExecutionId,
-      });
+      await executeQueuedStepExecution({ stepExecutionId }, testAppContext);
 
       expect(hoisted.markPullRequestReadyForReviewMock).toHaveBeenCalledTimes(
         1,
@@ -577,14 +639,13 @@ describe("AI pipeline flow (integration)", () => {
     await runStep("execute fix step", async () => {
       const stepExecutionId = await getPipelineRun(
         initialState.pipelineId,
+        testAppContext,
       ).then((pipeline) => pipeline?.stepExecutions?.[0]?.id);
       if (!stepExecutionId) {
         throw new Error("No step execution found for fix step");
       }
 
-      await executeQueuedStepExecution({
-        stepExecutionId,
-      });
+      await executeQueuedStepExecution({ stepExecutionId }, testAppContext);
 
       expect(hoisted.createIssueMock).toHaveBeenCalledTimes(1);
       expect(hoisted.unassignCopilotMock).toHaveBeenCalledTimes(2);
@@ -593,17 +654,20 @@ describe("AI pipeline flow (integration)", () => {
 
       await assertFixStepRunning(initialState.pipelineId);
 
-      await completeTicketFailingTestFixStep({
-        stepExecutionId,
-        agentStatus: "complete",
-        agentBranch: "ticket/CV-612-fix",
-        fixOperationOutcome: "fixed",
-        summaryOfFix:
-          "Updated session restore to rehydrate saved filters before rendering restored tabs, which makes the reproduced integration test pass.",
-        fixConfidenceLevel: 0.89,
-        fixedTestPath:
-          "tests/integration/modules/session/restore-session.integration.test.ts",
-      });
+      await completeTicketFailingTestFixStep(
+        {
+          stepExecutionId,
+          agentStatus: "complete",
+          agentBranch: "ticket/CV-612-fix",
+          fixOperationOutcome: "fixed",
+          summaryOfFix:
+            "Updated session restore to rehydrate saved filters before rendering restored tabs, which makes the reproduced integration test pass.",
+          fixConfidenceLevel: 0.89,
+          fixedTestPath:
+            "tests/integration/modules/session/restore-session.integration.test.ts",
+        },
+        testAppContext,
+      );
 
       await assertCompletedFixStep(initialState.pipelineId);
     });

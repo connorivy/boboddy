@@ -13,6 +13,7 @@ import {
 import type { GithubApiService } from "@/modules/step-executions/infra/github-copilot-coding-agent";
 import { TicketGithubIssueEntity } from "@/modules/tickets/domain/ticket-github-issue.entity";
 import { AppContext } from "@/lib/di";
+import type { TimeProvider } from "@/lib/time-provider";
 import { completeTicketFailingTestReproStepRequestBodySchema } from "../contracts/complete-ticket-failing-test-repro-step-contracts";
 import z from "zod";
 import { TicketGitEnvironmentAggregate } from "@/modules/environments/domain/ticket-git-environment-aggregate";
@@ -81,6 +82,7 @@ export const triggerTicketFailingTestReproStep = async (
     ticketGitEnvironmentRepo,
     pipelineRunRepo = AppContext.pipelineRunRepo,
     githubService,
+    timeProvider,
   }: {
     ticketRepo: TicketRepo;
     stepExecutionRepo: StepExecutionRepo;
@@ -88,6 +90,7 @@ export const triggerTicketFailingTestReproStep = async (
     ticketGitEnvironmentRepo: TicketGitEnvironmentRepo;
     pipelineRunRepo?: PipelineRunRepo;
     githubService: GithubApiService;
+    timeProvider: TimeProvider;
   } = AppContext,
 ): Promise<TriggerTicketFailingTestReproStepResponse> => {
   const input = triggerTicketFailingTestReproStepRequestSchema.parse(rawInput);
@@ -101,7 +104,7 @@ export const triggerTicketFailingTestReproStep = async (
     throw new Error(`Ticket with ID ${input.ticketId} not found`);
   }
 
-  const now = AppContext.timeProvider.now();
+  const now = timeProvider.now();
   const pipelineId = uuidv7();
   await pipelineRunRepo.save(
     new PipelineRunEntity(pipelineId, input.ticketId, true),
@@ -234,7 +237,7 @@ export const triggerTicketFailingTestReproStep = async (
     if (savedExecution instanceof FailingTestReproStepExecutionEntity) {
       savedExecution.setResult({
         status: "failed",
-        endedAt: AppContext.timeProvider.now(),
+        endedAt: timeProvider.now(),
         githubPrTargetBranch: baseBranch,
       });
     }

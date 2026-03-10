@@ -23,12 +23,15 @@ import {
 } from "@/modules/step-executions/domain/step-execution.types";
 import { PipelineRunRepo } from "./pipeline-run-repo";
 import { httpError } from "@/lib/api/http";
+import { systemTimeProvider } from "@/lib/time-provider";
 
 export class QueueNextPipelineStepOnStepExecutionCompleted implements DomainEventHandler<StepExecutionCompletedDomainEvent> {
   constructor(
     private readonly stepExecutionRepo: StepExecutionRepo,
     private readonly pipelineRunRepo: PipelineRunRepo,
-    private readonly pipelineAdvancementPolicy: PipelineAdvancementPolicy = new PipelineAdvancementPolicy(),
+    private readonly pipelineAdvancementPolicy: PipelineAdvancementPolicy = new PipelineAdvancementPolicy(
+      systemTimeProvider,
+    ),
   ) {}
 
   async handle(

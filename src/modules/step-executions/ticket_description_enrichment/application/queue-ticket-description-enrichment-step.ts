@@ -8,6 +8,7 @@ import {
 } from "@/modules/step-executions/ticket_description_enrichment/contracts/queue-ticket-description-enrichment-step-contracts";
 import { stepExecutionEntityToContract } from "@/modules/step-executions/application/step-execution-entity-to-contract";
 import { AppContext } from "@/lib/di";
+import type { TimeProvider } from "@/lib/time-provider";
 import { TicketDescriptionEnrichmentStepExecutionEntity } from "@/modules/step-executions/domain/step-execution-entity";
 import type { TicketRepo } from "@/modules/tickets/application/jira-ticket-repo";
 import type { StepExecutionRepo } from "@/modules/step-executions/application/step-execution-repo";
@@ -17,9 +18,11 @@ export const queueTicketDescriptionEnrichmentStep = async (
   {
     ticketRepo,
     stepExecutionRepo,
+    timeProvider,
   }: {
     ticketRepo: Pick<TicketRepo, "loadById">;
     stepExecutionRepo: StepExecutionRepo;
+    timeProvider: TimeProvider;
   } = AppContext,
 ): Promise<QueueTicketDescriptionEnrichmentStepResponse> => {
   const input =
@@ -30,7 +33,7 @@ export const queueTicketDescriptionEnrichmentStep = async (
     throw new Error(`Ticket with ID ${input.ticketId} not found`);
   }
 
-  const queuedAt = AppContext.timeProvider.now();
+  const queuedAt = timeProvider.now();
   const execution = new TicketDescriptionEnrichmentStepExecutionEntity(
     null,
     input.ticketId,

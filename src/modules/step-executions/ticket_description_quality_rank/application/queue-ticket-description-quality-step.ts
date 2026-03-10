@@ -8,6 +8,7 @@ import {
 } from "@/modules/step-executions/ticket_description_quality_rank/contracts/queue-ticket-description-quality-step-contracts";
 import { stepExecutionEntityToContract } from "@/modules/step-executions/application/step-execution-entity-to-contract";
 import { AppContext } from "@/lib/di";
+import type { TimeProvider } from "@/lib/time-provider";
 import { TicketDescriptionQualityStepExecutionEntity } from "@/modules/step-executions/domain/step-execution-entity";
 import type { TicketRepo } from "@/modules/tickets/application/jira-ticket-repo";
 import type { StepExecutionRepo } from "@/modules/step-executions/application/step-execution-repo";
@@ -17,9 +18,11 @@ export const queueTicketDescriptionQualityStep = async (
   {
     ticketRepo,
     stepExecutionRepo,
+    timeProvider,
   }: {
     ticketRepo: Pick<TicketRepo, "loadById">;
     stepExecutionRepo: StepExecutionRepo;
+    timeProvider: TimeProvider;
   } = AppContext,
 ): Promise<QueueTicketDescriptionQualityStepResponse> => {
   const input = queueTicketDescriptionQualityStepRequestSchema.parse(rawInput);
@@ -29,7 +32,7 @@ export const queueTicketDescriptionQualityStep = async (
     throw new Error(`Ticket with ID ${input.ticketId} not found`);
   }
 
-  const queuedAt = AppContext.timeProvider.now();
+  const queuedAt = timeProvider.now();
   const execution = new TicketDescriptionQualityStepExecutionEntity(
     null,
     input.ticketId,

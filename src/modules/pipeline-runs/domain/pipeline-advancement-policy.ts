@@ -1,12 +1,8 @@
 import { httpError } from "@/lib/api/http";
-import { appTimeProvider } from "@/lib/time-provider";
+import { systemTimeProvider, type TimeProvider } from "@/lib/time-provider";
 import type { PipelineRunEntity } from "@/modules/pipeline-runs/domain/pipeline-run-aggregate";
-import {
-  type TicketPipelineStepExecutionEntity,
-} from "@/modules/step-executions/domain/step-execution-entity";
-import {
-  getStepExecutionDefinition,
-} from "@/modules/step-executions/domain/step-execution-registry";
+import { type TicketPipelineStepExecutionEntity } from "@/modules/step-executions/domain/step-execution-entity";
+import { getStepExecutionDefinition } from "@/modules/step-executions/domain/step-execution-registry";
 import {
   FAILING_TEST_FIX_STEP_NAME,
   FINALIZE_FAILING_TEST_REPRO_PR_STEP_NAME,
@@ -27,9 +23,16 @@ const PIPELINE_STEP_SEQUENCE: ReadonlyArray<StepExecutionStepName> = [
 ];
 
 export class PipelineAdvancementPolicy {
+  constructor(
+    private readonly timeProvider: TimeProvider = systemTimeProvider,
+  ) {}
+
   createNextStepExecution(
     pipelineRun: PipelineRunEntity,
   ): TicketPipelineStepExecutionEntity | null {
+    if (!pipelineRun.autoAdvance) {
+      return null;
+    }
     const latestStepExecution = this.getLatestStepExecution(pipelineRun);
     if (!this.shouldAdvance(latestStepExecution, pipelineRun)) {
       return null;
@@ -110,7 +113,7 @@ export class PipelineAdvancementPolicy {
     return getStepExecutionDefinition(stepName).createQueuedExecution({
       pipelineId,
       ticketId,
-      now: appTimeProvider.current.now(),
+      now: this.timeProvider.now(),
     });
   }
 }

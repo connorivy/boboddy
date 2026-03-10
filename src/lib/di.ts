@@ -8,46 +8,53 @@ import { DrizzleTicketGitEnvironmentRepo } from "@/modules/environments/infra/dr
 import { GithubApiService } from "@/modules/step-executions/infra/github-copilot-coding-agent";
 import { DrizzlePipelineRunRepo } from "@/modules/pipeline-runs/infra/drizzle-pipeline-run-repo";
 import { QueueNextPipelineStepOnStepExecutionCompleted } from "@/modules/pipeline-runs/application/queue-next-pipeline-step-on-step-execution-completed";
+import { PipelineAdvancementPolicy } from "@/modules/pipeline-runs/domain/pipeline-advancement-policy";
 import { STEP_EXECUTION_COMPLETED_DOMAIN_EVENT_TYPE } from "@/modules/step-executions/domain/step-execution-completed.domain-event";
-import { appTimeProvider, type TimeProvider } from "@/lib/time-provider";
+import { systemTimeProvider, TimeProvider } from "@/lib/time-provider";
 
-let githubServiceInstance: GithubApiService | null = null;
-const domainEventBus = new InProcessDomainEventBus();
-const stepExecutionRepo = new DrizzleStepExecutionRepo(domainEventBus);
-const pipelineRunRepo = new DrizzlePipelineRunRepo();
+export function createAppContext(customTimeProvider?: TimeProvider) {
+  let githubServiceInstance: GithubApiService | null = null;
+  const domainEventBus = new InProcessDomainEventBus();
+  const timeProvider = customTimeProvider ?? systemTimeProvider;
+  const stepExecutionRepo = new DrizzleStepExecutionRepo(
+    domainEventBus,
+    timeProvider,
+  );
+  const pipelineRunRepo = new DrizzlePipelineRunRepo();
+  const ticketRepo = new DrizzleTicketRepo(undefined, undefined, timeProvider);
 
-domainEventBus.register(
-  STEP_EXECUTION_COMPLETED_DOMAIN_EVENT_TYPE,
-  new QueueNextPipelineStepOnStepExecutionCompleted(
+  domainEventBus.register(
+    STEP_EXECUTION_COMPLETED_DOMAIN_EVENT_TYPE,
+    new QueueNextPipelineStepOnStepExecutionCompleted(
+      stepExecutionRepo,
+      pipelineRunRepo,
+      new PipelineAdvancementPolicy(timeProvider),
+    ),
+  );
+
+  const getGithubService = (): GithubApiService => {
+    if (!githubServiceInstance) {
+      githubServiceInstance = new GithubApiService();
+    }
+
+    return githubServiceInstance;
+  };
+  return {
+    timeProvider,
+    ticketRepo,
+    jiraTicketRepo: new JiraTicketRepoByHttpClient(),
     stepExecutionRepo,
+    ticketVectorRepo: new DrizzleTicketVectorRepo(),
+    environmentRepo: new DrizzleEnvironmentRepo(),
+    ticketGitEnvironmentRepo: new DrizzleTicketGitEnvironmentRepo(),
     pipelineRunRepo,
-  ),
-);
+    domainEventBus,
+    get githubService() {
+      return getGithubService();
+    },
+  };
+}
 
-const getGithubService = (): GithubApiService => {
-  if (!githubServiceInstance) {
-    githubServiceInstance = new GithubApiService();
-  }
+export type AppContext = ReturnType<typeof createAppContext>;
 
-  return githubServiceInstance;
-};
-
-export const AppContext = {
-  ticketRepo: new DrizzleTicketRepo(),
-  jiraTicketRepo: new JiraTicketRepoByHttpClient(),
-  stepExecutionRepo,
-  ticketVectorRepo: new DrizzleTicketVectorRepo(),
-  environmentRepo: new DrizzleEnvironmentRepo(),
-  ticketGitEnvironmentRepo: new DrizzleTicketGitEnvironmentRepo(),
-  pipelineRunRepo,
-  domainEventBus,
-  get timeProvider() {
-    return appTimeProvider.current;
-  },
-  set timeProvider(timeProvider: TimeProvider) {
-    appTimeProvider.current = timeProvider;
-  },
-  get githubService() {
-    return getGithubService();
-  },
-};
+export const AppContext = createAppContext();

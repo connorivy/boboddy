@@ -3,7 +3,7 @@ import { getDb } from "@/lib/db";
 import { DbExecutor } from "@/lib/db/db-executor";
 import { pipelineRuns, ticketStepExecutionsTph } from "@/lib/db/schema";
 import type { InProcessDomainEventBus } from "@/lib/domain-events/in-process-domain-event-bus";
-import { appTimeProvider } from "@/lib/time-provider";
+import { systemTimeProvider, type TimeProvider } from "@/lib/time-provider";
 import type { PipelineStepExecutionsQuery } from "@/modules/step-executions/contracts/get-pipeline-step-executions-contracts";
 import {
   getStepExecutionDefinition,
@@ -15,6 +15,7 @@ import { StepExecutionRepo } from "../application/step-execution-repo";
 export class DrizzleStepExecutionRepo implements StepExecutionRepo {
   constructor(
     private readonly domainEventBus: InProcessDomainEventBus | null = null,
+    private readonly timeProvider: TimeProvider = systemTimeProvider,
   ) {}
 
   private mapRowToExecution(
@@ -69,7 +70,7 @@ export class DrizzleStepExecutionRepo implements StepExecutionRepo {
     id: string,
   ): Promise<TicketPipelineStepExecutionEntity | null> {
     const db = getDb();
-    const now = appTimeProvider.current.now();
+    const now = this.timeProvider.now();
 
     const [row] = await db
       .update(ticketStepExecutionsTph)
@@ -314,7 +315,7 @@ export class DrizzleStepExecutionRepo implements StepExecutionRepo {
     pipeline: TicketPipelineStepExecutionEntity,
     dbExecutor: DbExecutor,
   ): Promise<TicketPipelineStepExecutionEntity> {
-    const now = appTimeProvider.current.now();
+    const now = this.timeProvider.now();
     const startedAt = pipeline.startedAt;
     const endedAt = pipeline.endedAt ?? null;
 

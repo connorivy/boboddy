@@ -9,6 +9,7 @@ import { TICKET_INVESTIGATION_STEP_NAME } from "@/modules/step-executions/domain
 import type { StepExecutionStatus } from "@/modules/tickets/contracts/ticket-contracts";
 import { httpError } from "@/lib/api/http";
 import { AppContext } from "@/lib/di";
+import type { TimeProvider } from "@/lib/time-provider";
 import {
   TicketDescriptionEnrichmentStepExecutionEntity,
   TicketDescriptionEnrichmentStepResultEntity,
@@ -42,7 +43,13 @@ const resolveStatus = (
 
 export const completeTicketDescriptionEnrichmentStep = async (
   rawInput: CompleteTicketDescriptionEnrichmentStepRequest,
-  { stepExecutionRepo }: { stepExecutionRepo: StepExecutionRepo } = AppContext,
+  {
+    stepExecutionRepo,
+    timeProvider,
+  }: {
+    stepExecutionRepo: StepExecutionRepo;
+    timeProvider: TimeProvider;
+  } = AppContext,
 ): Promise<CompleteTicketDescriptionEnrichmentStepResponse> => {
   const input =
     completeTicketDescriptionEnrichmentStepRequestSchema.parse(rawInput);
@@ -71,7 +78,7 @@ export const completeTicketDescriptionEnrichmentStep = async (
     );
   }
 
-  const endedAt = AppContext.timeProvider.now();
+  const endedAt = timeProvider.now();
   existingExecution.setResult({
     status: resolveStatus(input),
     endedAt,

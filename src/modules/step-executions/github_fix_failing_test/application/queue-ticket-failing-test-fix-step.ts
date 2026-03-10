@@ -8,6 +8,7 @@ import {
 } from "@/modules/step-executions/github_fix_failing_test/contracts/queue-ticket-failing-test-fix-step-contracts";
 import { stepExecutionEntityToContract } from "@/modules/step-executions/application/step-execution-entity-to-contract";
 import { AppContext } from "@/lib/di";
+import type { TimeProvider } from "@/lib/time-provider";
 import { FailingTestFixStepExecutionEntity } from "@/modules/step-executions/domain/step-execution-entity";
 import type { TicketRepo } from "@/modules/tickets/application/jira-ticket-repo";
 import type { StepExecutionRepo } from "@/modules/step-executions/application/step-execution-repo";
@@ -17,9 +18,11 @@ export const queueTicketFailingTestFixStep = async (
   {
     ticketRepo,
     stepExecutionRepo,
+    timeProvider,
   }: {
     ticketRepo: Pick<TicketRepo, "loadById">;
     stepExecutionRepo: StepExecutionRepo;
+    timeProvider: TimeProvider;
   } = AppContext,
 ): Promise<QueueTicketFailingTestFixStepResponse> => {
   const input = queueTicketFailingTestFixStepRequestSchema.parse(rawInput);
@@ -29,7 +32,7 @@ export const queueTicketFailingTestFixStep = async (
     throw new Error(`Ticket with ID ${input.ticketId} not found`);
   }
 
-  const queuedAt = AppContext.timeProvider.now();
+  const queuedAt = timeProvider.now();
   const execution = new FailingTestFixStepExecutionEntity(
     null,
     input.ticketId,

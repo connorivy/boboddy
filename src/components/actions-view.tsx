@@ -6,6 +6,8 @@ import {
   Button,
   Card,
   CardContent,
+  Checkbox,
+  FormControlLabel,
   Grid,
   LinearProgress,
   Stack,
@@ -26,6 +28,7 @@ export const ActionsView = () => {
   const [error, setError] = useState<string | null>(null);
   const [ticketNumber, setTicketNumber] = useState("");
   const [pipelineTicketId, setPipelineTicketId] = useState("");
+  const [pipelineAutoAdvance, setPipelineAutoAdvance] = useState(false);
   const [output, setOutput] = useState<unknown>({
     message: "Run an action to see output.",
   });
@@ -102,12 +105,18 @@ export const ActionsView = () => {
       setError(null);
 
       const result = await createPipelineRuns({
-        pipelineRuns: [{ ticketId: normalizedPipelineTicketId }],
+        pipelineRuns: [
+          {
+            ticketId: normalizedPipelineTicketId,
+            autoAdvance: pipelineAutoAdvance,
+          },
+        ],
       });
       setOutput({
         ok: true,
         createdCount: result.length,
         ticketId: normalizedPipelineTicketId,
+        autoAdvance: pipelineAutoAdvance,
         result,
       });
     } catch (runError) {
@@ -117,6 +126,7 @@ export const ActionsView = () => {
       setOutput({
         ok: false,
         ticketId: normalizedPipelineTicketId,
+        autoAdvance: pipelineAutoAdvance,
         error: message,
       });
     } finally {
@@ -170,6 +180,18 @@ export const ActionsView = () => {
                 onChange={(event) => setPipelineTicketId(event.target.value)}
                 placeholder="CV-1234"
                 helperText="Creates a pipeline run for an existing ticket id."
+              />
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={pipelineAutoAdvance}
+                    onChange={(event) =>
+                      setPipelineAutoAdvance(event.target.checked)
+                    }
+                    disabled={loading}
+                  />
+                }
+                label="Auto advance pipeline"
               />
               <Button
                 variant="contained"

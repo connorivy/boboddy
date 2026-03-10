@@ -15,6 +15,7 @@ import {
 import type { GithubApiService } from "@/modules/step-executions/infra/github-copilot-coding-agent";
 import { TicketGithubIssueEntity } from "@/modules/tickets/domain/ticket-github-issue.entity";
 import { AppContext } from "@/lib/di";
+import type { TimeProvider } from "@/lib/time-provider";
 import {
   FailingTestFixStepExecutionEntity,
   FailingTestFixStepResultEntity,
@@ -70,12 +71,14 @@ export const triggerTicketFailingTestFixStep = async (
     environmentRepo,
     ticketGitEnvironmentRepo,
     githubService,
+    timeProvider,
   }: {
     ticketRepo: TicketRepo;
     stepExecutionRepo: StepExecutionRepo;
     environmentRepo: EnvironmentRepo;
     ticketGitEnvironmentRepo: TicketGitEnvironmentRepo;
     githubService: GithubApiService;
+    timeProvider: TimeProvider;
   } = AppContext,
 ): Promise<TriggerTicketFailingTestFixStepResponse> => {
   const input = triggerTicketFailingTestFixStepRequestSchema.parse(rawInput);
@@ -139,7 +142,7 @@ export const triggerTicketFailingTestFixStep = async (
     );
   }
 
-  const now = AppContext.timeProvider.now();
+  const now = timeProvider.now();
   const execution = new FailingTestFixStepExecutionEntity(
     null,
     ticket.id,
@@ -216,7 +219,7 @@ export const triggerTicketFailingTestFixStep = async (
     if (!TERMINAL_STEP_EXECUTION_STATUSES.has(savedExecution.status)) {
       execution.setResult({
         status: "failed",
-        endedAt: AppContext.timeProvider.now(),
+        endedAt: timeProvider.now(),
       });
       await stepExecutionRepo.save(execution);
     }

@@ -17,7 +17,9 @@ export async function advancePipeline(
     pipelineRunRepo: PipelineRunRepo;
     stepExecutionRepo: StepExecutionRepo;
   } = {
-    pipelineAdvancementPolicy: new PipelineAdvancementPolicy(),
+    pipelineAdvancementPolicy: new PipelineAdvancementPolicy(
+      AppContext.timeProvider,
+    ),
     ...AppContext,
   },
 ): Promise<PipelineRunContract> {

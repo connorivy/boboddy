@@ -7,6 +7,7 @@ import {
   tickets,
 } from "@/lib/db/schema";
 import { getDb } from "@/lib/db";
+import { appTimeProvider } from "@/lib/time-provider";
 import { TicketAggregate } from "@/modules/tickets/domain/ticket-aggregate";
 import { TICKET_DESCRIPTION_QUALITY_STEP_NAME } from "@/modules/step-executions/domain/step-execution.types";
 import {
@@ -206,7 +207,7 @@ export class DrizzleTicketRepo implements TicketRepo {
     { entity: TicketAggregate; persistenceStatus: "created" | "updated" }[]
   > {
     const db = dbExecutor ?? getDb();
-    const now = new Date();
+    const now = appTimeProvider.current.now();
     const rows = ticketEntities.map((ticket) => {
       const row = ticket;
       return {
@@ -455,7 +456,7 @@ export class DrizzleTicketRepo implements TicketRepo {
     githubIssue: TicketGithubIssueEntity,
   ): Promise<TicketGithubIssueEntity> {
     const db = getDb();
-    const now = new Date();
+    const now = appTimeProvider.current.now();
     const [row] = await db
       .insert(ticketGithubIssues)
       .values({
@@ -506,7 +507,7 @@ export class DrizzleTicketRepo implements TicketRepo {
       .update(tickets)
       .set({
         defaultGitEnvironmentId: ticket.defaultGitEnvironmentId,
-        updatedAt: new Date(),
+        updatedAt: appTimeProvider.current.now(),
       })
       .where(eq(tickets.id, ticket.id))
       .returning(ticketSelectFields);

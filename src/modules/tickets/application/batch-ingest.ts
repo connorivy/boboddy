@@ -124,13 +124,14 @@ async function persistTicketsAndPipelines(
     return [];
   }
 
-  const queuedAt = new Date();
+  const queuedAt = AppContext.timeProvider.now();
   const pipelineRuns = persistedTickets
     .filter((ticket) => ticket.persistenceStatus === "created")
     .map((ticket) =>
       PipelineRunEntity.createAndQueueFirstStep({
         ticketId: ticket.entity.id ?? ticket.entity.ticketNumber,
         queuedAt,
+        autoAdvance: true,
       }),
     );
 

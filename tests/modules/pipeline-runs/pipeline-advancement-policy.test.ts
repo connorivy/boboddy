@@ -27,7 +27,7 @@ class TestablePipelineAdvancementPolicy extends PipelineAdvancementPolicy {
 const policy = new TestablePipelineAdvancementPolicy();
 
 function buildPipelineRun(step: TicketPipelineStepExecutionEntity) {
-  return new PipelineRunEntity("pipeline-1", "CV-1001", [step]);
+  return new PipelineRunEntity("pipeline-1", "CV-1001", true, [step]);
 }
 
 describe("PipelineAdvancementPolicy.shouldAdvance", () => {

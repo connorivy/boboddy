@@ -101,9 +101,11 @@ export const triggerTicketFailingTestReproStep = async (
     throw new Error(`Ticket with ID ${input.ticketId} not found`);
   }
 
-  const now = new Date().toISOString();
+  const now = AppContext.timeProvider.nowIso();
   const pipelineId = uuidv7();
-  await pipelineRunRepo.save(new PipelineRunEntity(pipelineId, input.ticketId));
+  await pipelineRunRepo.save(
+    new PipelineRunEntity(pipelineId, input.ticketId, true),
+  );
   const executionId = uuidv7();
   const execution = new FailingTestReproStepExecutionEntity(
     pipelineId,
@@ -232,7 +234,7 @@ export const triggerTicketFailingTestReproStep = async (
     if (savedExecution instanceof FailingTestReproStepExecutionEntity) {
       savedExecution.setResult({
         status: "failed",
-        endedAt: new Date().toISOString(),
+        endedAt: AppContext.timeProvider.nowIso(),
         githubPrTargetBranch: baseBranch,
       });
     }

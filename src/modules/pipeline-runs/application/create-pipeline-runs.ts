@@ -16,16 +16,19 @@ export async function createPipelineRuns(
   {
     pipelineRunRepo,
     stepExecutionRepo,
+    timeProvider,
   }: {
     pipelineRunRepo: PipelineRunRepo;
     stepExecutionRepo: StepExecutionRepo;
+    timeProvider: (typeof AppContext)["timeProvider"];
   } = AppContext,
 ): Promise<PipelineRunContract[]> {
   const request = createPipelineRunsRequestSchema.parse(rawRequest);
   const pipelineRuns = request.pipelineRuns.map((pipelineRun) =>
     PipelineRunEntity.createAndQueueFirstStep({
       ticketId: pipelineRun.ticketId,
-      queuedAt: new Date(),
+      queuedAt: timeProvider.now(),
+      autoAdvance: pipelineRun.autoAdvance,
     }),
   );
 
@@ -44,9 +47,12 @@ export async function createPipelineRuns(
       }
 
       const firstStep = await stepExecutionRepo.save(unsavedFirstStep);
-      return new PipelineRunEntity(createdRun.id, createdRun.ticketId, [
-        firstStep,
-      ]);
+      return new PipelineRunEntity(
+        createdRun.id,
+        createdRun.ticketId,
+        createdRun.autoAdvance,
+        [firstStep],
+      );
     }),
   );
 

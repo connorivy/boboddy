@@ -30,7 +30,7 @@ export const queueTicketDescriptionEnrichmentStep = async (
     throw new Error(`Ticket with ID ${input.ticketId} not found`);
   }
 
-  const queuedAt = new Date().toISOString();
+  const queuedAt = AppContext.timeProvider.nowIso();
   const execution = new TicketDescriptionEnrichmentStepExecutionEntity(
     null,
     input.ticketId,

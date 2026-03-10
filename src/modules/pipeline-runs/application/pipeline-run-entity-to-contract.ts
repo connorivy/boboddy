@@ -9,6 +9,7 @@ export function pipelineRunEntityToContract(
   return pipelineRunSchema.parse({
     pipelineRunId: pipelineRun.id,
     ticketId: pipelineRun.ticketId,
+    autoAdvance: pipelineRun.autoAdvance,
     stepExecutions:
       pipelineRun.pipelineSteps?.map(stepExecutionEntityToContract) ?? null,
   });

@@ -9,6 +9,7 @@ import { GithubApiService } from "@/modules/step-executions/infra/github-copilot
 import { DrizzlePipelineRunRepo } from "@/modules/pipeline-runs/infra/drizzle-pipeline-run-repo";
 import { QueueNextPipelineStepOnStepExecutionCompleted } from "@/modules/pipeline-runs/application/queue-next-pipeline-step-on-step-execution-completed";
 import { STEP_EXECUTION_COMPLETED_DOMAIN_EVENT_TYPE } from "@/modules/step-executions/domain/step-execution-completed.domain-event";
+import { appTimeProvider, type TimeProvider } from "@/lib/time-provider";
 
 let githubServiceInstance: GithubApiService | null = null;
 const domainEventBus = new InProcessDomainEventBus();
@@ -40,6 +41,12 @@ export const AppContext = {
   ticketGitEnvironmentRepo: new DrizzleTicketGitEnvironmentRepo(),
   pipelineRunRepo,
   domainEventBus,
+  get timeProvider() {
+    return appTimeProvider.current;
+  },
+  set timeProvider(timeProvider: TimeProvider) {
+    appTimeProvider.current = timeProvider;
+  },
   get githubService() {
     return getGithubService();
   },

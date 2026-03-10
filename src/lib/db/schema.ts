@@ -1,5 +1,6 @@
 import {
   type AnyPgColumn,
+  boolean,
   customType,
   pgEnum,
   pgTable,
@@ -143,6 +144,7 @@ export const pipelineRuns = pgTable("pipeline_runs", {
   ticketId: text("ticket_id")
     .references(() => tickets.id, { onDelete: "cascade" })
     .notNull(),
+  autoAdvance: boolean("auto_advance").notNull().default(true),
 });
 
 export const ticketEmbeddings = pgTable(

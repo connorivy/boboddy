@@ -31,7 +31,7 @@ export const triggerFinalizeFailingTestReproPrStep = async (
   const input =
     triggerFinalizeFailingTestReproPrStepRequestSchema.parse(rawInput);
 
-  const now = new Date().toISOString();
+  const now = AppContext.timeProvider.nowIso();
   const execution = new FinalizeFailingTestReproPrStepExecutionEntity(
     null,
     input.ticketId,
@@ -92,7 +92,7 @@ export const triggerFinalizeFailingTestReproPrStep = async (
 
     savedExecution.setResult({
       status: "succeeded",
-      endedAt: new Date().toISOString(),
+      endedAt: AppContext.timeProvider.nowIso(),
       result: new FinalizeFailingTestReproPrStepResultEntity(
         "merged",
         reproStep.result.githubIssueNumber,
@@ -108,7 +108,7 @@ export const triggerFinalizeFailingTestReproPrStep = async (
         error instanceof Error ? error.message : "Unknown error";
       savedExecution.setResult({
         status: "failed",
-        endedAt: new Date().toISOString(),
+        endedAt: AppContext.timeProvider.nowIso(),
         failureReason: errorMessage,
       });
       await stepExecutionRepo.save(savedExecution);

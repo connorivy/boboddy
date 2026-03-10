@@ -1,14 +1,12 @@
 import { httpError } from "@/lib/api/http";
+import { appTimeProvider } from "@/lib/time-provider";
 import type { PipelineRunEntity } from "@/modules/pipeline-runs/domain/pipeline-run-aggregate";
 import {
-  FailingTestFixStepExecutionEntity,
-  FinalizeFailingTestReproPrStepExecutionEntity,
-  FailingTestReproStepExecutionEntity,
-  TicketDescriptionEnrichmentStepExecutionEntity,
-  TicketDescriptionQualityStepExecutionEntity,
-  TicketDuplicateCandidatesStepResultEntity,
   type TicketPipelineStepExecutionEntity,
 } from "@/modules/step-executions/domain/step-execution-entity";
+import {
+  getStepExecutionDefinition,
+} from "@/modules/step-executions/domain/step-execution-registry";
 import {
   FAILING_TEST_FIX_STEP_NAME,
   FINALIZE_FAILING_TEST_REPRO_PR_STEP_NAME,
@@ -27,10 +25,6 @@ const PIPELINE_STEP_SEQUENCE: ReadonlyArray<StepExecutionStepName> = [
   FINALIZE_FAILING_TEST_REPRO_PR_STEP_NAME,
   FAILING_TEST_FIX_STEP_NAME,
 ];
-
-const DESCRIPTION_QUALITY_ADVANCEMENT_THRESHOLD = 0.6;
-const DUPLICATE_CONFIDENCE_BLOCK_THRESHOLD = 0.85;
-const REPRO_CONFIDENCE_ADVANCEMENT_THRESHOLD = 0.85;
 
 export class PipelineAdvancementPolicy {
   createNextStepExecution(
@@ -85,93 +79,10 @@ export class PipelineAdvancementPolicy {
 
   protected shouldAdvance(
     latestStepExecution: TicketPipelineStepExecutionEntity,
-    _pipelineRun: PipelineRunEntity,
+    pipelineRun: PipelineRunEntity,
   ): boolean {
-    if (latestStepExecution.status !== "succeeded") {
-      return false;
-    }
-
-    switch (latestStepExecution.stepName) {
-      case TICKET_DESCRIPTION_QUALITY_STEP_NAME: {
-        if (
-          !(
-            latestStepExecution instanceof
-            TicketDescriptionQualityStepExecutionEntity
-          )
-        ) {
-          return false;
-        }
-
-        const result = latestStepExecution.result;
-        if (!result) {
-          return false;
-        }
-
-        const averageQualityScore =
-          (result.stepsToReproduceScore +
-            result.expectedBehaviorScore +
-            result.observedBehaviorScore) /
-          3;
-
-        return averageQualityScore >= DESCRIPTION_QUALITY_ADVANCEMENT_THRESHOLD;
-      }
-      case TICKET_DUPLICATE_CANDIDATES_STEP_NAME: {
-        if (
-          !(
-            latestStepExecution instanceof
-            TicketDuplicateCandidatesStepResultEntity
-          )
-        ) {
-          return false;
-        }
-
-        const result = latestStepExecution.result;
-        if (!result) {
-          return false;
-        }
-
-        const topDuplicateScore = Math.max(
-          0,
-          ...result.proposed.map((candidate) => candidate.score),
-          ...result.promoted.map((candidate) => candidate.score),
-        );
-
-        return topDuplicateScore < DUPLICATE_CONFIDENCE_BLOCK_THRESHOLD;
-      }
-      case TICKET_INVESTIGATION_STEP_NAME:
-        return (
-          latestStepExecution instanceof
-          TicketDescriptionEnrichmentStepExecutionEntity
-        );
-      case FAILING_TEST_REPRO_STEP_NAME: {
-        if (
-          !(latestStepExecution instanceof FailingTestReproStepExecutionEntity)
-        ) {
-          return false;
-        }
-
-        const result = latestStepExecution.result;
-        if (
-          !result ||
-          !("confidenceLevel" in result) ||
-          typeof result.confidenceLevel !== "number"
-        ) {
-          return false;
-        }
-
-        return result.confidenceLevel >= REPRO_CONFIDENCE_ADVANCEMENT_THRESHOLD;
-      }
-      case FINALIZE_FAILING_TEST_REPRO_PR_STEP_NAME:
-        return (
-          latestStepExecution instanceof
-            FinalizeFailingTestReproPrStepExecutionEntity &&
-          latestStepExecution.result?.githubMergeStatus === "merged"
-        );
-      case FAILING_TEST_FIX_STEP_NAME:
-        return latestStepExecution instanceof FailingTestFixStepExecutionEntity;
-      default:
-        return true;
-    }
+    const definition = getStepExecutionDefinition(latestStepExecution.stepName);
+    return definition.shouldAdvance(latestStepExecution as never, pipelineRun);
   }
 
   protected getNextStepName(
@@ -196,60 +107,10 @@ export class PipelineAdvancementPolicy {
     ticketId: string,
     stepName: StepExecutionStepName,
   ): TicketPipelineStepExecutionEntity {
-    const now = new Date().toISOString();
-
-    switch (stepName) {
-      case TICKET_DESCRIPTION_QUALITY_STEP_NAME:
-        return new TicketDescriptionQualityStepExecutionEntity(
-          pipelineId,
-          ticketId,
-          "queued",
-          null,
-          now,
-        );
-      case TICKET_INVESTIGATION_STEP_NAME:
-        return new TicketDescriptionEnrichmentStepExecutionEntity(
-          pipelineId,
-          ticketId,
-          "queued",
-          null,
-          now,
-        );
-      case TICKET_DUPLICATE_CANDIDATES_STEP_NAME:
-        return new TicketDuplicateCandidatesStepResultEntity(
-          pipelineId,
-          ticketId,
-          "queued",
-          null,
-          now,
-        );
-      case FAILING_TEST_REPRO_STEP_NAME:
-        return new FailingTestReproStepExecutionEntity(
-          pipelineId,
-          ticketId,
-          "queued",
-          null,
-          null,
-          now,
-        );
-      case FINALIZE_FAILING_TEST_REPRO_PR_STEP_NAME:
-        return new FinalizeFailingTestReproPrStepExecutionEntity(
-          pipelineId,
-          ticketId,
-          "queued",
-          null,
-          now,
-        );
-      case FAILING_TEST_FIX_STEP_NAME:
-        return new FailingTestFixStepExecutionEntity(
-          pipelineId,
-          ticketId,
-          "queued",
-          null,
-          now,
-        );
-      default:
-        throw httpError(`Unsupported pipeline step '${stepName}'`, 400);
-    }
+    return getStepExecutionDefinition(stepName).createQueuedExecution({
+      pipelineId,
+      ticketId,
+      now: appTimeProvider.current.nowIso(),
+    });
   }
 }

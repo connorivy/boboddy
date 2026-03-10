@@ -71,7 +71,7 @@ export const completeTicketDescriptionEnrichmentStep = async (
     );
   }
 
-  const endedAt = new Date().toISOString();
+  const endedAt = AppContext.timeProvider.nowIso();
   existingExecution.setResult({
     status: resolveStatus(input),
     endedAt,

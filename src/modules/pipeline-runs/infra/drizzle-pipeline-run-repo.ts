@@ -14,7 +14,7 @@ export class DrizzlePipelineRunRepo implements PipelineRunRepo {
   private readonly stepExecutionRepo = new DrizzleStepExecutionRepo();
 
   private toEntity(row: typeof pipelineRuns.$inferSelect): PipelineRunEntity {
-    return new PipelineRunEntity(row.id, row.ticketId);
+    return new PipelineRunEntity(row.id, row.ticketId, row.autoAdvance);
   }
 
   async loadById(
@@ -46,6 +46,7 @@ export class DrizzlePipelineRunRepo implements PipelineRunRepo {
     return new PipelineRunEntity(
       pipelineRun.id,
       pipelineRun.ticketId,
+      pipelineRun.autoAdvance,
       stepExecutions,
     );
   }
@@ -97,6 +98,7 @@ export class DrizzlePipelineRunRepo implements PipelineRunRepo {
           new PipelineRunEntity(
             pipelineRun.id,
             pipelineRun.ticketId,
+            pipelineRun.autoAdvance,
             stepExecutionsByPipelineId.get(row.id) ?? [],
           ),
         );
@@ -129,6 +131,7 @@ export class DrizzlePipelineRunRepo implements PipelineRunRepo {
     const rows = pipelineRunsInput.map((pipelineRun) => ({
       id: pipelineRun.id,
       ticketId: pipelineRun.ticketId,
+      autoAdvance: pipelineRun.autoAdvance,
     }));
 
     const result = await db
@@ -138,6 +141,7 @@ export class DrizzlePipelineRunRepo implements PipelineRunRepo {
         target: pipelineRuns.id,
         set: {
           ticketId: sql`excluded.ticket_id`,
+          autoAdvance: sql`excluded.auto_advance`,
         },
       })
       .returning();

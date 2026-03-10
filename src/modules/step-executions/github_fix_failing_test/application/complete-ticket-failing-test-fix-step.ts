@@ -71,7 +71,7 @@ export const completeTicketFailingTestFixStep = async (
     );
   }
 
-  const endedAt = new Date().toISOString();
+  const endedAt = AppContext.timeProvider.nowIso();
 
   existingExecution.setResult({
     status: resolveStatus(input),

@@ -1,5 +1,6 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { AppContext } from "@/lib/di";
+import { systemTimeProvider } from "@/lib/time-provider";
 import { assignDefaultEnvironment } from "@/modules/environments/application/assign-environment";
 import { EnvironmentAggregate } from "@/modules/environments/domain/environment-aggregate";
 import { TicketGitEnvironmentAggregate } from "@/modules/environments/domain/ticket-git-environment-aggregate";
@@ -14,7 +15,6 @@ import type {
   IngestTicketsRequest,
   TicketIngestInput,
 } from "@/modules/tickets/contracts/ticket-contracts";
-import { truncateTestTables } from "../../helpers/pgvector-test-db";
 import { createPipelineRuns } from "@/modules/pipeline-runs/application/create-pipeline-runs";
 
 const hoisted = vi.hoisted(() => ({
@@ -47,8 +47,64 @@ vi.spyOn(AppContext, "githubService", "get").mockReturnValue({
 
 const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-const ISO_TIMESTAMP_PATTERN =
-  /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z$/;
+const FIXED_NOW = new Date("2026-03-11T12:00:00.000Z");
+
+function createSnapshotNormalizer() {
+  const aliasesByKind = {
+    uuid: new Map<string, string>(),
+  };
+  const countersByKind = {
+    uuid: 0,
+  };
+
+  const getAlias = (value: string) => {
+    const existingAlias = aliasesByKind.uuid.get(value);
+    if (existingAlias) {
+      return existingAlias;
+    }
+
+    countersByKind.uuid += 1;
+    const alias = `<uuid${countersByKind.uuid}>`;
+    aliasesByKind.uuid.set(value, alias);
+    return alias;
+  };
+
+  const normalizeValue = (value: unknown): unknown => {
+    if (Array.isArray(value)) {
+      return value.map((item) => normalizeValue(item));
+    }
+
+    if (typeof value === "string") {
+      if (UUID_PATTERN.test(value)) {
+        return getAlias(value);
+      }
+    }
+
+    if (value && typeof value === "object") {
+      return Object.fromEntries(
+        Object.entries(value).map(([key, nestedValue]) => [
+          key,
+          normalizeValue(nestedValue),
+        ]),
+      );
+    }
+
+    return value;
+  };
+
+  return {
+    normalizeValue,
+    reset() {
+      for (const aliasMap of Object.values(aliasesByKind)) {
+        aliasMap.clear();
+      }
+
+      countersByKind.uuid = 0;
+    },
+  };
+}
+
+const snapshotNormalizer = createSnapshotNormalizer();
 
 const makeTicket = (
   overrides: Partial<TicketIngestInput> = {},
@@ -73,33 +129,6 @@ const makeTicket = (
     },
   ],
 });
-
-function normalizeSnapshotValue(value: unknown): unknown {
-  if (Array.isArray(value)) {
-    return value.map((item) => normalizeSnapshotValue(item));
-  }
-
-  if (typeof value === "string") {
-    if (UUID_PATTERN.test(value)) {
-      return "<uuid>";
-    }
-
-    if (ISO_TIMESTAMP_PATTERN.test(value)) {
-      return "<iso-timestamp>";
-    }
-  }
-
-  if (value && typeof value === "object") {
-    return Object.fromEntries(
-      Object.entries(value).map(([key, nestedValue]) => [
-        key,
-        normalizeSnapshotValue(nestedValue),
-      ]),
-    );
-  }
-
-  return value;
-}
 
 async function ingestTicketAndLoadDetail() {
   const [ticket] = await ingestTicketContracts(makeTicket());
@@ -167,7 +196,9 @@ function assertNamedStepExecutionSnapshot(
   stepExecution: unknown,
   snapshotName: string,
 ) {
-  expect(normalizeSnapshotValue(stepExecution)).toMatchSnapshot(snapshotName);
+  expect(snapshotNormalizer.normalizeValue(stepExecution)).toMatchSnapshot(
+    snapshotName,
+  );
 }
 
 async function assertInitialQueuedStepSnapshot(ticketDetail: {
@@ -179,22 +210,22 @@ async function assertInitialQueuedStepSnapshot(ticketDetail: {
     "initial queued description step",
   );
 
-  expect(normalizeSnapshotValue(ticketDetail)).toMatchInlineSnapshot(`
+  expect(snapshotNormalizer.normalizeValue(ticketDetail)).toMatchInlineSnapshot(`
     {
       "pipeline": {
         "stepExecutions": [
           {
-            "createdAt": "<iso-timestamp>",
+            "createdAt": "2026-03-11T12:00:00.000Z",
             "endedAt": null,
             "failureReason": null,
-            "id": "<uuid>",
-            "pipelineId": "<uuid>",
+            "id": "<uuid1>",
+            "pipelineId": "<uuid2>",
             "result": null,
-            "startedAt": "<iso-timestamp>",
+            "startedAt": "2026-03-11T12:00:00.000Z",
             "status": "queued",
             "stepName": "ticket_description_quality_rank",
             "ticketId": "CV-612",
-            "updatedAt": "<iso-timestamp>",
+            "updatedAt": "2026-03-11T12:00:00.000Z",
           },
         ],
       },
@@ -203,7 +234,7 @@ async function assertInitialQueuedStepSnapshot(ticketDetail: {
         "companyNames": [
           "Acme Co",
         ],
-        "createdAt": "<iso-timestamp>",
+        "createdAt": "2026-03-11T12:00:00.000Z",
         "defaultGitEnvironment": undefined,
         "defaultGitEnvironmentId": undefined,
         "description": "Restoring a saved session reopens tabs but loses filters.",
@@ -212,8 +243,8 @@ async function assertInitialQueuedStepSnapshot(ticketDetail: {
           "reporter@acme.test",
         ],
         "id": "CV-612",
-        "jiraCreatedAt": "<iso-timestamp>",
-        "jiraUpdatedAt": "<iso-timestamp>",
+        "jiraCreatedAt": "2026-03-11T10:00:00.000Z",
+        "jiraUpdatedAt": "2026-03-11T10:05:00.000Z",
         "pipelineSteps": undefined,
         "priority": "medium",
         "reporter": "reporter@acme.test",
@@ -222,7 +253,7 @@ async function assertInitialQueuedStepSnapshot(ticketDetail: {
         "ticketNumber": "CV-612",
         "ticketType": "bug",
         "title": "Session restore misses expected state",
-        "updatedAt": "<iso-timestamp>",
+        "updatedAt": "2026-03-11T12:00:00.000Z",
       },
     }
   `);
@@ -403,6 +434,11 @@ async function completeInvestigationStepAndAssert(
 
 describe("AI pipeline flow (integration)", () => {
   beforeEach(async () => {
+    AppContext.timeProvider = {
+      now: () => new Date(FIXED_NOW),
+      nowIso: () => FIXED_NOW.toISOString(),
+    };
+    snapshotNormalizer.reset();
     hoisted.rankTicketDescriptionMock.mockReset();
     hoisted.createIssueMock.mockReset();
     hoisted.unassignCopilotMock.mockReset();
@@ -419,6 +455,10 @@ describe("AI pipeline flow (integration)", () => {
     hoisted.upsertFileMock.mockResolvedValue(undefined);
     hoisted.markPullRequestReadyForReviewMock.mockResolvedValue(undefined);
     hoisted.mergePullRequestMock.mockResolvedValue(undefined);
+  });
+
+  afterEach(() => {
+    AppContext.timeProvider = systemTimeProvider;
   });
 
   it("walks through the AI pipeline happy path from ticket ingest through pipeline advancement", async () => {

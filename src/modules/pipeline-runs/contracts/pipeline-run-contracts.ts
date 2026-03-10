@@ -4,6 +4,7 @@ import { stepExecutionContractSchema } from "@/modules/step-executions/contracts
 export const pipelineRunSchema = z.object({
   pipelineRunId: z.string().min(1),
   ticketId: z.string().min(1),
+  autoAdvance: z.boolean(),
   stepExecutions: z.array(stepExecutionContractSchema).nullable(),
 });
 
@@ -14,6 +15,7 @@ export const advancePipelineStepRequestSchema = z.object({
 
 export const createPipelineRunRequestSchema = z.object({
   ticketId: z.string().trim().min(1),
+  autoAdvance: z.boolean().optional().default(true),
 });
 
 export const createPipelineRunsRequestSchema = z.object({
@@ -45,10 +47,10 @@ export type PipelineRunContract = z.infer<typeof pipelineRunSchema>;
 export type AdvancePipelineStepRequest = z.infer<
   typeof advancePipelineStepRequestSchema
 >;
-export type CreatePipelineRunRequest = z.infer<
+export type CreatePipelineRunRequest = z.input<
   typeof createPipelineRunRequestSchema
 >;
-export type CreatePipelineRunsRequest = z.infer<
+export type CreatePipelineRunsRequest = z.input<
   typeof createPipelineRunsRequestSchema
 >;
 export type AdvancePipelineStepResponse = z.infer<

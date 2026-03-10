@@ -139,7 +139,7 @@ export const triggerTicketFailingTestFixStep = async (
     );
   }
 
-  const now = new Date().toISOString();
+  const now = AppContext.timeProvider.nowIso();
   const execution = new FailingTestFixStepExecutionEntity(
     null,
     ticket.id,
@@ -216,7 +216,7 @@ export const triggerTicketFailingTestFixStep = async (
     if (!TERMINAL_STEP_EXECUTION_STATUSES.has(savedExecution.status)) {
       execution.setResult({
         status: "failed",
-        endedAt: new Date().toISOString(),
+        endedAt: AppContext.timeProvider.nowIso(),
       });
       await stepExecutionRepo.save(execution);
     }

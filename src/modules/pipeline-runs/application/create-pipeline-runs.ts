@@ -1,3 +1,5 @@
+"use server";
+
 import { AppContext } from "@/lib/di";
 import {
   createPipelineRunsRequestSchema,
@@ -22,7 +24,6 @@ export async function createPipelineRuns(
   const request = createPipelineRunsRequestSchema.parse(rawRequest);
   const pipelineRuns = request.pipelineRuns.map((pipelineRun) =>
     PipelineRunEntity.createAndQueueFirstStep({
-      id: pipelineRun.pipelineRunId,
       ticketId: pipelineRun.ticketId,
       queuedAt: new Date(),
     }),
@@ -43,11 +44,9 @@ export async function createPipelineRuns(
       }
 
       const firstStep = await stepExecutionRepo.save(unsavedFirstStep);
-      return new PipelineRunEntity(
-        createdRun.id,
-        createdRun.ticketId,
-        [firstStep],
-      );
+      return new PipelineRunEntity(createdRun.id, createdRun.ticketId, [
+        firstStep,
+      ]);
     }),
   );
 

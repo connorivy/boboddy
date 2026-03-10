@@ -16,6 +16,7 @@ import type {
   TicketIngestInput,
 } from "@/modules/tickets/contracts/ticket-contracts";
 import { truncateTestTables } from "../../helpers/pgvector-test-db";
+import { createPipelineRuns } from "@/modules/pipeline-runs/application/create-pipeline-runs";
 
 const hoisted = vi.hoisted(() => ({
   rankTicketDescriptionMock: vi.fn(),
@@ -101,6 +102,9 @@ async function ingestTicketAndLoadDetail() {
   const [ticket] = await ingestTicketContracts(makeTicket());
   expect(ticket).toBeDefined();
 
+  await createPipelineRuns({
+    pipelineRuns: [{ ticketId: ticket.id }],
+  });
   const ticketDetail = await loadTicketDetail(ticket.id);
   const [firstStepExecution] = ticketDetail.pipeline.stepExecutions;
 
@@ -143,7 +147,8 @@ async function runStep<T>(label: string, fn: () => Promise<T>): Promise<T> {
     return await fn();
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    throw new Error(`[AI pipeline happy path] ${label} failed: ${message}`);
+    console.error(`[AI pipeline happy path] ${label} failed:`, error);
+    throw error;
   }
 }
 
@@ -290,7 +295,10 @@ async function assertCompletedFixStep(pipelineId: string) {
   const stepExecutions = await loadPipelineStepExecutions(pipelineId);
   expect(stepExecutions).toHaveLength(4);
 
-  assertNamedStepExecutionSnapshot(stepExecutions[0], "completed fix step result");
+  assertNamedStepExecutionSnapshot(
+    stepExecutions[0],
+    "completed fix step result",
+  );
 }
 
 async function completeInvestigationStepAndAssert(
@@ -377,7 +385,8 @@ async function completeInvestigationStepAndAssert(
 }
 
 async function markReproStepAsMerged(stepExecutionId: string) {
-  const stepExecution = await AppContext.stepExecutionRepo.load(stepExecutionId);
+  const stepExecution =
+    await AppContext.stepExecutionRepo.load(stepExecutionId);
   expect(stepExecution).toBeDefined();
   expect(stepExecution?.result).toBeDefined();
 

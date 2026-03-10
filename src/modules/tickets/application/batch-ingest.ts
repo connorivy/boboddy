@@ -13,6 +13,7 @@ import {
   ingestTicketsRequestSchema,
   type IngestTicketsRequest,
 } from "../contracts/ticket-contracts";
+import { DbExecutor } from "@/lib/db/db-executor";
 
 type TicketIngestDeps = {
   ticketRepo: TicketRepo;
@@ -35,12 +36,10 @@ export async function ingestTickets(
   }: TicketIngestDeps = AppContext,
 ) {
   const jiraTickets = await jiraTicketRepo.fetchByTicketNumbers(ticketNumbers);
-  return await persistTicketsAndPipelines(
-    ticketRepo,
-    jiraTickets,
-    pipelineRunRepo,
-    stepExecutionRepo,
-  );
+  return await getDb().transaction(async (tx) => {
+    const persistedTickets = await ticketRepo.saveMany(jiraTickets, tx);
+    return persistedTickets.map((t) => ticketAggregateToContract(t.entity));
+  });
 }
 
 export async function ingestTicketsModifiedSince(
@@ -53,12 +52,10 @@ export async function ingestTicketsModifiedSince(
   }: TicketIngestDeps = AppContext,
 ) {
   const jiraTickets = await jiraTicketRepo.fetchModifiedSince(sinceDate);
-  return await persistTicketsAndPipelines(
-    ticketRepo,
-    jiraTickets,
-    pipelineRunRepo,
-    stepExecutionRepo,
-  );
+  return await getDb().transaction(async (tx) => {
+    const persistedTickets = await ticketRepo.saveMany(jiraTickets, tx);
+    return persistedTickets.map((t) => ticketAggregateToContract(t.entity));
+  });
 }
 
 export async function ingestTicketContracts(
@@ -67,18 +64,20 @@ export async function ingestTicketContracts(
     ticketRepo,
     pipelineRunRepo,
     stepExecutionRepo,
-  }: Pick<TicketIngestDeps, "ticketRepo" | "pipelineRunRepo" | "stepExecutionRepo"> =
-    AppContext,
+  }: Pick<
+    TicketIngestDeps,
+    "ticketRepo" | "pipelineRunRepo" | "stepExecutionRepo"
+  > = AppContext,
 ) {
   const request = ingestTicketsRequestSchema.parse(rawRequest);
-  const tickets = request.tickets.map((ticket) => TicketAggregate.create(ticket));
-
-  return await persistTicketsAndPipelines(
-    ticketRepo,
-    tickets,
-    pipelineRunRepo,
-    stepExecutionRepo,
+  const tickets = request.tickets.map((ticket) =>
+    TicketAggregate.create(ticket),
   );
+
+  return await getDb().transaction(async (tx) => {
+    const persistedTickets = await ticketRepo.saveMany(tickets, tx);
+    return persistedTickets.map((t) => ticketAggregateToContract(t.entity));
+  });
 }
 
 export async function ingestTicketsFromBoards({
@@ -97,51 +96,53 @@ export async function ingestTicketsFromBoards({
     555,
     lastModifiedTicketDate,
   );
-  return await persistTicketsAndPipelines(
-    ticketRepo,
-    [...admTickets, ...vocTickets],
-    pipelineRunRepo,
-    stepExecutionRepo,
-  );
+  return await getDb().transaction(async (tx) => {
+    const persistedTickets = await ticketRepo.saveMany(
+      [...admTickets, ...vocTickets],
+      tx,
+    );
+    // await persistTicketsAndPipelines(
+    //   persistedTickets,
+    //   pipelineRunRepo,
+    //   stepExecutionRepo,
+    //   tx,
+    // );
+    return persistedTickets.map((t) => ticketAggregateToContract(t.entity));
+  });
 }
 
 async function persistTicketsAndPipelines(
-  ticketRepo: TicketRepo,
-  tickets: TicketAggregate[],
+  persistedTickets: {
+    entity: TicketAggregate;
+    persistenceStatus: "created" | "updated";
+  }[],
   pipelineRunRepo: PipelineRunRepo,
   stepExecutionRepo: StepExecutionRepo,
+  tx: DbExecutor,
 ) {
-  const result = await getDb().transaction(async (tx) => {
-    const persistedTickets = await ticketRepo.saveMany(tickets, tx);
+  if (persistedTickets.length === 0) {
+    return [];
+  }
 
-    if (persistedTickets.length === 0) {
-      return [];
-    }
-
-    const queuedAt = new Date();
-    const pipelineRuns = persistedTickets
-      .filter((ticket) => ticket.persistenceStatus === "created")
-      .map((ticket) =>
-        PipelineRunEntity.createAndQueueFirstStep({
-          id: randomUUID(),
-          ticketId: ticket.entity.id ?? ticket.entity.ticketNumber,
-          queuedAt,
-        }),
-      );
-
-    const createdRuns = await pipelineRunRepo.createMany(pipelineRuns, tx);
-    const pipelineRunById = new Map(
-      pipelineRuns.map((pipelineRun) => [pipelineRun.id, pipelineRun]),
+  const queuedAt = new Date();
+  const pipelineRuns = persistedTickets
+    .filter((ticket) => ticket.persistenceStatus === "created")
+    .map((ticket) =>
+      PipelineRunEntity.createAndQueueFirstStep({
+        ticketId: ticket.entity.id ?? ticket.entity.ticketNumber,
+        queuedAt,
+      }),
     );
 
-    const firstSteps = createdRuns.flatMap((createdRun) => {
-      const firstStep =
-        pipelineRunById.get(createdRun.id)?.pipelineSteps?.[0] ?? null;
-      return firstStep ? [firstStep] : [];
-    });
-    await stepExecutionRepo.saveMany(firstSteps, tx);
+  const createdRuns = await pipelineRunRepo.createMany(pipelineRuns, tx);
+  const pipelineRunById = new Map(
+    pipelineRuns.map((pipelineRun) => [pipelineRun.id, pipelineRun]),
+  );
 
-    return persistedTickets.map((persisted) => persisted.entity);
+  const firstSteps = createdRuns.flatMap((createdRun) => {
+    const firstStep =
+      pipelineRunById.get(createdRun.id)?.pipelineSteps?.[0] ?? null;
+    return firstStep ? [firstStep] : [];
   });
-  return result.map(ticketAggregateToContract);
+  await stepExecutionRepo.saveMany(firstSteps, tx);
 }

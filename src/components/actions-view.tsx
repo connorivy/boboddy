@@ -13,6 +13,7 @@ import {
   Typography,
 } from "@mui/material";
 import { useState } from "react";
+import { createPipelineRuns } from "@/modules/pipeline-runs/application/create-pipeline-runs";
 import {
   ingestTickets,
   ingestTicketsFromBoards,
@@ -24,11 +25,13 @@ export const ActionsView = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [ticketNumber, setTicketNumber] = useState("");
+  const [pipelineTicketId, setPipelineTicketId] = useState("");
   const [output, setOutput] = useState<unknown>({
     message: "Run an action to see output.",
   });
   const normalizedTicketNumber = ticketNumber.trim().toUpperCase();
   const hasTicketNumber = normalizedTicketNumber.length > 0;
+  const normalizedPipelineTicketId = pipelineTicketId.trim();
   const isTicketNumberValid = JIRA_TICKET_NUMBER_PATTERN.test(
     normalizedTicketNumber,
   );
@@ -88,6 +91,39 @@ export const ActionsView = () => {
     }
   };
 
+  const runCreatePipelineRun = async () => {
+    if (!normalizedPipelineTicketId) {
+      setError("Ticket ID is required");
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setError(null);
+
+      const result = await createPipelineRuns({
+        pipelineRuns: [{ ticketId: normalizedPipelineTicketId }],
+      });
+      setOutput({
+        ok: true,
+        createdCount: result.length,
+        ticketId: normalizedPipelineTicketId,
+        result,
+      });
+    } catch (runError) {
+      const message =
+        runError instanceof Error ? runError.message : "Unexpected error";
+      setError(message);
+      setOutput({
+        ok: false,
+        ticketId: normalizedPipelineTicketId,
+        error: message,
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <Grid container spacing={3}>
       <Grid size={{ xs: 12, md: 4 }}>
@@ -127,6 +163,21 @@ export const ActionsView = () => {
                 disabled={loading || !isTicketNumberValid}
               >
                 ingestTicket
+              </Button>
+              <TextField
+                label="Pipeline Ticket ID"
+                value={pipelineTicketId}
+                onChange={(event) => setPipelineTicketId(event.target.value)}
+                placeholder="CV-1234"
+                helperText="Creates a pipeline run for an existing ticket id."
+              />
+              <Button
+                variant="contained"
+                startIcon={<PlayArrowIcon />}
+                onClick={() => void runCreatePipelineRun()}
+                disabled={loading || normalizedPipelineTicketId.length === 0}
+              >
+                createPipelineRuns
               </Button>
               {error ? <Alert severity="error">{error}</Alert> : null}
             </Stack>

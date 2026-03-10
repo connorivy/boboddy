@@ -25,16 +25,17 @@ const PIPELINE_STEP_SEQUENCE: ReadonlyArray<StepExecutionStepName> = [
   FAILING_TEST_FIX_STEP_NAME,
 ];
 
+const DESCRIPTION_QUALITY_ADVANCEMENT_THRESHOLD = 0.6;
+const DUPLICATE_CONFIDENCE_BLOCK_THRESHOLD = 0.85;
+const REPRO_CONFIDENCE_ADVANCEMENT_THRESHOLD = 0.85;
+
 export class PipelineAdvancementPolicy {
   createNextStepExecution(
     pipelineRun: PipelineRunEntity,
   ): TicketPipelineStepExecutionEntity | null {
     const latestStepExecution = this.getLatestStepExecution(pipelineRun);
     if (!this.shouldAdvance(latestStepExecution, pipelineRun)) {
-      throw httpError(
-        `Latest step execution with ID ${latestStepExecution.id} is not eligible for pipeline advancement for pipeline run ${pipelineRun.id}`,
-        400,
-      );
+      return null;
     }
 
     const nextStepName = this.getNextStepName(latestStepExecution, pipelineRun);
@@ -83,7 +84,85 @@ export class PipelineAdvancementPolicy {
     latestStepExecution: TicketPipelineStepExecutionEntity,
     _pipelineRun: PipelineRunEntity,
   ): boolean {
-    return latestStepExecution.status === "succeeded";
+    if (latestStepExecution.status !== "succeeded") {
+      return false;
+    }
+
+    switch (latestStepExecution.stepName) {
+      case TICKET_DESCRIPTION_QUALITY_STEP_NAME: {
+        if (
+          !(
+            latestStepExecution instanceof
+            TicketDescriptionQualityStepExecutionEntity
+          )
+        ) {
+          return false;
+        }
+
+        const result = latestStepExecution.result;
+        if (!result) {
+          return false;
+        }
+
+        const averageQualityScore =
+          (result.stepsToReproduceScore +
+            result.expectedBehaviorScore +
+            result.observedBehaviorScore) /
+          3;
+
+        return averageQualityScore >= DESCRIPTION_QUALITY_ADVANCEMENT_THRESHOLD;
+      }
+      case TICKET_DUPLICATE_CANDIDATES_STEP_NAME: {
+        if (
+          !(
+            latestStepExecution instanceof
+            TicketDuplicateCandidatesStepResultEntity
+          )
+        ) {
+          return false;
+        }
+
+        const result = latestStepExecution.result;
+        if (!result) {
+          return false;
+        }
+
+        const topDuplicateScore = Math.max(
+          0,
+          ...result.proposed.map((candidate) => candidate.score),
+          ...result.promoted.map((candidate) => candidate.score),
+        );
+
+        return topDuplicateScore < DUPLICATE_CONFIDENCE_BLOCK_THRESHOLD;
+      }
+      case TICKET_INVESTIGATION_STEP_NAME:
+        return (
+          latestStepExecution instanceof
+          TicketDescriptionEnrichmentStepExecutionEntity
+        );
+      case FAILING_TEST_REPRO_STEP_NAME: {
+        if (
+          !(latestStepExecution instanceof FailingTestReproStepExecutionEntity)
+        ) {
+          return false;
+        }
+
+        const result = latestStepExecution.result;
+        if (
+          !result ||
+          !("confidenceLevel" in result) ||
+          typeof result.confidenceLevel !== "number"
+        ) {
+          return false;
+        }
+
+        return result.confidenceLevel >= REPRO_CONFIDENCE_ADVANCEMENT_THRESHOLD;
+      }
+      case FAILING_TEST_FIX_STEP_NAME:
+        return latestStepExecution instanceof FailingTestFixStepExecutionEntity;
+      default:
+        return true;
+    }
   }
 
   protected getNextStepName(

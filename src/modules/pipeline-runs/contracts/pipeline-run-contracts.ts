@@ -13,7 +13,6 @@ export const advancePipelineStepRequestSchema = z.object({
 });
 
 export const createPipelineRunRequestSchema = z.object({
-  pipelineRunId: z.string().trim().min(1),
   ticketId: z.string().trim().min(1),
 });
 

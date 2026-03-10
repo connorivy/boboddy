@@ -1,3 +1,4 @@
+import type { PipelineRunsQuery } from "@/modules/pipeline-runs/contracts/pipeline-run-contracts";
 import type { DbExecutor } from "@/lib/db/db-executor";
 import { PipelineRunEntity } from "../domain/pipeline-run-aggregate";
 
@@ -20,6 +21,8 @@ export type PipelineRunRepo = {
     ticketIds: string[],
     options?: LoadPipelineRunsByTicketIdsOptions,
   ): Promise<Map<string, PipelineRunEntity[]>>;
+  loadPage(query: PipelineRunsQuery): Promise<PipelineRunEntity[]>;
+  count(query: PipelineRunsQuery): Promise<number>;
   createMany(
     pipelineRuns: PipelineRunEntity[],
     dbExecutor?: DbExecutor,

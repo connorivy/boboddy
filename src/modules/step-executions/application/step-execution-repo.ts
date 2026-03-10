@@ -19,7 +19,7 @@ export interface StepExecutionRepo {
   loadPage(
     query: PipelineStepExecutionsQuery,
   ): Promise<TicketPipelineStepExecutionEntity[]>;
-  count(): Promise<number>;
+  count(query: PipelineStepExecutionsQuery): Promise<number>;
   save(
     stepExecution: TicketPipelineStepExecutionEntity,
     dbExecutor?: DbExecutor,

@@ -1,3 +1,5 @@
+"use server";
+
 import { AppContext } from "@/lib/di";
 import { type PipelineRunContract } from "@/modules/pipeline-runs/contracts/pipeline-run-contracts";
 import { pipelineRunEntityToContract } from "./pipeline-run-entity-to-contract";

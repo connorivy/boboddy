@@ -286,7 +286,7 @@ describe("DrizzleStepExecutionRepo TPH integration", () => {
       duplicateExecution,
     ]);
 
-    expect(await repo.count()).toBe(5);
+    expect(await repo.count({ page: 1, pageSize: 25, q: "" })).toBe(5);
 
     const loaded = await repo.loadByPipelineId(pipelineId);
     expect(loaded).toHaveLength(5);
@@ -347,7 +347,7 @@ describe("DrizzleStepExecutionRepo TPH integration", () => {
       reasoning: "The ticket is precise enough to begin work.",
     });
 
-    const page = await repo.loadPage({ page: 1, pageSize: 2 });
+    const page = await repo.loadPage({ page: 1, pageSize: 2, q: "" });
     expect(page).toHaveLength(2);
     expect(page[0].id).toBe(duplicateExecution.id);
     expect(page[1].id).toBe(fixExecution.id);

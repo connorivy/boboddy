@@ -18,7 +18,7 @@ export async function getPipelineStepExecutions(
 
   const [stepExecutions, total] = await Promise.all([
     stepExecutionRepo.loadPage(query),
-    stepExecutionRepo.count(),
+    stepExecutionRepo.count(query),
   ]);
 
   return paginatedPipelineStepExecutionsResponseSchema.parse({

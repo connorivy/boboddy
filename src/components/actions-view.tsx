@@ -16,6 +16,7 @@ import {
 } from "@mui/material";
 import { useState } from "react";
 import { createPipelineRuns } from "@/modules/pipeline-runs/application/create-pipeline-runs";
+import { modifyPipeline } from "@/modules/pipeline-runs/application/modify-pipeline";
 import {
   ingestTickets,
   ingestTicketsFromBoards,
@@ -29,12 +30,16 @@ export const ActionsView = () => {
   const [ticketNumber, setTicketNumber] = useState("");
   const [pipelineTicketId, setPipelineTicketId] = useState("");
   const [pipelineAutoAdvance, setPipelineAutoAdvance] = useState(false);
+  const [modifyPipelineRunId, setModifyPipelineRunId] = useState("");
+  const [modifyPipelineAutoAdvance, setModifyPipelineAutoAdvance] =
+    useState(false);
   const [output, setOutput] = useState<unknown>({
     message: "Run an action to see output.",
   });
   const normalizedTicketNumber = ticketNumber.trim().toUpperCase();
   const hasTicketNumber = normalizedTicketNumber.length > 0;
   const normalizedPipelineTicketId = pipelineTicketId.trim();
+  const normalizedModifyPipelineRunId = modifyPipelineRunId.trim();
   const isTicketNumberValid = JIRA_TICKET_NUMBER_PATTERN.test(
     normalizedTicketNumber,
   );
@@ -134,6 +139,41 @@ export const ActionsView = () => {
     }
   };
 
+  const runModifyPipeline = async () => {
+    if (!normalizedModifyPipelineRunId) {
+      setError("Pipeline run ID is required");
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setError(null);
+
+      const result = await modifyPipeline({
+        pipelineRunId: normalizedModifyPipelineRunId,
+        autoAdvance: modifyPipelineAutoAdvance,
+      });
+      setOutput({
+        ok: true,
+        pipelineRunId: normalizedModifyPipelineRunId,
+        autoAdvance: modifyPipelineAutoAdvance,
+        result,
+      });
+    } catch (runError) {
+      const message =
+        runError instanceof Error ? runError.message : "Unexpected error";
+      setError(message);
+      setOutput({
+        ok: false,
+        pipelineRunId: normalizedModifyPipelineRunId,
+        autoAdvance: modifyPipelineAutoAdvance,
+        error: message,
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <Grid container spacing={3}>
       <Grid size={{ xs: 12, md: 4 }}>
@@ -200,6 +240,33 @@ export const ActionsView = () => {
                 disabled={loading || normalizedPipelineTicketId.length === 0}
               >
                 createPipelineRuns
+              </Button>
+              <TextField
+                label="Modify Pipeline Run ID"
+                value={modifyPipelineRunId}
+                onChange={(event) => setModifyPipelineRunId(event.target.value)}
+                placeholder="01959504-cf1c-7f43-bf6f-898c53b176ef"
+                helperText="Updates an existing pipeline run."
+              />
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={modifyPipelineAutoAdvance}
+                    onChange={(event) =>
+                      setModifyPipelineAutoAdvance(event.target.checked)
+                    }
+                    disabled={loading}
+                  />
+                }
+                label="Modified auto advance value"
+              />
+              <Button
+                variant="contained"
+                startIcon={<PlayArrowIcon />}
+                onClick={() => void runModifyPipeline()}
+                disabled={loading || normalizedModifyPipelineRunId.length === 0}
+              >
+                modifyPipeline
               </Button>
               {error ? <Alert severity="error">{error}</Alert> : null}
             </Stack>

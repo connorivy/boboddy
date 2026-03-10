@@ -22,6 +22,11 @@ export const createPipelineRunsRequestSchema = z.object({
   pipelineRuns: z.array(createPipelineRunRequestSchema).min(1),
 });
 
+export const modifyPipelineRequestSchema = z.object({
+  pipelineRunId: z.string().trim().min(1),
+  autoAdvance: z.boolean(),
+});
+
 export const advancePipelineStepResponseSchema = z.object({
   ok: z.literal(true),
   data: z.object({
@@ -32,6 +37,7 @@ export const advancePipelineStepResponseSchema = z.object({
 export const pipelineRunsQuerySchema = z.object({
   page: z.coerce.number().int().positive().default(1),
   pageSize: z.coerce.number().int().min(1).max(100).default(25),
+  q: z.string().trim().default(""),
 });
 
 export const paginatedPipelineRunsResponseSchema = z.object({
@@ -53,6 +59,7 @@ export type CreatePipelineRunRequest = z.input<
 export type CreatePipelineRunsRequest = z.input<
   typeof createPipelineRunsRequestSchema
 >;
+export type ModifyPipelineRequest = z.input<typeof modifyPipelineRequestSchema>;
 export type AdvancePipelineStepResponse = z.infer<
   typeof advancePipelineStepResponseSchema
 >;

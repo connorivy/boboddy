@@ -85,8 +85,8 @@ class ClaimedExecutionStepRepo implements StepExecutionRepo {
     return this.delegate.loadPage(query);
   }
 
-  async count(): Promise<number> {
-    return this.delegate.count();
+  async count(query: PipelineStepExecutionsQuery): Promise<number> {
+    return this.delegate.count(query);
   }
 
   async save(

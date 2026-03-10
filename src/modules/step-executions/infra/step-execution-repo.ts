@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, inArray, or, sql } from "drizzle-orm";
+import { and, asc, desc, eq, ilike, inArray, or, sql } from "drizzle-orm";
 import { getDb } from "@/lib/db";
 import { DbExecutor } from "@/lib/db/db-executor";
 import { pipelineRuns, ticketStepExecutionsTph } from "@/lib/db/schema";
@@ -29,6 +29,22 @@ export class DrizzleStepExecutionRepo implements StepExecutionRepo {
     }
 
     return getStepExecutionDefinition(row.type).deserializeExecution(row, ticketId);
+  }
+
+  private buildFilters(query: PipelineStepExecutionsQuery) {
+    const conditions = [];
+
+    if (query.q) {
+      const pattern = `%${query.q}%`;
+      conditions.push(
+        or(
+          sql`${ticketStepExecutionsTph.pipelineId}::text ilike ${pattern}`,
+          ilike(ticketStepExecutionsTph.ticketId, pattern),
+        ),
+      );
+    }
+
+    return conditions.length > 0 ? and(...conditions) : undefined;
   }
 
   async load(id: string): Promise<TicketPipelineStepExecutionEntity | null> {
@@ -182,6 +198,7 @@ export class DrizzleStepExecutionRepo implements StepExecutionRepo {
     const rows = await db
       .select()
       .from(ticketStepExecutionsTph)
+      .where(this.buildFilters(query))
       .orderBy(
         desc(ticketStepExecutionsTph.startedAt),
         desc(ticketStepExecutionsTph.id),
@@ -192,12 +209,13 @@ export class DrizzleStepExecutionRepo implements StepExecutionRepo {
     return rows.map((row) => this.mapRowToExecution(row));
   }
 
-  async count(): Promise<number> {
+  async count(query: PipelineStepExecutionsQuery): Promise<number> {
     const db = getDb();
 
     const [result] = await db
       .select({ count: sql<number>`count(*)` })
-      .from(ticketStepExecutionsTph);
+      .from(ticketStepExecutionsTph)
+      .where(this.buildFilters(query));
 
     return Number(result?.count ?? 0);
   }

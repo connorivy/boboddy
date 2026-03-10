@@ -1,4 +1,4 @@
-import { desc, eq, inArray, sql } from "drizzle-orm";
+import { and, desc, eq, ilike, inArray, or, sql } from "drizzle-orm";
 import { getDb } from "@/lib/db";
 import { pipelineRuns } from "@/lib/db/schema";
 import type { DbExecutor } from "@/lib/db/db-executor";
@@ -7,6 +7,7 @@ import type {
   LoadPipelineRunsByTicketIdsOptions,
   PipelineRunRepo,
 } from "@/modules/pipeline-runs/application/pipeline-run-repo";
+import type { PipelineRunsQuery } from "@/modules/pipeline-runs/contracts/pipeline-run-contracts";
 import { PipelineRunEntity } from "@/modules/pipeline-runs/domain/pipeline-run-aggregate";
 import { DrizzleStepExecutionRepo } from "@/modules/step-executions/infra/step-execution-repo";
 
@@ -15,6 +16,22 @@ export class DrizzlePipelineRunRepo implements PipelineRunRepo {
 
   private toEntity(row: typeof pipelineRuns.$inferSelect): PipelineRunEntity {
     return new PipelineRunEntity(row.id, row.ticketId, row.autoAdvance);
+  }
+
+  private buildFilters(query: PipelineRunsQuery) {
+    const conditions = [];
+
+    if (query.q) {
+      const pattern = `%${query.q}%`;
+      conditions.push(
+        or(
+          sql`${pipelineRuns.id}::text ilike ${pattern}`,
+          ilike(pipelineRuns.ticketId, pattern),
+        ),
+      );
+    }
+
+    return conditions.length > 0 ? and(...conditions) : undefined;
   }
 
   async loadById(
@@ -117,6 +134,29 @@ export class DrizzlePipelineRunRepo implements PipelineRunRepo {
     }
 
     return pipelineRunsByTicketId;
+  }
+
+  async loadPage(query: PipelineRunsQuery): Promise<PipelineRunEntity[]> {
+    const db = getDb();
+    const rows = await db
+      .select()
+      .from(pipelineRuns)
+      .where(this.buildFilters(query))
+      .orderBy(desc(pipelineRuns.id))
+      .limit(query.pageSize)
+      .offset((query.page - 1) * query.pageSize);
+
+    return rows.map((row) => this.toEntity(row));
+  }
+
+  async count(query: PipelineRunsQuery): Promise<number> {
+    const db = getDb();
+    const [result] = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(pipelineRuns)
+      .where(this.buildFilters(query));
+
+    return Number(result?.count ?? 0);
   }
 
   async createMany(

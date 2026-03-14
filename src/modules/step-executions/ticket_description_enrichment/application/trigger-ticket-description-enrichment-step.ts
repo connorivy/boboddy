@@ -6,6 +6,7 @@ import {
   type TriggerTicketDescriptionEnrichmentStepResponse,
 } from "@/modules/step-executions/ticket_description_enrichment/contracts/trigger-ticket-description-enrichment-step-contracts";
 import { completeTicketDescriptionEnrichmentStepRequestBodySchema } from "@/modules/step-executions/ticket_description_enrichment/contracts/complete-ticket-description-enrichment-step-contracts";
+import type { AgentRunLauncher } from "@/modules/ai/infra/agent-run-launcher";
 import { stepExecutionEntityToContract } from "@/modules/step-executions/application/step-execution-entity-to-contract";
 import { TICKET_INVESTIGATION_STEP_NAME } from "@/modules/step-executions/domain/step-execution.types";
 import type { GithubApiService } from "@/modules/step-executions/infra/github-copilot-coding-agent";
@@ -83,6 +84,7 @@ export const triggerTicketDescriptionEnrichmentStep = async (
     ticketGitEnvironmentRepo,
     pipelineRunRepo = AppContext.pipelineRunRepo,
     githubService,
+    agentRunLauncher,
     timeProvider,
   }: {
     ticketRepo: TicketRepo;
@@ -91,6 +93,7 @@ export const triggerTicketDescriptionEnrichmentStep = async (
     ticketGitEnvironmentRepo: TicketGitEnvironmentRepo;
     pipelineRunRepo?: PipelineRunRepo;
     githubService: GithubApiService;
+    agentRunLauncher: AgentRunLauncher;
     timeProvider: TimeProvider;
   } = AppContext,
 ): Promise<TriggerTicketDescriptionEnrichmentStepResponse> => {
@@ -192,7 +195,11 @@ export const triggerTicketDescriptionEnrichmentStep = async (
       `,
     );
 
-    await githubService.assignCopilot({
+    await agentRunLauncher.launch({
+      stepExecutionId: savedExecution.id,
+      stepName: savedExecution.stepName,
+      ticketId: input.ticketId,
+      pipelineId,
       issueNumber: githubIssue.githubIssueNumber,
       baseBranch: ticketGitEnvironment.devBranch,
       customAgent: TICKET_INVESTIGATION_AGENT,

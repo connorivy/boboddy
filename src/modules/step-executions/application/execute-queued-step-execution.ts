@@ -144,6 +144,7 @@ async function processClaimedStepExecution(
     | "pipelineRunRepo"
     | "ticketVectorRepo"
     | "githubService"
+    | "agentRunLauncher"
   > & { stepExecutionRepo: StepExecutionRepo; timeProvider: TimeProvider },
 ): Promise<void> {
   const stepExecutionRepo = new ClaimedExecutionStepRepo(
@@ -175,6 +176,7 @@ async function processClaimedStepExecution(
           ticketGitEnvironmentRepo: deps.ticketGitEnvironmentRepo,
           pipelineRunRepo: deps.pipelineRunRepo,
           githubService: deps.githubService,
+          agentRunLauncher: deps.agentRunLauncher,
           stepExecutionRepo,
           timeProvider: deps.timeProvider,
         },
@@ -200,6 +202,7 @@ async function processClaimedStepExecution(
           ticketGitEnvironmentRepo: deps.ticketGitEnvironmentRepo,
           pipelineRunRepo: deps.pipelineRunRepo,
           githubService: deps.githubService,
+          agentRunLauncher: deps.agentRunLauncher,
           stepExecutionRepo,
           timeProvider: deps.timeProvider,
         },
@@ -243,6 +246,7 @@ async function processClaimedStepExecution(
           environmentRepo: deps.environmentRepo,
           ticketGitEnvironmentRepo: deps.ticketGitEnvironmentRepo,
           githubService: deps.githubService,
+          agentRunLauncher: deps.agentRunLauncher,
           stepExecutionRepo,
           timeProvider: deps.timeProvider,
         },
@@ -267,6 +271,7 @@ export async function executeQueuedStepExecution(
     pipelineRunRepo,
     ticketVectorRepo,
     githubService,
+    agentRunLauncher,
   }: {
     stepExecutionRepo: StepExecutionRepo;
     timeProvider: TimeProvider;
@@ -276,6 +281,7 @@ export async function executeQueuedStepExecution(
     pipelineRunRepo: (typeof AppContext)["pipelineRunRepo"];
     ticketVectorRepo: (typeof AppContext)["ticketVectorRepo"];
     githubService: (typeof AppContext)["githubService"];
+    agentRunLauncher: (typeof AppContext)["agentRunLauncher"];
   } = AppContext,
 ): Promise<ExecuteQueuedStepExecutionResponse> {
   const input = executeQueuedStepExecutionRequestSchema.parse(rawInput);
@@ -301,6 +307,7 @@ export async function executeQueuedStepExecution(
     pipelineRunRepo,
     ticketVectorRepo,
     githubService,
+    agentRunLauncher,
   });
 
   const persistedExecution =

@@ -5,6 +5,7 @@ import {
   type TriggerTicketFailingTestReproStepRequest,
   type TriggerTicketFailingTestReproStepResponse,
 } from "@/modules/step-executions/github_repro_failing_test/contracts/trigger-ticket-failing-test-repro-step-contracts";
+import type { AgentRunLauncher } from "@/modules/ai/infra/agent-run-launcher";
 import { stepExecutionEntityToContract } from "@/modules/step-executions/application/step-execution-entity-to-contract";
 import {
   FAILING_TEST_REPRO_STEP_NAME,
@@ -82,6 +83,7 @@ export const triggerTicketFailingTestReproStep = async (
     ticketGitEnvironmentRepo,
     pipelineRunRepo = AppContext.pipelineRunRepo,
     githubService,
+    agentRunLauncher,
     timeProvider,
   }: {
     ticketRepo: TicketRepo;
@@ -90,6 +92,7 @@ export const triggerTicketFailingTestReproStep = async (
     ticketGitEnvironmentRepo: TicketGitEnvironmentRepo;
     pipelineRunRepo?: PipelineRunRepo;
     githubService: GithubApiService;
+    agentRunLauncher: AgentRunLauncher;
     timeProvider: TimeProvider;
   } = AppContext,
 ): Promise<TriggerTicketFailingTestReproStepResponse> => {
@@ -222,7 +225,11 @@ export const triggerTicketFailingTestReproStep = async (
       `,
     );
 
-    await githubService.assignCopilot({
+    await agentRunLauncher.launch({
+      stepExecutionId: savedExecution.id,
+      stepName: savedExecution.stepName,
+      ticketId: input.ticketId,
+      pipelineId,
       issueNumber: githubIssue.githubIssueNumber,
       baseBranch,
       customInstructions: buildCustomInstructions(enrichmentContext),

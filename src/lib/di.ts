@@ -5,6 +5,10 @@ import { DrizzleStepExecutionRepo } from "@/modules/step-executions/infra/step-e
 import { DrizzleTicketVectorRepo } from "@/modules/step-executions/ticket_duplicate_candidates/infra/ticket-vector.repository";
 import { DrizzleEnvironmentRepo } from "@/modules/environments/infra/drizzle-environment-repo";
 import { DrizzleTicketGitEnvironmentRepo } from "@/modules/environments/infra/drizzle-ticket-git-environment-repo";
+import {
+  createAgentRunLauncher,
+  type AgentRunLauncher,
+} from "@/modules/ai/infra/agent-run-launcher";
 import { GithubApiService } from "@/modules/step-executions/infra/github-copilot-coding-agent";
 import { DrizzlePipelineRunRepo } from "@/modules/pipeline-runs/infra/drizzle-pipeline-run-repo";
 import { QueueNextPipelineStepOnStepExecutionCompleted } from "@/modules/pipeline-runs/application/queue-next-pipeline-step-on-step-execution-completed";
@@ -14,6 +18,7 @@ import { systemTimeProvider, TimeProvider } from "@/lib/time-provider";
 
 export function createAppContext(customTimeProvider?: TimeProvider) {
   let githubServiceInstance: GithubApiService | null = null;
+  let agentRunLauncherInstance: AgentRunLauncher | null = null;
   const domainEventBus = new InProcessDomainEventBus();
   const timeProvider = customTimeProvider ?? systemTimeProvider;
   const stepExecutionRepo = new DrizzleStepExecutionRepo(
@@ -39,7 +44,8 @@ export function createAppContext(customTimeProvider?: TimeProvider) {
 
     return githubServiceInstance;
   };
-  return {
+
+  const context = {
     timeProvider,
     ticketRepo,
     jiraTicketRepo: new JiraTicketRepoByHttpClient(),
@@ -52,7 +58,16 @@ export function createAppContext(customTimeProvider?: TimeProvider) {
     get githubService() {
       return getGithubService();
     },
+    get agentRunLauncher() {
+      if (!agentRunLauncherInstance) {
+        agentRunLauncherInstance = createAgentRunLauncher(context.githubService);
+      }
+
+      return agentRunLauncherInstance;
+    },
   };
+
+  return context;
 }
 
 export type AppContext = ReturnType<typeof createAppContext>;

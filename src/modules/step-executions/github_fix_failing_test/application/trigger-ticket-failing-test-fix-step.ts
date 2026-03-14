@@ -6,6 +6,7 @@ import {
   type TriggerTicketFailingTestFixStepResponse,
 } from "@/modules/step-executions/github_fix_failing_test/contracts/trigger-ticket-failing-test-fix-step-contracts";
 import { completeTicketFailingTestFixStepRequestBodySchema } from "@/modules/step-executions/github_fix_failing_test/contracts/complete-ticket-failing-test-fix-step-contracts";
+import type { AgentRunLauncher } from "@/modules/ai/infra/agent-run-launcher";
 import { stepExecutionEntityToContract } from "@/modules/step-executions/application/step-execution-entity-to-contract";
 import {
   FAILING_TEST_FIX_STEP_NAME,
@@ -71,6 +72,7 @@ export const triggerTicketFailingTestFixStep = async (
     environmentRepo,
     ticketGitEnvironmentRepo,
     githubService,
+    agentRunLauncher,
     timeProvider,
   }: {
     ticketRepo: TicketRepo;
@@ -78,6 +80,7 @@ export const triggerTicketFailingTestFixStep = async (
     environmentRepo: EnvironmentRepo;
     ticketGitEnvironmentRepo: TicketGitEnvironmentRepo;
     githubService: GithubApiService;
+    agentRunLauncher: AgentRunLauncher;
     timeProvider: TimeProvider;
   } = AppContext,
 ): Promise<TriggerTicketFailingTestFixStepResponse> => {
@@ -198,7 +201,11 @@ export const triggerTicketFailingTestFixStep = async (
       `,
     );
 
-    await githubService.assignCopilot({
+    const launchedRun = await agentRunLauncher.launch({
+      stepExecutionId: savedExecution.id,
+      stepName: savedExecution.stepName,
+      ticketId: ticket.id,
+      pipelineId: savedExecution.pipelineId,
       issueNumber: githubIssue.githubIssueNumber,
       baseBranch: ticketGitEnvironment.devBranch,
       customInstructions: buildCustomInstructions(failingTestPaths),
@@ -210,7 +217,7 @@ export const triggerTicketFailingTestFixStep = async (
       githubIssue.githubIssueId,
       ticketGitEnvironment.devBranch,
       null,
-      undefined,
+      launchedRun.externalRunId,
       undefined,
       failingTestPaths[0],
     );

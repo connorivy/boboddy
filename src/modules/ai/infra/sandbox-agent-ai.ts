@@ -2,6 +2,7 @@ import { readdir, readFile, stat } from "node:fs/promises";
 import { join, relative } from "node:path";
 import { generateText, Output } from "ai";
 import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
+import { codexExec } from "ai-sdk-provider-codex-cli";
 import { z } from "zod";
 import {
   FAILING_TEST_FIX_STEP_NAME,
@@ -22,6 +23,8 @@ const githubModels = createOpenAICompatible({
   apiKey: process.env.GITHUB_MODELS_API_KEY,
 });
 
+type SandboxAgentModelProvider = "github-models" | "codex-cli";
+
 function getRequiredEnv(name: "GITHUB_MODELS_API_KEY"): string {
   const value = process.env[name]?.trim();
   if (!value) {
@@ -31,7 +34,35 @@ function getRequiredEnv(name: "GITHUB_MODELS_API_KEY"): string {
   return value;
 }
 
-function getSandboxModel() {
+function getSandboxModelProvider(): SandboxAgentModelProvider {
+  const provider = process.env.SANDBOX_AGENT_MODEL_PROVIDER?.trim().toLowerCase();
+
+  if (!provider || provider === "github-models") {
+    return "github-models";
+  }
+
+  if (provider === "codex" || provider === "codex-cli") {
+    return "codex-cli";
+  }
+
+  throw new Error(`Unsupported SANDBOX_AGENT_MODEL_PROVIDER "${provider}"`);
+}
+
+function getSandboxModel(workspacePath: string) {
+  const provider = getSandboxModelProvider();
+
+  if (provider === "codex-cli") {
+    const modelName = process.env.SANDBOX_AGENT_MODEL?.trim() || "gpt-5.3-codex";
+
+    return codexExec(modelName, {
+      cwd: workspacePath,
+      allowNpx: true,
+      skipGitRepoCheck: true,
+      approvalMode: "on-failure",
+      sandboxMode: "workspace-write",
+    });
+  }
+
   getRequiredEnv("GITHUB_MODELS_API_KEY");
   const modelName =
     process.env.SANDBOX_AGENT_MODEL?.trim() || "openai/gpt-4.1-mini";
@@ -153,7 +184,7 @@ export async function generateSandboxAgentPayload(
   ].join("\n");
 
   const { output } = await generateText({
-    model: getSandboxModel(),
+    model: getSandboxModel(input.workspacePath),
     output: Output.object({ schema }),
     prompt,
   });
@@ -163,4 +194,5 @@ export async function generateSandboxAgentPayload(
 
 export const sandboxAgentAiInternals = {
   buildRepoContext,
+  getSandboxModelProvider,
 };

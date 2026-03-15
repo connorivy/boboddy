@@ -7,7 +7,10 @@ services:
       SANDBOX_SOURCE_REPO_PATH: /workspace/source
       SANDBOX_WORKSPACE_ROOT: /tmp
       SANDBOX_AGENT_BRANCH_PREFIX: ${SANDBOX_AGENT_BRANCH_PREFIX:-sandbox}
+      SANDBOX_AGENT_MODEL_PROVIDER: ${SANDBOX_AGENT_MODEL_PROVIDER:-github-models}
       SANDBOX_AGENT_MODEL: ${SANDBOX_AGENT_MODEL:-openai/gpt-4.1-mini}
       GITHUB_MODELS_API_KEY: ${GITHUB_MODELS_API_KEY}
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
     volumes:
       - ${SANDBOX_SOURCE_REPO_PATH:-.}:/workspace/source:ro
+      - ${HOME}/.codex:/root/.codex:ro

@@ -1,0 +1,17 @@
+{
+  "name": "@boboddy/opencode",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json --noEmit",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@boboddy/tch": "workspace:*",
+    "@opencode-ai/plugin": "1.3.13"
+  }
+}
+

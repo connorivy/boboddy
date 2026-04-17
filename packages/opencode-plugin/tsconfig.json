@@ -1,0 +1,15 @@
+{
+  "extends": "../../../tsconfig.base.json",
+  "compilerOptions": {
+    "types": ["node"],
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["../../boboddy/src/*"],
+      "@/lib/*": ["../../boboddy/src/lib/*"],
+      "@/modules/*": ["../../boboddy/src/*"],
+      "#boboddy/*": ["../../boboddy/src/*"]
+    }
+  },
+  "include": ["src/**/*.ts", "tools/**/*.ts"],
+  "exclude": ["node_modules"]
+}

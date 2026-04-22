@@ -1,7 +1,26 @@
 {
   "extends": "../../../tsconfig.base.json",
   "compilerOptions": {
+    "baseUrl": ".",
     "exactOptionalPropertyTypes": false,
+    "paths": {
+      "@/*": ["../../../apps/api/src/*"],
+      "@/lib/*": ["../../boboddy/src/lib/*"],
+      "@/modules/*": ["../../boboddy/src/*"],
+      "@boboddy/api/*": ["../../../apps/api/src/*"],
+      "@boboddy/boboddy": ["../../boboddy/src/index.ts"],
+      "@boboddy/boboddy/*": ["../../boboddy/src/*"],
+      "@boboddy/containers": ["../../containers/src/index.ts"],
+      "@boboddy/containers/*": ["../../containers/src/*"],
+      "@boboddy/opencode": ["../../ai/opencode/src/index.ts"],
+      "@boboddy/opencode/*": ["../../ai/opencode/src/*"],
+      "@boboddy/sdk": ["./src/index.ts"],
+      "@boboddy/sdk/*": ["./src/*"],
+      "@boboddy/shared-types": ["../../shared-types/src/index.ts"],
+      "@boboddy/shared-types/*": ["../../shared-types/src/*"],
+      "@boboddy/tch": ["../../tch/src/index.ts"],
+      "@boboddy/tch/*": ["../../tch/src/*"]
+    },
     "types": ["node"]
   },
   "include": ["src/**/*.ts", "openapi-ts.config.ts"],

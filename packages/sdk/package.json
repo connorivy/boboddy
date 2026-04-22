@@ -5,12 +5,16 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
-    "./client": "./src/client.ts"
+    "./client": "./src/client.ts",
+    "./treaty": "./src/treaty.ts"
   },
   "scripts": {
     "generate": "openapi-ts",
     "build": "bun run generate && tsc -p tsconfig.json --noEmit",
     "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@elysiajs/eden": "^1.4.9"
   },
   "devDependencies": {
     "@hey-api/openapi-ts": "^0.90.10"

@@ -15,11 +15,7 @@
       "@boboddy/opencode": ["../../ai/opencode/src/index.ts"],
       "@boboddy/opencode/*": ["../../ai/opencode/src/*"],
       "@boboddy/sdk": ["./src/index.ts"],
-      "@boboddy/sdk/*": ["./src/*"],
-      "@boboddy/shared-types": ["../../shared-types/src/index.ts"],
-      "@boboddy/shared-types/*": ["../../shared-types/src/*"],
-      "@boboddy/tch": ["../../tch/src/index.ts"],
-      "@boboddy/tch/*": ["../../tch/src/*"]
+      "@boboddy/sdk/*": ["./src/*"]
     },
     "types": ["node"]
   },

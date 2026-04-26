@@ -8,44 +8,25 @@ const SOURCE_OPENCODE_DIR = path.resolve(
 );
 
 const RUNTIME_BOBODDY_SOURCE_ROOT = "/workspace/.boboddy-src";
-const RUNTIME_BOBODDY_TCH_ENTRYPOINT =
-  `${RUNTIME_BOBODDY_SOURCE_ROOT}/packages/tch/src/index.ts`;
 
 function rewriteRuntimeImports(source: string): string {
   return source
     .replaceAll("'#boboddy/", `'${RUNTIME_BOBODDY_SOURCE_ROOT}/packages/boboddy/src/`)
-    .replaceAll('"#boboddy/', `"${RUNTIME_BOBODDY_SOURCE_ROOT}/packages/boboddy/src/`)
-    .replaceAll("'@boboddy/tch'", `'${RUNTIME_BOBODDY_TCH_ENTRYPOINT}'`)
-    .replaceAll('"@boboddy/tch"', `"${RUNTIME_BOBODDY_TCH_ENTRYPOINT}"`);
+    .replaceAll('"#boboddy/', `"${RUNTIME_BOBODDY_SOURCE_ROOT}/packages/boboddy/src/`);
 }
 
 async function buildRuntimePackageJson(): Promise<string> {
   const sourcePackageJsonPath = path.join(SOURCE_OPENCODE_DIR, "package.json");
-  const tchPackageJsonPath = path.resolve(
-    SOURCE_OPENCODE_DIR,
-    "../../tch/package.json",
-  );
   const sourcePackageJson = JSON.parse(
     await readFile(sourcePackageJsonPath, "utf8"),
   ) as {
     dependencies?: Record<string, string>;
   };
-  const tchPackageJson = JSON.parse(
-    await readFile(tchPackageJsonPath, "utf8"),
-  ) as {
-    dependencies?: Record<string, string>;
-  };
-
-  const runtimeDependencies = {
-    ...(sourcePackageJson.dependencies ?? {}),
-    ...(tchPackageJson.dependencies ?? {}),
-  };
-  delete runtimeDependencies["@boboddy/tch"];
 
   return `${JSON.stringify(
     {
       ...sourcePackageJson,
-      dependencies: runtimeDependencies,
+      dependencies: sourcePackageJson.dependencies ?? {},
     },
     null,
     2,

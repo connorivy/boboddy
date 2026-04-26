@@ -1,9 +1,10 @@
+import type { AnyJsonValue } from '@boboddy/core/common/contracts/json';
 import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
 export async function writeJsonPayload(
   relativeFilePath: string,
-  payload: unknown,
+  payload: AnyJsonValue,
 ): Promise<string> {
   const filePath = path.join(process.cwd(), relativeFilePath);
 

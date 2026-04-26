@@ -6,16 +6,16 @@ export async function fetchUserCredentials(args: {
   verbose?: boolean;
 }): Promise<string> {
   const output: string[] = [];
-  const capture = (...values: unknown[]) => {
+  const capture = (...values: Parameters<typeof console.log>) => {
     output.push(values.map((value) => String(value)).join(' '));
   };
 
   const originalLog = console.log;
   const originalError = console.error;
-  const logToolEvent = (...values: unknown[]) => {
+  const logToolEvent = (...values: Parameters<typeof console.log>) => {
     originalLog('[tch-fetch-user-credentials-by-emails]', ...values);
   };
-  const logToolError = (...values: unknown[]) => {
+  const logToolError = (...values: Parameters<typeof console.error>) => {
     originalError('[tch-fetch-user-credentials-by-emails]', ...values);
   };
 

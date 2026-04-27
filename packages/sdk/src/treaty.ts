@@ -15,7 +15,9 @@ const normalizeBoboddyBaseUrl = (baseUrl: string): string => {
     .replace(API_SUFFIX_PATTERN, "");
 };
 
-export function createBoboddyTreaty(baseUrl: string): ReturnType<typeof treaty<App>>;
+export function createBoboddyTreaty(
+  baseUrl: string,
+): ReturnType<typeof treaty<App>>;
 export function createBoboddyTreaty(app: App): ReturnType<typeof treaty<App>>;
 export function createBoboddyTreaty(baseUrlOrApp: string | App) {
   if (typeof baseUrlOrApp === "string") {

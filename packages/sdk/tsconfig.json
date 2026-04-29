@@ -5,11 +5,7 @@
     "exactOptionalPropertyTypes": false,
     "paths": {
       "@/*": ["../../../apps/api/src/*"],
-      "@/lib/*": ["../../boboddy/src/lib/*"],
-      "@/modules/*": ["../../boboddy/src/*"],
       "@boboddy/api/*": ["../../../apps/api/src/*"],
-      "@boboddy/boboddy": ["../../boboddy/src/index.ts"],
-      "@boboddy/boboddy/*": ["../../boboddy/src/*"],
       "@boboddy/containers": ["../../containers/src/index.ts"],
       "@boboddy/containers/*": ["../../containers/src/*"],
       "@boboddy/opencode": ["../../ai/opencode/src/index.ts"],

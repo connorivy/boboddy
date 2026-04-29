@@ -38,6 +38,7 @@ Run the CLI directly from source:
 ```sh
 bun run apps/cli/src/index.ts hello
 bun run apps/cli/src/index.ts hello Connor
+bun run apps/cli/src/index.ts work 01966a2c-9494-7db5-aa46-0f8f5cbbe001
 bun run apps/cli/src/index.ts auth status
 ```
 
@@ -46,6 +47,7 @@ Or from the package directory:
 ```sh
 cd apps/cli
 bun run src/index.ts hello Connor
+bun run src/index.ts work 01966a2c-9494-7db5-aa46-0f8f5cbbe001
 ```
 
 ## Type Checking

@@ -3,6 +3,7 @@ import { hideBin } from "yargs/helpers";
 
 import { authCommand } from "./commands/auth";
 import { helloCommand } from "./commands/hello";
+import { workCommand } from "./commands/work";
 
 const CLI_VERSION = "0.0.0";
 
@@ -16,6 +17,7 @@ export function createCli(argv: readonly string[]) {
     .exitProcess(false)
     .command(authCommand)
     .command(helloCommand)
+    .command(workCommand)
     .demandCommand(1, "A command is required.");
 }
 

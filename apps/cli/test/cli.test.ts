@@ -1,8 +1,9 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect } from "bun:test";
 import { spawnSync } from "node:child_process";
 import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
+import { concurrentTest } from "./utils";
 
 const projectRoot = resolve(import.meta.dir, "..");
 const cliEntrypoint = resolve(projectRoot, "src/index.ts");
@@ -35,7 +36,7 @@ function run(command: readonly string[], env?: NodeJS.ProcessEnv): SpawnResult {
 }
 
 describe("boboddy CLI", () => {
-  test.concurrent("prints the default hello greeting", () => {
+  concurrentTest("prints the default hello greeting", () => {
     const result = run([process.execPath, "run", cliEntrypoint, "hello"]);
 
     expect(result).toMatchObject({
@@ -45,7 +46,7 @@ describe("boboddy CLI", () => {
     });
   });
 
-  test.concurrent("prints a named hello greeting", () => {
+  concurrentTest("prints a named hello greeting", () => {
     const result = run([process.execPath, "run", cliEntrypoint, "hello", "Connor"]);
 
     expect(result).toMatchObject({
@@ -55,17 +56,18 @@ describe("boboddy CLI", () => {
     });
   });
 
-  test.concurrent("prints help output", () => {
+  concurrentTest("prints help output", () => {
     const result = run([process.execPath, "run", cliEntrypoint, "--help"]);
 
     expect(result.exitCode).toBe(0);
     expect(result.stderr).toBe("");
     expect(result.stdout).toContain("hello [name]");
+    expect(result.stdout).toContain("work <projectId>");
     expect(result.stdout).toContain("--help");
     expect(result.stdout).toContain("--version");
   });
 
-  test.concurrent("prints version output", () => {
+  concurrentTest("prints version output", () => {
     const result = run([process.execPath, "run", cliEntrypoint, "--version"]);
 
     expect(result).toMatchObject({
@@ -75,7 +77,7 @@ describe("boboddy CLI", () => {
     });
   });
 
-  test.concurrent("reports a missing compiled binary in the wrapper", () => {
+  concurrentTest("reports a missing compiled binary in the wrapper", () => {
     const result = run(["node", wrapperEntrypoint, "hello"], {
       BOBODDY_DIST_DIR: resolve(projectRoot, "dist-does-not-exist"),
     });
@@ -85,7 +87,7 @@ describe("boboddy CLI", () => {
     expect(result.stderr).toContain("Missing compiled binary");
   });
 
-  test.concurrent("reports an unsupported platform in the wrapper", () => {
+  concurrentTest("reports an unsupported platform in the wrapper", () => {
     const result = run(["node", wrapperEntrypoint, "hello"], {
       BOBODDY_PLATFORM: "freebsd",
       BOBODDY_ARCH: "arm64",

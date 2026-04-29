@@ -1,4 +1,4 @@
-import { describe, expect } from "bun:test";
+import { describe, expect, test } from "bun:test";
 import { spawnSync } from "node:child_process";
 import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -47,7 +47,13 @@ describe("boboddy CLI", () => {
   });
 
   concurrentTest("prints a named hello greeting", () => {
-    const result = run([process.execPath, "run", cliEntrypoint, "hello", "Connor"]);
+    const result = run([
+      process.execPath,
+      "run",
+      cliEntrypoint,
+      "hello",
+      "Connor",
+    ]);
 
     expect(result).toMatchObject({
       exitCode: 0,
@@ -98,12 +104,20 @@ describe("boboddy CLI", () => {
     expect(result.stderr).toContain("Unsupported platform or architecture");
   });
 
-  test.concurrent("reports auth status when not signed in", () => {
+  concurrentTest("reports auth status when not signed in", () => {
     const fakeHome = mkdtempSync(resolve(tmpdir(), "boboddy-cli-"));
 
     try {
       const result = run(
-        [process.execPath, "run", cliEntrypoint, "auth", "status", "--base-url", "https://example.com"],
+        [
+          process.execPath,
+          "run",
+          cliEntrypoint,
+          "auth",
+          "status",
+          "--base-url",
+          "https://example.com",
+        ],
         { HOME: fakeHome },
       );
 
@@ -122,7 +136,15 @@ describe("boboddy CLI", () => {
 
     try {
       const result = run(
-        [process.execPath, "run", cliEntrypoint, "auth", "whoami", "--base-url", "https://example.com"],
+        [
+          process.execPath,
+          "run",
+          cliEntrypoint,
+          "auth",
+          "whoami",
+          "--base-url",
+          "https://example.com",
+        ],
         { HOME: fakeHome },
       );
 
@@ -153,7 +175,15 @@ describe("boboddy CLI", () => {
       );
 
       const result = run(
-        [process.execPath, "run", cliEntrypoint, "auth", "logout", "--base-url", "https://example.com"],
+        [
+          process.execPath,
+          "run",
+          cliEntrypoint,
+          "auth",
+          "logout",
+          "--base-url",
+          "https://example.com",
+        ],
         { HOME: fakeHome },
       );
 
@@ -164,11 +194,21 @@ describe("boboddy CLI", () => {
       });
 
       const statusResult = run(
-        [process.execPath, "run", cliEntrypoint, "auth", "status", "--base-url", "https://example.com"],
+        [
+          process.execPath,
+          "run",
+          cliEntrypoint,
+          "auth",
+          "status",
+          "--base-url",
+          "https://example.com",
+        ],
         { HOME: fakeHome },
       );
 
-      expect(statusResult.stdout).toBe("Not signed in to https://example.com.\n");
+      expect(statusResult.stdout).toBe(
+        "Not signed in to https://example.com.\n",
+      );
     } finally {
       rmSync(fakeHome, { recursive: true, force: true });
     }

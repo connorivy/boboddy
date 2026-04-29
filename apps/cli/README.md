@@ -38,6 +38,7 @@ Run the CLI directly from source:
 ```sh
 bun run apps/cli/src/index.ts hello
 bun run apps/cli/src/index.ts hello Connor
+bun run apps/cli/src/index.ts auth status
 ```
 
 Or from the package directory:
@@ -87,7 +88,24 @@ After building, run the wrapper locally:
 
 ```sh
 ./bin/boboddy hello Connor
+./bin/boboddy auth login
 ```
+
+## Authentication
+
+Authenticate the CLI through the browser-based Better Auth device flow:
+
+```sh
+boboddy auth login
+boboddy auth status
+boboddy auth whoami
+boboddy auth logout
+```
+
+By default the CLI targets `http://127.0.0.1:3000`. Override that with
+`--base-url` or the `BOBODDY_BASE_URL` environment variable.
+
+Authenticated CLI credentials are stored in `~/.boboddy.json`.
 
 ## npm-Style Installation
 

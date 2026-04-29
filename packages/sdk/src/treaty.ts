@@ -28,3 +28,22 @@ export function createBoboddyTreaty(baseUrlOrApp: string | App) {
 }
 
 export type BoboddyTreaty = ReturnType<typeof createBoboddyTreaty>;
+
+type EdenResult<T> = {
+  data: T | null | undefined;
+  error: { value: unknown } | null | undefined;
+};
+
+export const unwrapTreatyResponse = async <T>(
+  promise: Promise<EdenResult<T>>,
+): Promise<T> => {
+  const { data, error } = await promise;
+
+  if (error) {
+    throw error.value;
+  }
+
+  return data as T;
+};
+
+export const createBoboddyApiClient = createBoboddyTreaty;

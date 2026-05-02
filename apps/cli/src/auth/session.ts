@@ -25,7 +25,7 @@ export async function requestDeviceAuthorization(baseUrl: string) {
 
     throw new Error(
       result.error?.error_description ??
-        result.error?.message ??
+        result.error?.statusText ??
         `Unable to start CLI authentication (HTTP ${String(result.error?.status ?? "unknown")}).`,
     );
   }
@@ -69,12 +69,15 @@ export async function pollForAccessToken({
         currentIntervalSeconds += 5;
         continue;
       case "expired_token":
-        throw new Error("The CLI sign-in request expired. Run `boboddy auth login` again.");
+        throw new Error(
+          "The CLI sign-in request expired. Run `boboddy auth login` again.",
+        );
       case "access_denied":
         throw new Error("CLI access was denied.");
       default:
         throw new Error(
-          result.error?.error_description ?? "CLI sign-in could not be completed.",
+          result.error?.error_description ??
+            "CLI sign-in could not be completed.",
         );
     }
   }

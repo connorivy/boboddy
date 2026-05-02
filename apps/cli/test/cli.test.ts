@@ -15,6 +15,12 @@ interface SpawnResult {
   readonly exitCode: number;
 }
 
+interface LogLine {
+  readonly level?: number;
+  readonly msg?: string;
+  readonly [key: string]: unknown;
+}
+
 function run(command: readonly string[], env?: NodeJS.ProcessEnv): SpawnResult {
   const [file, ...args] = command;
 
@@ -35,15 +41,26 @@ function run(command: readonly string[], env?: NodeJS.ProcessEnv): SpawnResult {
   };
 }
 
+function parseLogLines(stdout: string): LogLine[] {
+  return stdout
+    .trim()
+    .split("\n")
+    .filter((line) => line.length > 0)
+    .map((line) => JSON.parse(line) as LogLine);
+}
+
 describe("boboddy CLI", () => {
   concurrentTest("prints the default hello greeting", () => {
     const result = run([process.execPath, "run", cliEntrypoint, "hello"]);
+    const logs = parseLogLines(result.stdout);
 
     expect(result).toMatchObject({
       exitCode: 0,
-      stdout: "Hello, world!\n",
       stderr: "",
     });
+    expect(logs).toContainEqual(
+      expect.objectContaining({ msg: "Hello, world!" }),
+    );
   });
 
   concurrentTest("prints a named hello greeting", () => {
@@ -54,12 +71,15 @@ describe("boboddy CLI", () => {
       "hello",
       "Connor",
     ]);
+    const logs = parseLogLines(result.stdout);
 
     expect(result).toMatchObject({
       exitCode: 0,
-      stdout: "Hello, Connor!\n",
       stderr: "",
     });
+    expect(logs).toContainEqual(
+      expect.objectContaining({ msg: "Hello, Connor!" }),
+    );
   });
 
   concurrentTest("prints help output", () => {
@@ -89,8 +109,10 @@ describe("boboddy CLI", () => {
     });
 
     expect(result.exitCode).toBe(1);
-    expect(result.stdout).toBe("");
-    expect(result.stderr).toContain("Missing compiled binary");
+    expect(result.stderr).toBe("");
+    expect(parseLogLines(result.stdout)).toContainEqual(
+      expect.objectContaining({ msg: "CLI wrapper failed" }),
+    );
   });
 
   concurrentTest("reports an unsupported platform in the wrapper", () => {
@@ -100,8 +122,10 @@ describe("boboddy CLI", () => {
     });
 
     expect(result.exitCode).toBe(1);
-    expect(result.stdout).toBe("");
-    expect(result.stderr).toContain("Unsupported platform or architecture");
+    expect(result.stderr).toBe("");
+    expect(parseLogLines(result.stdout)).toContainEqual(
+      expect.objectContaining({ msg: "CLI wrapper failed" }),
+    );
   });
 
   concurrentTest("reports auth status when not signed in", () => {
@@ -123,9 +147,11 @@ describe("boboddy CLI", () => {
 
       expect(result).toMatchObject({
         exitCode: 0,
-        stdout: "Not signed in to https://example.com.\n",
         stderr: "",
       });
+      expect(parseLogLines(result.stdout)).toContainEqual(
+        expect.objectContaining({ msg: "Not signed in", baseUrl: "https://example.com" }),
+      );
     } finally {
       rmSync(fakeHome, { recursive: true, force: true });
     }
@@ -149,8 +175,10 @@ describe("boboddy CLI", () => {
       );
 
       expect(result.exitCode).toBe(1);
-      expect(result.stdout).toBe("");
-      expect(result.stderr).toContain("Not signed in to https://example.com.");
+      expect(result.stderr).toBe("");
+      expect(parseLogLines(result.stdout)).toContainEqual(
+        expect.objectContaining({ msg: "Not signed in to https://example.com." }),
+      );
     } finally {
       rmSync(fakeHome, { recursive: true, force: true });
     }
@@ -189,9 +217,11 @@ describe("boboddy CLI", () => {
 
       expect(result).toMatchObject({
         exitCode: 0,
-        stdout: "Signed out from https://example.com.\n",
         stderr: "",
       });
+      expect(parseLogLines(result.stdout)).toContainEqual(
+        expect.objectContaining({ msg: "Signed out", baseUrl: "https://example.com" }),
+      );
 
       const statusResult = run(
         [
@@ -206,8 +236,8 @@ describe("boboddy CLI", () => {
         { HOME: fakeHome },
       );
 
-      expect(statusResult.stdout).toBe(
-        "Not signed in to https://example.com.\n",
+      expect(parseLogLines(statusResult.stdout)).toContainEqual(
+        expect.objectContaining({ msg: "Not signed in", baseUrl: "https://example.com" }),
       );
     } finally {
       rmSync(fakeHome, { recursive: true, force: true });

@@ -21,10 +21,14 @@ export function createBoboddyTreaty(
 export function createBoboddyTreaty(app: App): ReturnType<typeof treaty<App>>;
 export function createBoboddyTreaty(baseUrlOrApp: string | App) {
   if (typeof baseUrlOrApp === "string") {
-    return treaty<App>(normalizeBoboddyBaseUrl(baseUrlOrApp));
+    return treaty<App>(normalizeBoboddyBaseUrl(baseUrlOrApp), {
+      parseDate: false,
+    });
   }
 
-  return treaty(baseUrlOrApp);
+  return treaty(baseUrlOrApp, {
+    parseDate: false,
+  });
 }
 
 export type BoboddyTreaty = ReturnType<typeof createBoboddyTreaty>;

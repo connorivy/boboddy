@@ -1,0 +1,71 @@
+#!/usr/bin/env node
+
+const { spawnSync } = require("node:child_process");
+const { existsSync } = require("node:fs");
+const { resolve } = require("node:path");
+const pino = require("pino");
+
+const cliName = "boboddy";
+const projectRoot = resolve(__dirname, "..");
+const distDirectory = process.env.BOBODDY_DIST_DIR ?? resolve(projectRoot, "dist");
+const platform = process.env.BOBODDY_PLATFORM ?? process.platform;
+const arch = process.env.BOBODDY_ARCH ?? process.arch;
+const transport = process.stdout.isTTY
+  ? pino.transport({
+      target: "pino-pretty",
+      options: {
+        colorize: true,
+        translateTime: "SYS:standard",
+        destination: 1,
+        ignore: "pid,hostname",
+      },
+    })
+  : undefined;
+const logger = pino(
+  {
+    name: "@boboddy/cli-wrapper",
+    level: process.env.BOBODDY_LOG_LEVEL ?? "info",
+    scope: "wrapper",
+  },
+  transport,
+);
+
+const binaryNames = {
+  "darwin:arm64": `${cliName}-darwin-arm64`,
+  "darwin:x64": `${cliName}-darwin-x64`,
+  "linux:arm64": `${cliName}-linux-arm64`,
+  "linux:x64": `${cliName}-linux-x64`,
+  "win32:x64": `${cliName}-windows-x64.exe`,
+};
+
+function fail(message) {
+  logger.error({ message }, "CLI wrapper failed");
+  process.exit(1);
+}
+
+const targetKey = `${platform}:${arch}`;
+const binaryName = binaryNames[targetKey];
+
+if (binaryName === undefined) {
+  fail(`Unsupported platform or architecture: ${platform}/${arch}.`);
+}
+
+const binaryPath = resolve(distDirectory, binaryName);
+
+if (!existsSync(binaryPath)) {
+  fail(`Missing compiled binary: ${binaryPath}`);
+}
+
+const result = spawnSync(binaryPath, process.argv.slice(2), {
+  stdio: "inherit",
+});
+
+if (result.error instanceof Error) {
+  fail(result.error.message);
+}
+
+if (typeof result.status === "number") {
+  process.exit(result.status);
+}
+
+process.exit(1);

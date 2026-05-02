@@ -4,8 +4,10 @@ import { hideBin } from "yargs/helpers";
 import { authCommand } from "./commands/auth";
 import { helloCommand } from "./commands/hello";
 import { workCommand } from "./commands/work";
+import { createCliLogger } from "./lib/logger";
 
 const CLI_VERSION = "0.0.0";
+const logger = createCliLogger("cli");
 
 export function createCli(argv: readonly string[]) {
   return yargs(argv)
@@ -13,6 +15,13 @@ export function createCli(argv: readonly string[]) {
     .strict()
     .help()
     .version(CLI_VERSION)
+    .fail((message, error) => {
+      if (error instanceof Error) {
+        throw error;
+      }
+
+      throw new Error(message);
+    })
     .showHelpOnFail(false)
     .exitProcess(false)
     .command(authCommand)
@@ -27,9 +36,9 @@ export async function run(argv: readonly string[] = hideBin(process.argv)): Prom
     return 0;
   } catch (error) {
     if (error instanceof Error) {
-      console.error(error.message);
+      logger.error({ err: error }, error.message);
     } else {
-      console.error("Unknown CLI error.");
+      logger.error({ error }, "Unknown CLI error.");
     }
 
     return 1;

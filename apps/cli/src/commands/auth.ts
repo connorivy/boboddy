@@ -1,4 +1,5 @@
 import type { ArgumentsCamelCase, Argv, CommandModule } from "yargs";
+import { createCliLogger } from "../lib/logger";
 import { CLI_AUTH_CLIENT_ID, resolveBoboddyBaseUrl } from "../auth/config";
 import { openBrowser } from "../auth/browser";
 import {
@@ -21,21 +22,27 @@ const getBaseUrlArgument = (arguments_: ArgumentsCamelCase<object>) => {
 };
 
 const runLogin = async (arguments_: ArgumentsCamelCase<object>) => {
+  const logger = createCliLogger("auth");
   const baseUrl = resolveBoboddyBaseUrl(getBaseUrlArgument(arguments_));
   const deviceAuth = await requestDeviceAuthorization(baseUrl);
 
-  console.log(`Open this URL to approve the CLI:`);
-  console.log(deviceAuth.verification_uri_complete || deviceAuth.verification_uri);
-  console.log(`CLI code: ${deviceAuth.user_code}`);
-  console.log(`Client: ${CLI_AUTH_CLIENT_ID}`);
+  logger.info("Open this URL to approve the CLI");
+  logger.info(
+    { url: deviceAuth.verification_uri_complete || deviceAuth.verification_uri },
+    "Approval URL",
+  );
+  logger.info({ code: deviceAuth.user_code }, "CLI code");
+  logger.info({ clientId: CLI_AUTH_CLIENT_ID }, "Auth client");
 
   try {
     await openBrowser(deviceAuth.verification_uri_complete || deviceAuth.verification_uri);
   } catch {
-    console.log("Could not open a browser automatically. Open the URL above manually.");
+    logger.warn(
+      "Could not open a browser automatically. Open the URL above manually.",
+    );
   }
 
-  console.log("Waiting for approval...");
+  logger.info("Waiting for approval");
 
   const tokenResponse = await pollForAccessToken({
     baseUrl,
@@ -49,32 +56,37 @@ const runLogin = async (arguments_: ArgumentsCamelCase<object>) => {
     accessToken: tokenResponse.access_token,
   });
 
-  console.log(`Signed in as ${session.user.email}.`);
+  logger.info({ email: session.user.email }, "Signed in");
 };
 
 const runStatus = async (arguments_: ArgumentsCamelCase<object>) => {
+  const logger = createCliLogger("auth");
   const baseUrl = resolveBoboddyBaseUrl(getBaseUrlArgument(arguments_));
   const profile = loadAuthProfile(baseUrl);
 
   if (!profile) {
-    console.log(`Not signed in to ${baseUrl}.`);
+    logger.info({ baseUrl }, "Not signed in");
     return;
   }
 
   try {
     const authenticated = await loadAuthenticatedSession(baseUrl);
     if (!authenticated) {
-      console.log(`Not signed in to ${baseUrl}.`);
+      logger.info({ baseUrl }, "Not signed in");
       return;
     }
 
-    console.log(`Signed in to ${baseUrl} as ${authenticated.session.user.email}.`);
+    logger.info(
+      { baseUrl, email: authenticated.session.user.email },
+      "Signed in",
+    );
   } catch {
-    console.log(`Stored credentials for ${baseUrl} are no longer valid.`);
+    logger.warn({ baseUrl }, "Stored credentials are no longer valid");
   }
 };
 
 const runWhoAmI = async (arguments_: ArgumentsCamelCase<object>) => {
+  const logger = createCliLogger("auth");
   const baseUrl = resolveBoboddyBaseUrl(getBaseUrlArgument(arguments_));
   const authenticated = await loadAuthenticatedSession(baseUrl);
 
@@ -82,13 +94,14 @@ const runWhoAmI = async (arguments_: ArgumentsCamelCase<object>) => {
     throw new Error(`Not signed in to ${baseUrl}.`);
   }
 
-  console.log(authenticated.session.user.email);
+  logger.info({ email: authenticated.session.user.email }, "Authenticated user");
 };
 
 const runLogout = async (arguments_: ArgumentsCamelCase<object>) => {
+  const logger = createCliLogger("auth");
   const baseUrl = resolveBoboddyBaseUrl(getBaseUrlArgument(arguments_));
   deleteAuthProfile(baseUrl);
-  console.log(`Signed out from ${baseUrl}.`);
+  logger.info({ baseUrl }, "Signed out");
 };
 
 const loginCommand: CommandModule<object, object> = {

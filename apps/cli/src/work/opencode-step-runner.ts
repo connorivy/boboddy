@@ -1,5 +1,5 @@
 import { createOpencodeClient } from "@opencode-ai/sdk";
-import type { StepExecutionAgentRunner } from "@boboddy/core/step-executions/application/process-project-work";
+import type { StepExecutionAgentRunner } from "@boboddy/core/pipeline-executions/step-execution/application/process-project-work";
 import { logWork } from "./work-logger";
 
 export type PromptAsyncOpencodeStepInput = {

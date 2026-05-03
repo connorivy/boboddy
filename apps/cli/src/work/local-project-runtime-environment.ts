@@ -5,21 +5,21 @@ import type { UuidV7 } from "@boboddy/core/common/contracts/uuid-v7";
 import type {
   StepExecutionRuntimeEnvironment,
   StepExecutionRuntimeEnvironmentOrchestrator,
-} from "@boboddy/core/step-executions/application/process-project-work";
-import type { AiContainerLauncher } from "@boboddy/core/project-runtime-sessions/application/ai-container-launcher";
-import type { DevcontainerLauncher } from "@boboddy/core/project-runtime-sessions/application/devcontainer-launcher";
-import type { GitCloneService } from "@boboddy/core/project-runtime-sessions/application/git-clone-service";
+} from "@boboddy/core/pipeline-executions/step-execution/application/process-project-work";
+import type { AiContainerLauncher } from "@boboddy/core/agent-sessions/project-runtime-session/application/ai-container-launcher";
+import type { DevcontainerLauncher } from "@boboddy/core/agent-sessions/project-runtime-session/application/devcontainer-launcher";
+import type { GitCloneService } from "@boboddy/core/agent-sessions/project-runtime-session/application/git-clone-service";
 import {
   PROJECT_RUNTIME_SESSION_AGENT_NETWORK_ALIAS,
   PROJECT_RUNTIME_SESSION_PROJECT_NETWORK_ALIAS,
-} from "@boboddy/core/project-runtime-sessions/application/project-runtime-session-network-metadata";
-import type { RuntimeSessionNetworkManager } from "@boboddy/core/project-runtime-sessions/application/runtime-session-network-manager";
-import type { WorkspaceManager } from "@boboddy/core/project-runtime-sessions/application/workspace-manager";
-import { DockerAiContainerLauncher } from "@boboddy/core/project-runtime-sessions/infra/docker-ai-container-launcher";
-import { DevcontainerCliLauncher } from "@boboddy/core/project-runtime-sessions/infra/devcontainer-cli-launcher";
-import { GitCliCloneService } from "@boboddy/core/project-runtime-sessions/infra/git-cli-clone-service";
-import { LocalDockerRuntimeSessionNetworkManager } from "@boboddy/core/project-runtime-sessions/infra/local-docker-runtime-session-network-manager";
-import { LocalWorkspaceManager } from "@boboddy/core/project-runtime-sessions/infra/local-workspace-manager";
+} from "@boboddy/core/agent-sessions/project-runtime-session/application/project-runtime-session-network-metadata";
+import type { RuntimeSessionNetworkManager } from "@boboddy/core/agent-sessions/project-runtime-session/application/runtime-session-network-manager";
+import type { WorkspaceManager } from "@boboddy/core/agent-sessions/project-runtime-session/application/workspace-manager";
+import { DockerAiContainerLauncher } from "@boboddy/core/agent-sessions/project-runtime-session/infra/docker-ai-container-launcher";
+import { DevcontainerCliLauncher } from "@boboddy/core/agent-sessions/project-runtime-session/infra/devcontainer-cli-launcher";
+import { GitCliCloneService } from "@boboddy/core/agent-sessions/project-runtime-session/infra/git-cli-clone-service";
+import { LocalDockerRuntimeSessionNetworkManager } from "@boboddy/core/agent-sessions/project-runtime-session/infra/local-docker-runtime-session-network-manager";
+import { LocalWorkspaceManager } from "@boboddy/core/agent-sessions/project-runtime-session/infra/local-workspace-manager";
 import { logWork } from "./work-logger";
 
 const execFileAsync = promisify(execFile);

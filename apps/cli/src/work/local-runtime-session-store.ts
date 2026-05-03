@@ -2,7 +2,7 @@ import { Database } from "bun:sqlite";
 import { mkdirSync } from "node:fs";
 import { homedir } from "node:os";
 import path from "node:path";
-import type { StepExecutionRunTracker } from "@boboddy/core/step-executions/application/process-project-work";
+import type { StepExecutionRunTracker } from "@boboddy/core/pipeline-executions/step-execution/application/process-project-work";
 
 export type LocalRuntimeSessionStatus =
   | "launching"

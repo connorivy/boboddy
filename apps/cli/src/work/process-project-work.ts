@@ -7,7 +7,7 @@ import {
   type StepExecutionRunTracker,
   type StepExecutionRuntimeEnvironmentOrchestrator,
   type StepExecutionWorkerClient,
-} from "@boboddy/core/step-executions/application/process-project-work";
+} from "@boboddy/core/pipeline-executions/step-execution/application/process-project-work";
 import { hostname } from "node:os";
 import { resolveBoboddyBaseUrl } from "../auth/config";
 import {

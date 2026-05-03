@@ -2,8 +2,8 @@ import { createStepExecutionPlaneClient } from "@boboddy/sdk";
 import { parseUuidV7 } from "@boboddy/core/common/contracts/uuid-v7";
 import type {
   StepExecutionWorkerClient,
-} from "@boboddy/core/step-executions/application/process-project-work";
-import type { StepExecutionWorkerContextContract } from "@boboddy/core/step-executions/contracts/step-execution-contracts";
+} from "@boboddy/core/pipeline-executions/step-execution/application/process-project-work";
+import type { StepExecutionWorkerContextContract } from "@boboddy/core/pipeline-executions/step-execution/contracts/step-execution-contracts";
 import { loadAuthenticatedSession } from "../auth/session";
 
 export type StepExecutionWorkerContext = StepExecutionWorkerContextContract;

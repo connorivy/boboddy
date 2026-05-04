@@ -35,8 +35,8 @@ function run(command: readonly string[], env?: NodeJS.ProcessEnv): SpawnResult {
   });
 
   return {
-    stdout: result.stdout ?? "",
-    stderr: result.stderr ?? "",
+    stdout: typeof result.stdout === "string" ? result.stdout : "",
+    stderr: typeof result.stderr === "string" ? result.stderr : "",
     exitCode: result.status ?? 1,
   };
 }
@@ -49,6 +49,12 @@ function parseLogLines(stdout: string): LogLine[] {
     .map((line) => JSON.parse(line) as LogLine);
 }
 
+function hasLogLine(logs: readonly LogLine[], expected: Partial<LogLine>): boolean {
+  return logs.some((log) =>
+    Object.entries(expected).every(([key, value]) => log[key] === value),
+  );
+}
+
 describe("boboddy CLI", () => {
   concurrentTest("prints the default hello greeting", () => {
     const result = run([process.execPath, "run", cliEntrypoint, "hello"]);
@@ -58,9 +64,7 @@ describe("boboddy CLI", () => {
       exitCode: 0,
       stderr: "",
     });
-    expect(logs).toContainEqual(
-      expect.objectContaining({ msg: "Hello, world!" }),
-    );
+    expect(hasLogLine(logs, { msg: "Hello, world!" })).toBe(true);
   });
 
   concurrentTest("prints a named hello greeting", () => {
@@ -77,9 +81,7 @@ describe("boboddy CLI", () => {
       exitCode: 0,
       stderr: "",
     });
-    expect(logs).toContainEqual(
-      expect.objectContaining({ msg: "Hello, Connor!" }),
-    );
+    expect(hasLogLine(logs, { msg: "Hello, Connor!" })).toBe(true);
   });
 
   concurrentTest("prints help output", () => {
@@ -110,8 +112,8 @@ describe("boboddy CLI", () => {
 
     expect(result.exitCode).toBe(1);
     expect(result.stderr).toBe("");
-    expect(parseLogLines(result.stdout)).toContainEqual(
-      expect.objectContaining({ msg: "CLI wrapper failed" }),
+    expect(hasLogLine(parseLogLines(result.stdout), { msg: "CLI wrapper failed" })).toBe(
+      true,
     );
   });
 
@@ -123,8 +125,8 @@ describe("boboddy CLI", () => {
 
     expect(result.exitCode).toBe(1);
     expect(result.stderr).toBe("");
-    expect(parseLogLines(result.stdout)).toContainEqual(
-      expect.objectContaining({ msg: "CLI wrapper failed" }),
+    expect(hasLogLine(parseLogLines(result.stdout), { msg: "CLI wrapper failed" })).toBe(
+      true,
     );
   });
 
@@ -149,9 +151,12 @@ describe("boboddy CLI", () => {
         exitCode: 0,
         stderr: "",
       });
-      expect(parseLogLines(result.stdout)).toContainEqual(
-        expect.objectContaining({ msg: "Not signed in", baseUrl: "https://example.com" }),
-      );
+      expect(
+        hasLogLine(parseLogLines(result.stdout), {
+          msg: "Not signed in",
+          baseUrl: "https://example.com",
+        }),
+      ).toBe(true);
     } finally {
       rmSync(fakeHome, { recursive: true, force: true });
     }
@@ -176,9 +181,11 @@ describe("boboddy CLI", () => {
 
       expect(result.exitCode).toBe(1);
       expect(result.stderr).toBe("");
-      expect(parseLogLines(result.stdout)).toContainEqual(
-        expect.objectContaining({ msg: "Not signed in to https://example.com." }),
-      );
+      expect(
+        hasLogLine(parseLogLines(result.stdout), {
+          msg: "Not signed in to https://example.com.",
+        }),
+      ).toBe(true);
     } finally {
       rmSync(fakeHome, { recursive: true, force: true });
     }
@@ -219,9 +226,12 @@ describe("boboddy CLI", () => {
         exitCode: 0,
         stderr: "",
       });
-      expect(parseLogLines(result.stdout)).toContainEqual(
-        expect.objectContaining({ msg: "Signed out", baseUrl: "https://example.com" }),
-      );
+      expect(
+        hasLogLine(parseLogLines(result.stdout), {
+          msg: "Signed out",
+          baseUrl: "https://example.com",
+        }),
+      ).toBe(true);
 
       const statusResult = run(
         [
@@ -236,9 +246,12 @@ describe("boboddy CLI", () => {
         { HOME: fakeHome },
       );
 
-      expect(parseLogLines(statusResult.stdout)).toContainEqual(
-        expect.objectContaining({ msg: "Not signed in", baseUrl: "https://example.com" }),
-      );
+      expect(
+        hasLogLine(parseLogLines(statusResult.stdout), {
+          msg: "Not signed in",
+          baseUrl: "https://example.com",
+        }),
+      ).toBe(true);
     } finally {
       rmSync(fakeHome, { recursive: true, force: true });
     }

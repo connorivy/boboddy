@@ -49,7 +49,7 @@ async function main(): Promise<void> {
   await mkdir(distDirectory, { recursive: true });
 
   for (const target of buildTargets) {
-    console.log(`Building ${target.outputName}...`);
+    process.stdout.write(`Building ${target.outputName}...\n`);
     await buildTarget(target);
   }
 }

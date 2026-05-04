@@ -1,6 +1,6 @@
-import pino, { type Logger } from "pino";
+import pino, { type DestinationStream, type Logger } from "pino";
 
-function createTransport() {
+function createTransport(): DestinationStream | undefined {
   if (!process.stdout.isTTY) {
     return undefined;
   }
@@ -13,10 +13,10 @@ function createTransport() {
       destination: 1,
       ignore: "pid,hostname",
     },
-  });
+  }) as DestinationStream;
 }
 
-export const cliLogger = pino(
+export const cliLogger: Logger = pino(
   {
     name: "@boboddy/cli",
     level: process.env["BOBODDY_LOG_LEVEL"] ?? "info",

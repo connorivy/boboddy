@@ -46,7 +46,7 @@ export type ProcessProjectWorkDeps = {
   logger: ProjectWorkLogger;
 };
 
-async function loadDefaultDeps(): Promise<ProcessProjectWorkDeps> {
+function loadDefaultDeps(): ProcessProjectWorkDeps {
   return {
     createWorkerClient: createStepExecutionPlaneWorkerClient,
     createRunTracker: () => new SqliteLocalRuntimeSessionStore(),
@@ -114,14 +114,14 @@ function resolveWorkerId(projectId: string, workerId?: string  ) {
     return normalizedWorkerId;
   }
 
-  return `boboddy-work-${hostname()}-${process.pid}-${projectId}`;
+  return `boboddy-work-${hostname()}-${String(process.pid)}-${projectId}`;
 }
 
 export async function processProjectWork(
   options: ProcessProjectWorkOptions,
   deps?: ProcessProjectWorkDeps,
 ): Promise<ProcessProjectWorkResult> {
-  const resolvedDeps = deps ?? (await loadDefaultDeps());
+  const resolvedDeps = deps ?? loadDefaultDeps();
   const projectId = parseUuidV7(options.projectId);
   const baseUrl = resolveBoboddyBaseUrl(options.baseUrl);
   const workerClient = await resolvedDeps.createWorkerClient(baseUrl);
@@ -146,12 +146,19 @@ export async function processProjectWork(
     },
     {
       workerClient,
-      createRunTracker: resolvedDeps.createRunTracker,
+      createRunTracker: () => resolvedDeps.createRunTracker(),
       runtimeEnvironmentOrchestrator:
         resolvedDeps.runtimeEnvironmentOrchestrator,
       agentRunner: resolvedDeps.agentRunner,
-      sleep: resolvedDeps.sleep,
-      logger: resolvedDeps.logger,
+      sleep: (milliseconds) => resolvedDeps.sleep(milliseconds),
+      logger: {
+        log: (scope, message, details) => {
+          resolvedDeps.logger.log(scope, message, details);
+        },
+        error: (scope, message, details) => {
+          resolvedDeps.logger.error(scope, message, details);
+        },
+      },
     },
   );
 }

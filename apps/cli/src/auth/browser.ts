@@ -2,7 +2,7 @@ import { spawn } from "node:child_process";
 
 export async function openBrowser(url: string): Promise<void> {
   const platform = process.platform;
-  const command =
+  const command: readonly [string, ...string[]] =
     platform === "darwin"
       ? ["open", url]
       : platform === "win32"
@@ -10,7 +10,7 @@ export async function openBrowser(url: string): Promise<void> {
         : ["xdg-open", url];
 
   await new Promise<void>((resolve, reject) => {
-    const child = spawn(command[0]!, command.slice(1), {
+    const child = spawn(command[0], command.slice(1), {
       stdio: "ignore",
       detached: true,
     });

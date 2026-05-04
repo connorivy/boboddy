@@ -16,10 +16,8 @@ const normalizeBoboddyBaseUrl = (baseUrl: string): string => {
 };
 
 export function createBoboddyTreaty(
-  baseUrl: string,
-): ReturnType<typeof treaty<App>>;
-export function createBoboddyTreaty(app: App): ReturnType<typeof treaty<App>>;
-export function createBoboddyTreaty(baseUrlOrApp: string | App) {
+  baseUrlOrApp: string | App,
+): ReturnType<typeof treaty<App>> {
   if (typeof baseUrlOrApp === "string") {
     return treaty<App>(normalizeBoboddyBaseUrl(baseUrlOrApp), {
       parseDate: false,

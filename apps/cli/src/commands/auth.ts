@@ -97,7 +97,7 @@ const runWhoAmI = async (arguments_: ArgumentsCamelCase<object>) => {
   logger.info({ email: authenticated.session.user.email }, "Authenticated user");
 };
 
-const runLogout = async (arguments_: ArgumentsCamelCase<object>) => {
+const runLogout = (arguments_: ArgumentsCamelCase<object>) => {
   const logger = createCliLogger("auth");
   const baseUrl = resolveBoboddyBaseUrl(getBaseUrlArgument(arguments_));
   deleteAuthProfile(baseUrl);
@@ -142,5 +142,5 @@ export const authCommand: CommandModule<object, object> = {
       .command(whoamiCommand)
       .command(logoutCommand)
       .demandCommand(1, "An auth command is required."),
-  handler: async () => undefined,
+  handler: () => undefined,
 };

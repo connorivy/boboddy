@@ -7,8 +7,6 @@ const SOURCE_OPENCODE_DIR = path.resolve(
   "..",
 );
 
-const RUNTIME_BOBODDY_SOURCE_ROOT = "/workspace/.boboddy-src";
-
 function rewriteRuntimeImports(source: string): string {
   return source;
 }

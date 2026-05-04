@@ -16,18 +16,8 @@ export async function requestDeviceAuthorization(baseUrl: string) {
     scope: "openid profile email",
   });
 
-  if (result.error || !result.data) {
-    if (result.error?.status === 404) {
-      throw new Error(
-        `CLI auth endpoints were not found at ${baseUrl}/api/auth/device/code. Make sure the Next app is running with the latest auth changes, or pass the correct --base-url.`,
-      );
-    }
-
-    throw new Error(
-      result.error?.error_description ??
-        result.error?.statusText ??
-        `Unable to start CLI authentication (HTTP ${String(result.error?.status ?? "unknown")}).`,
-    );
+  if (!result.data) {
+    throw new Error("Unable to start CLI authentication.");
   }
 
   return result.data;

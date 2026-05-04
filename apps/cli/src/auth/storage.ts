@@ -64,7 +64,7 @@ const writeAuthFile = (data: AuthFile) => {
     mkdirSync(parentDirectory, { recursive: true });
   }
 
-  const temporaryPath = `${AUTH_FILE_PATH}.${process.pid}.${Date.now()}.tmp`;
+  const temporaryPath = `${AUTH_FILE_PATH}.${String(process.pid)}.${String(Date.now())}.tmp`;
   writeFileSync(temporaryPath, `${JSON.stringify(data, null, 2)}\n`, {
     encoding: "utf8",
     mode: 0o600,
@@ -91,9 +91,11 @@ export const deleteAuthProfile = (baseUrl: string) => {
     return;
   }
 
-  delete authFile.profiles[baseUrl];
+  const remainingProfiles = Object.fromEntries(
+    Object.entries(authFile.profiles).filter(([profileBaseUrl]) => profileBaseUrl !== baseUrl),
+  );
 
-  if (Object.keys(authFile.profiles).length === 0) {
+  if (Object.keys(remainingProfiles).length === 0) {
     rmSync(AUTH_FILE_PATH, { force: true });
     if (existsSync(LEGACY_AUTH_FILE_PATH) && lstatSync(LEGACY_AUTH_FILE_PATH).isFile()) {
       rmSync(LEGACY_AUTH_FILE_PATH, { force: true });
@@ -101,5 +103,7 @@ export const deleteAuthProfile = (baseUrl: string) => {
     return;
   }
 
-  writeAuthFile(authFile);
+  writeAuthFile({
+    profiles: remainingProfiles,
+  });
 };

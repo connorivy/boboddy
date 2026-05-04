@@ -187,6 +187,14 @@ export class DefaultLocalProjectRuntimeEnvironmentOrchestrator implements LocalP
         networkName,
       });
 
+      const checkableDevcontainerId = devcontainerId;
+      const checkableAiContainerId = aiContainerId;
+      if (!checkableDevcontainerId || !checkableAiContainerId) {
+        throw new Error(
+          "Runtime containers must be available before health checks can run.",
+        );
+      }
+
       return {
         workspacePath,
         resolvedBranch: cloneResult.resolvedBranch,
@@ -197,8 +205,12 @@ export class DefaultLocalProjectRuntimeEnvironmentOrchestrator implements LocalP
         aiImage: aiContainerResult.image,
         networkName,
         checkContainerHealth: async () => ({
-          devcontainerStatus: await inspectContainerHealthStatus(devcontainerId!),
-          aiContainerStatus: await inspectContainerHealthStatus(aiContainerId!),
+          devcontainerStatus: await inspectContainerHealthStatus(
+            checkableDevcontainerId,
+          ),
+          aiContainerStatus: await inspectContainerHealthStatus(
+            checkableAiContainerId,
+          ),
         }),
         cleanup: async () => {
           await cleanupEnvironment({

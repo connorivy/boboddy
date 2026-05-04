@@ -70,7 +70,7 @@ export class SqliteLocalRuntimeSessionStore implements LocalRuntimeSessionStore 
   constructor(databasePath = getDefaultLocalRuntimeSessionDbPath()) {
     mkdirSync(path.dirname(databasePath), { recursive: true });
     this.db = new Database(databasePath, { create: true, strict: true });
-    this.db.exec(`
+    this.db.run(`
       CREATE TABLE IF NOT EXISTS local_runtime_sessions (
         id TEXT PRIMARY KEY,
         project_id TEXT NOT NULL,

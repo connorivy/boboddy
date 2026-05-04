@@ -14,15 +14,9 @@ type RequestOptions = {
 };
 
 export function createStepExecutionPlaneClient(
-  baseUrl: string,
-): ReturnType<typeof buildStepExecutionPlaneClient>;
-export function createStepExecutionPlaneClient(
-  app: App,
-): ReturnType<typeof buildStepExecutionPlaneClient>;
-export function createStepExecutionPlaneClient(baseUrlOrApp: string | App) {
-  return buildStepExecutionPlaneClient(
-    createBoboddyTreaty(baseUrlOrApp as never),
-  );
+  baseUrlOrApp: string | App,
+): ReturnType<typeof buildStepExecutionPlaneClient> {
+  return buildStepExecutionPlaneClient(createBoboddyTreaty(baseUrlOrApp));
 }
 
 const buildStepExecutionPlaneClient = (

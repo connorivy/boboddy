@@ -1,3 +1,4 @@
+import type { SessionStatus } from "@opencode-ai/sdk";
 import { createOpencodeClient } from "@opencode-ai/sdk";
 import type { StepExecutionAgentRunner } from "@boboddy/core/pipeline-executions/step-execution/application/process-project-work";
 import { logWork } from "./work-logger";
@@ -6,6 +7,7 @@ export type PromptAsyncOpencodeStepInput = {
   aiBaseUrl: string;
   sessionTitle: string;
   promptText: string;
+  agent: string;
 };
 
 export type PromptAsyncOpencodeStepResult = {
@@ -16,6 +18,25 @@ export type OpencodeStepRunner = StepExecutionAgentRunner;
 
 const DEFAULT_DIRECTORY = "/workspace";
 
+function createClient(aiBaseUrl: string) {
+  return createOpencodeClient({
+    baseUrl: aiBaseUrl,
+    directory: DEFAULT_DIRECTORY,
+  });
+}
+
+function isRunningSessionStatus(sessionStatus: SessionStatus | undefined): boolean {
+  if (!sessionStatus) {
+    return false;
+  }
+
+  if (sessionStatus.type === "busy" || sessionStatus.type === "retry") {
+    return true;
+  }
+
+  return false;
+}
+
 export class DefaultOpencodeStepRunner implements OpencodeStepRunner {
   async promptAsync(
     input: PromptAsyncOpencodeStepInput,
@@ -24,10 +45,7 @@ export class DefaultOpencodeStepRunner implements OpencodeStepRunner {
       aiBaseUrl: input.aiBaseUrl,
       sessionTitle: input.sessionTitle,
     });
-    const client = createOpencodeClient({
-      baseUrl: input.aiBaseUrl,
-      directory: DEFAULT_DIRECTORY,
-    });
+    const client = createClient(input.aiBaseUrl);
     const sessionResponse = await client.session.create({
       body: {
         title: input.sessionTitle,
@@ -47,6 +65,7 @@ export class DefaultOpencodeStepRunner implements OpencodeStepRunner {
     await client.session.promptAsync({
       path: { id: sessionId },
       body: {
+        agent: input.agent,
         parts: [
           {
             type: "text",
@@ -62,5 +81,51 @@ export class DefaultOpencodeStepRunner implements OpencodeStepRunner {
     return {
       sessionId,
     };
+  }
+
+  async getSessionStatus(input: {
+    aiBaseUrl: string;
+    sessionId: string;
+  }): Promise<{ running: boolean }> {
+    const client = createClient(input.aiBaseUrl);
+    logWork("opencode", "Checking OpenCode session status", {
+      aiBaseUrl: input.aiBaseUrl,
+      sessionId: input.sessionId,
+    });
+
+    const statusResponse = await client.session.status();
+    const statusBySession = statusResponse.data ?? {};
+    const running = isRunningSessionStatus(statusBySession[input.sessionId]);
+    logWork("opencode", "Resolved OpenCode session status", {
+      sessionId: input.sessionId,
+      running,
+    });
+    return { running };
+  }
+
+  async sendRetryPrompt(input: {
+    aiBaseUrl: string;
+    sessionId: string;
+    promptText: string;
+    agent: string;
+  }): Promise<void> {
+    const client = createClient(input.aiBaseUrl);
+    logWork("opencode", "Sending retry prompt to OpenCode session", {
+      aiBaseUrl: input.aiBaseUrl,
+      sessionId: input.sessionId,
+      promptLength: input.promptText.length,
+    });
+    await client.session.promptAsync({
+      path: { id: input.sessionId },
+      body: {
+        agent: input.agent,
+        parts: [
+          {
+            type: "text",
+            text: input.promptText,
+          },
+        ],
+      },
+    });
   }
 }

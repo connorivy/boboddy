@@ -90,6 +90,7 @@ describe("boboddy CLI", () => {
     expect(result.exitCode).toBe(0);
     expect(result.stderr).toBe("");
     expect(result.stdout).toContain("hello [name]");
+    expect(result.stdout).toContain("runtime <command>");
     expect(result.stdout).toContain("work <projectId>");
     expect(result.stdout).toContain("--help");
     expect(result.stdout).toContain("--version");

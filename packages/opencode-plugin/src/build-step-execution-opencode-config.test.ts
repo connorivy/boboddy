@@ -1,0 +1,91 @@
+import { beforeAll, describe, expect, test } from "bun:test";
+import type { Config } from "@opencode-ai/sdk";
+import { buildStepExecutionOpencodeConfig } from "./build-step-execution-opencode-config";
+
+describe("buildStepExecutionOpencodeConfig", () => {
+  beforeAll(() => {
+    // Ensure environment variables don't interfere with tests
+    process.env["AGENT_DEFAULT_MODEL"] = "openapi/gpt-5.4";
+  });
+
+  test.concurrent(
+    "preserves baseline config and enables required MCP tools only for step execution",
+    () => {
+      const baseConfig: Config = {
+        $schema: "https://opencode.ai/config.json",
+        permission: { bash: "allow" },
+        model: "openapi/gpt-5.4",
+        mcp: {
+          datadog: {
+            type: "local",
+            command: ["npx", "-y", "@winor30/mcp-server-datadog@1.7.0"],
+            enabled: true,
+          },
+        },
+        tools: {
+          "datadog*": false,
+          "playwright*": false,
+        },
+        agent: {
+          build: {
+            description: "Baseline build agent",
+            tools: {
+              "datadog*": true,
+            },
+          },
+        },
+      };
+
+      const config = buildStepExecutionOpencodeConfig({
+        baseConfig,
+        stepMcpServers: {
+          playwright: {
+            type: "local",
+            command: ["npx", "-y", "@playwright/mcp@0.0.68"],
+            enabled: true,
+          },
+        },
+      });
+
+      expect(config.permission).toEqual(baseConfig.permission);
+      expect(config.mcp?.["datadog"]).toEqual(baseConfig.mcp?.["datadog"]);
+      expect(config.mcp?.["playwright"]).toEqual({
+        type: "local",
+        command: ["npx", "-y", "@playwright/mcp@0.0.68"],
+        enabled: true,
+      });
+      expect(config.tools?.["playwright*"]).toBe(false);
+      expect(config.agent?.build?.tools?.["playwright*"]).toBeUndefined();
+      expect(config.agent?.["step-execution"]?.tools?.["playwright*"]).toBe(
+        true,
+      );
+      expect(
+        config.agent?.["step-execution"]?.tools?.["datadog*"],
+      ).toBeUndefined();
+    },
+  );
+
+  test.concurrent(
+    "returns the baseline config unchanged when the step has no MCP overlay",
+    () => {
+      const baseConfig: Config = {
+        model: "openapi/gpt-5.4",
+        tools: {
+          "playwright*": false,
+        },
+        agent: {
+          build: {
+            description: "Build",
+          },
+        },
+      };
+
+      const config = buildStepExecutionOpencodeConfig({
+        baseConfig,
+        stepMcpServers: null,
+      });
+
+      expect(config).toEqual(baseConfig);
+    },
+  );
+});

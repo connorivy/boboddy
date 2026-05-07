@@ -1,4 +1,14 @@
+import os, { hostname } from "node:os";
+import path from "node:path";
 import { parseUuidV7 } from "@boboddy/core/common/contracts/uuid-v7";
+import type { RuntimeCommandRunner } from "@boboddy/core/agent-sessions/runtime-command/application/runtime-command-runner";
+import { systemTimeProvider } from "@boboddy/core/lib/time-provider";
+import type { TimeProvider } from "@boboddy/core/lib/time-provider";
+import { LocalArtifactStore } from "../artifacts/local-artifact-store";
+import { LocalRuntimeCommandRunner } from "@boboddy/core/agent-sessions/runtime-command/infra/local-runtime-command-runner";
+import { LocalDevcontainerPortForwardManager } from "@boboddy/core/agent-sessions/project-runtime-session/infra/local-devcontainer-port-forward-manager";
+import type { RuntimeServiceRunner } from "@boboddy/core/agent-sessions/runtime-service/application/runtime-service-runner";
+import { LocalRuntimeServiceRunner } from "@boboddy/core/agent-sessions/runtime-service/infra/local-runtime-service-runner";
 import {
   processProjectWork as processProjectWorkInCore,
   type ProcessProjectWorkResult,
@@ -8,8 +18,8 @@ import {
   type StepExecutionRuntimeEnvironmentOrchestrator,
   type StepExecutionWorkerClient,
 } from "@boboddy/core/pipeline-executions/step-execution/application/process-project-work";
-import { hostname } from "node:os";
 import { resolveBoboddyBaseUrl } from "../auth/config";
+import { cliLogger } from "../lib/logger";
 import {
   type LocalRuntimeSessionStore,
   SqliteLocalRuntimeSessionStore,
@@ -42,6 +52,9 @@ export type ProcessProjectWorkDeps = {
   createRunTracker(): StepExecutionRunTracker;
   runtimeEnvironmentOrchestrator: StepExecutionRuntimeEnvironmentOrchestrator;
   agentRunner: StepExecutionAgentRunner;
+  runtimeCommandRunner: RuntimeCommandRunner;
+  runtimeServiceRunner: RuntimeServiceRunner;
+  timeProvider: TimeProvider;
   sleep(milliseconds: number): Promise<void>;
   logger: ProjectWorkLogger;
 };
@@ -53,6 +66,14 @@ function loadDefaultDeps(): ProcessProjectWorkDeps {
     runtimeEnvironmentOrchestrator:
       new DefaultLocalProjectRuntimeEnvironmentOrchestrator(),
     agentRunner: new DefaultOpencodeStepRunner(),
+    runtimeCommandRunner: new LocalRuntimeCommandRunner(
+      cliLogger.child({ scope: "runtime-command-runner" }),
+    ),
+    runtimeServiceRunner: new LocalRuntimeServiceRunner(
+      new LocalDevcontainerPortForwardManager(),
+      cliLogger.child({ scope: "runtime-service-runner" }),
+    ),
+    timeProvider: systemTimeProvider,
     sleep: (milliseconds) =>
       new Promise((resolve) => {
         setTimeout(resolve, milliseconds);
@@ -133,6 +154,10 @@ export async function processProjectWork(
   const batchSize = parsePositiveInt(options.batchSize, concurrency);
   const workerId = resolveWorkerId(projectId, options.workerId);
 
+  const artifactStore = new LocalArtifactStore(
+    path.join(os.homedir(), ".boboddy", "artifacts"),
+  );
+
   return await processProjectWorkInCore(
     {
       projectId,
@@ -150,6 +175,10 @@ export async function processProjectWork(
       runtimeEnvironmentOrchestrator:
         resolvedDeps.runtimeEnvironmentOrchestrator,
       agentRunner: resolvedDeps.agentRunner,
+      artifactStore,
+      runtimeCommandRunner: resolvedDeps.runtimeCommandRunner,
+      runtimeServiceRunner: resolvedDeps.runtimeServiceRunner,
+      timeProvider: resolvedDeps.timeProvider,
       sleep: (milliseconds) => resolvedDeps.sleep(milliseconds),
       logger: {
         log: (scope, message, details) => {

@@ -14,7 +14,7 @@
     "@boboddy/opencode": "workspace:*",
     "@boboddy/core": "workspace:*",
     "@boboddy/sdk": "workspace:*",
-    "@opencode-ai/sdk": "1.3.13",
+    "@opencode-ai/sdk": "1.14.34",
     "better-auth": "^1.6.7",
     "pino": "^9.14.0",
     "yargs": "^17.7.2"

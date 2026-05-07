@@ -7,10 +7,16 @@
   },
   "scripts": {
     "build": "tsc -p tsconfig.json --noEmit",
-    "typecheck": "tsc -p tsconfig.json --noEmit"
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "bun test"
   },
   "dependencies": {
+    "@boboddy/core": "workspace:*",
+    "@opencode-ai/sdk": "1.14.34",
     "ajv": "^8.17.1",
-    "@opencode-ai/plugin": "1.3.13"
+    "@opencode-ai/plugin": "1.14.34"
+  },
+  "devDependencies": {
+    "bun-types": "^1.3.12"
   }
 }

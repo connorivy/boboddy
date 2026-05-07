@@ -45,6 +45,12 @@ function createWorkerClient(
         projectId: parseUuidV7(projectId),
         gitUrl: "https://github.com/example/repo.git",
         requestedBranch: null,
+        projectOpencodeConfig: {
+          relativePath: ".boboddy/boboddy.jsonc",
+          present: false,
+          commands: [],
+          services: [],
+        },
         stepExecution: {
           id: stepExecutionId,
           status: "running",
@@ -57,6 +63,7 @@ function createWorkerClient(
           name: "Demo Step",
           prompt: "Run the demo step.",
           resultSchemaJson: { type: "object" },
+          opencodeMcpJson: null,
         },
         agentPrompt: {
           sessionTitle: "Demo Step",
@@ -103,7 +110,17 @@ describe("CLI processProjectWork", () => {
         } satisfies StepExecutionRuntimeEnvironmentOrchestrator,
         agentRunner: {
           promptAsync: vi.fn(() => Promise.reject(new Error("Not used"))),
+          getSessionStatus: vi.fn(() => Promise.resolve({ running: false })),
+          sendRetryPrompt: vi.fn(() => Promise.resolve(undefined)),
         } satisfies StepExecutionAgentRunner,
+        runtimeCommandRunner: {
+          executeOneShot: vi.fn(() => Promise.reject(new Error("Not used"))),
+        },
+        runtimeServiceRunner: {
+          start: vi.fn(() => Promise.reject(new Error("Not used"))),
+          stop: vi.fn(() => Promise.reject(new Error("Not used"))),
+        },
+        timeProvider: { now: () => new Date(), nowIso: () => new Date().toISOString() },
         sleep: () => Promise.resolve(undefined),
         logger: {
           log: vi.fn(),
@@ -149,7 +166,17 @@ describe("CLI processProjectWork", () => {
         } satisfies StepExecutionRuntimeEnvironmentOrchestrator,
         agentRunner: {
           promptAsync: vi.fn(() => Promise.reject(new Error("Not used"))),
+          getSessionStatus: vi.fn(() => Promise.resolve({ running: false })),
+          sendRetryPrompt: vi.fn(() => Promise.resolve(undefined)),
         } satisfies StepExecutionAgentRunner,
+        runtimeCommandRunner: {
+          executeOneShot: vi.fn(() => Promise.reject(new Error("Not used"))),
+        },
+        runtimeServiceRunner: {
+          start: vi.fn(() => Promise.reject(new Error("Not used"))),
+          stop: vi.fn(() => Promise.reject(new Error("Not used"))),
+        },
+        timeProvider: { now: () => new Date(), nowIso: () => new Date().toISOString() },
         sleep: () => Promise.resolve(undefined),
         logger: {
           log: vi.fn(),
@@ -189,7 +216,17 @@ describe("CLI processProjectWork", () => {
           } satisfies StepExecutionRuntimeEnvironmentOrchestrator,
           agentRunner: {
             promptAsync: vi.fn(() => Promise.reject(new Error("Not used"))),
+            getSessionStatus: vi.fn(() => Promise.resolve({ running: false })),
+            sendRetryPrompt: vi.fn(() => Promise.resolve(undefined)),
           } satisfies StepExecutionAgentRunner,
+          runtimeCommandRunner: {
+            executeOneShot: vi.fn(() => Promise.reject(new Error("Not used"))),
+          },
+          runtimeServiceRunner: {
+            start: vi.fn(() => Promise.reject(new Error("Not used"))),
+            stop: vi.fn(() => Promise.reject(new Error("Not used"))),
+          },
+          timeProvider: { now: () => new Date(), nowIso: () => new Date().toISOString() },
           sleep: () => Promise.resolve(undefined),
           logger: {
             log: vi.fn(),

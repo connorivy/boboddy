@@ -1,6 +1,7 @@
 import { buildOpencodeContext } from "@boboddy/opencode";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
+import type { OpenCodeMcpServers } from "@boboddy/core/common/contracts/opencode-mcp";
 import type { UuidV7 } from "@boboddy/core/common/contracts/uuid-v7";
 import type {
   StepExecutionRuntimeEnvironment,
@@ -20,6 +21,8 @@ import { DevcontainerCliLauncher } from "@boboddy/core/agent-sessions/project-ru
 import { GitCliCloneService } from "@boboddy/core/agent-sessions/project-runtime-session/infra/git-cli-clone-service";
 import { LocalDockerRuntimeSessionNetworkManager } from "@boboddy/core/agent-sessions/project-runtime-session/infra/local-docker-runtime-session-network-manager";
 import { LocalWorkspaceManager } from "@boboddy/core/agent-sessions/project-runtime-session/infra/local-workspace-manager";
+import { LocalDevcontainerPortForwardManager } from "@boboddy/core/agent-sessions/project-runtime-session/infra/local-devcontainer-port-forward-manager";
+import { createProjectRuntimeSessionExecutionTarget } from "@boboddy/core/agent-sessions/project-runtime-session/domain/project-runtime-session-execution-target";
 import { logWork } from "./work-logger";
 
 const execFileAsync = promisify(execFile);
@@ -51,13 +54,14 @@ export class DefaultLocalProjectRuntimeEnvironmentOrchestrator implements LocalP
       devcontainerLauncher: DevcontainerLauncher;
       aiContainerLauncher: AiContainerLauncher;
       runtimeSessionNetworkManager: RuntimeSessionNetworkManager;
+      portForwardManager: LocalDevcontainerPortForwardManager;
     } = {
       workspaceManager: new LocalWorkspaceManager(),
       gitCloneService: new GitCliCloneService(),
       devcontainerLauncher: new DevcontainerCliLauncher(),
       aiContainerLauncher: new DockerAiContainerLauncher(),
-      runtimeSessionNetworkManager:
-        new LocalDockerRuntimeSessionNetworkManager(),
+      runtimeSessionNetworkManager: new LocalDockerRuntimeSessionNetworkManager(),
+      portForwardManager: new LocalDevcontainerPortForwardManager(),
     },
   ) {}
 
@@ -67,6 +71,7 @@ export class DefaultLocalProjectRuntimeEnvironmentOrchestrator implements LocalP
     requestedByUserId: UuidV7;
     gitUrl: string;
     requestedBranch?: string | null | undefined;
+    opencodeMcpJson?: OpenCodeMcpServers | null | undefined;
   }): Promise<LocalProjectRuntimeEnvironment> {
     let workspacePath: string | null = null;
     let devcontainerId: string | null = null;
@@ -102,7 +107,10 @@ export class DefaultLocalProjectRuntimeEnvironmentOrchestrator implements LocalP
         resolvedBranch: cloneResult.resolvedBranch,
       });
 
-      await buildOpencodeContext({ workspacePath });
+      await buildOpencodeContext({
+        workspacePath,
+        stepMcpServers: input.opencodeMcpJson,
+      });
       logWork("runtime", "OpenCode context built", {
         sessionId: input.sessionId,
         workspacePath,
@@ -175,6 +183,30 @@ export class DefaultLocalProjectRuntimeEnvironmentOrchestrator implements LocalP
         alias: PROJECT_RUNTIME_SESSION_AGENT_NETWORK_ALIAS,
       });
 
+      const portForwardExecutionTarget = createProjectRuntimeSessionExecutionTarget({
+        environmentRole: "project",
+        runnerAssignment: "local:devcontainer",
+        environmentRef: "local:session",
+        metadata: {
+          localExecution: {
+            containerId: devcontainerId,
+            agentContainerId: aiContainerId,
+            workspacePath,
+            devcontainerConfigPath,
+          },
+        },
+      });
+      await this.deps.portForwardManager.ensureDefaultAccessPoints({
+        workspacePath,
+        devcontainerConfigPath,
+        executionTarget: portForwardExecutionTarget,
+      });
+      logWork("runtime", "Port forward proxies ready", {
+        sessionId: input.sessionId,
+        workspacePath,
+        devcontainerConfigPath,
+      });
+
       logWork("runtime", "Local runtime environment ready", {
         sessionId: input.sessionId,
         workspacePath,
@@ -197,6 +229,7 @@ export class DefaultLocalProjectRuntimeEnvironmentOrchestrator implements LocalP
 
       return {
         workspacePath,
+        opencodeLogDirectory: aiContainerResult.opencodeLogDirectory,
         resolvedBranch: cloneResult.resolvedBranch,
         devcontainerConfigPath,
         devcontainerId,
@@ -213,13 +246,16 @@ export class DefaultLocalProjectRuntimeEnvironmentOrchestrator implements LocalP
           ),
         }),
         cleanup: async () => {
-          await cleanupEnvironment({
-            workspacePath,
-            devcontainerId,
-            aiContainerId,
-            networkName,
-            deps: this.deps,
-          });
+          await Promise.allSettled([
+            this.deps.portForwardManager.stop(portForwardExecutionTarget),
+            cleanupEnvironment({
+              workspacePath,
+              devcontainerId,
+              aiContainerId,
+              networkName,
+              deps: this.deps,
+            }),
+          ]);
         },
       };
     } catch (error) {

@@ -13,7 +13,7 @@
       "@boboddy/sdk": ["./src/index.ts"],
       "@boboddy/sdk/*": ["./src/*"]
     },
-    "types": ["node"]
+    "types": ["bun-types", "node"]
   },
   "include": ["src/**/*.ts", "openapi-ts.config.ts"],
   "exclude": ["node_modules"]

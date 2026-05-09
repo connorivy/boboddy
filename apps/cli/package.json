@@ -3,7 +3,15 @@
   "private": false,
   "version": "0.0.0",
   "bin": {
-    "boboddy": "./bin/boboddy"
+    "boboddy": "bin/boboddy"
+  },
+  "files": [
+    "README.md",
+    "bin",
+    "dist"
+  ],
+  "publishConfig": {
+    "access": "public"
   },
   "scripts": {
     "build": "bun run script/build.ts",

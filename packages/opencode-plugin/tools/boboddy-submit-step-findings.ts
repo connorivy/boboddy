@@ -2,6 +2,7 @@ import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import Ajv from "ajv";
 import { tool } from "@opencode-ai/plugin";
+import { getWorkspaceRoot } from "./_shared/workspace";
 
 const DEFAULT_OUTPUT_PATH = ".boboddy/step-findings-submission.json";
 
@@ -46,7 +47,7 @@ export default tool({
       );
     }
 
-    const filePath = path.join(process.cwd(), DEFAULT_OUTPUT_PATH);
+    const filePath = path.join(getWorkspaceRoot(import.meta.url), DEFAULT_OUTPUT_PATH);
     await mkdir(path.dirname(filePath), { recursive: true });
     await writeFile(
       filePath,

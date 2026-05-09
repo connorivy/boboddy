@@ -5,6 +5,7 @@ import {
   waitForRuntimeResponse,
   writeRuntimeRequest,
 } from "./_shared/runtime-request";
+import { getWorkspaceRoot } from "./_shared/workspace";
 
 const POLL_INTERVAL_MS = 250;
 const TIMEOUT_MS = 10_000;
@@ -18,10 +19,11 @@ export default tool({
       .describe("The commandId returned in the boboddy-run-command response"),
   },
   async execute(args) {
-    await assertWorkspaceReadable(process.cwd());
+    const workspacePath = getWorkspaceRoot(import.meta.url);
+    await assertWorkspaceReadable(workspacePath);
     const requestId = crypto.randomUUID();
     await writeRuntimeRequest({
-      workspacePath: process.cwd(),
+      workspacePath,
       request: {
         id: requestId,
         kind: "cancel_command",
@@ -31,7 +33,7 @@ export default tool({
 
     return toRuntimeResponseJson(
       await waitForRuntimeResponse({
-        workspacePath: process.cwd(),
+        workspacePath,
         requestId,
         timeoutMs: TIMEOUT_MS,
         pollIntervalMs: POLL_INTERVAL_MS,

@@ -48,7 +48,7 @@ RUN npm install -g @winor30/mcp-server-datadog@1.7.0
 
 ENV UV_PYTHON_INSTALL_DIR=/opt/uv-python
 ENV UV_TOOL_DIR=/opt/uv-tools
-RUN uv tool install --python /opt/uv-python/cpython-3.12-linux-aarch64-gnu/bin/python3.12 playwright-trace-analyzer \
+RUN uv tool install --python /opt/postgres-mcp/bin/python playwright-trace-analyzer \
   && ln -sf /opt/uv-tools/playwright-trace-analyzer/bin/playwright-trace-analyzer /usr/local/bin/playwright-trace-analyzer \
   && chmod +x /opt/uv-tools/playwright-trace-analyzer/bin/playwright-trace-analyzer \
   && chown -R node:node /opt/uv-tools/

@@ -1,16 +1,31 @@
 {
   "$schema": "https://json.schemastore.org/package.json",
   "name": "@boboddy/sdk",
-  "private": true,
+  "version": "0.0.0",
   "type": "module",
   "exports": {
-    ".": "./src/index.ts",
-    "./client": "./src/client.ts",
-    "./treaty": "./src/treaty.ts"
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./client": {
+      "import": "./dist/client.js",
+      "types": "./dist/client.d.ts"
+    },
+    "./treaty": {
+      "import": "./dist/treaty.js",
+      "types": "./dist/treaty.d.ts"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "publishConfig": {
+    "access": "public"
   },
   "scripts": {
-    "generate": "openapi-ts",
-    "build": "bun run generate && tsc -p tsconfig.json --noEmit",
+    "build": "bun run script/build.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {

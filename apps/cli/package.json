@@ -1,6 +1,5 @@
 {
   "name": "@boboddy/cli",
-  "private": false,
   "version": "0.0.0",
   "bin": {
     "boboddy": "bin/boboddy"

@@ -33,6 +33,7 @@ export async function createStepExecutionPlaneWorkerClient(baseUrl: string) {
       workerId: string;
       batchSize: number;
       leaseDurationSeconds: number;
+      workItemId?: string | undefined;
     }) => await planeClient.claimStepExecutions(input, { headers }),
     heartbeatStepExecution: async (input: {
       stepExecutionId: string;

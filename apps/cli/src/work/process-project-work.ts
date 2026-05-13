@@ -43,6 +43,7 @@ export type ProcessProjectWorkOptions = {
   pollIntervalMs?: number | undefined;
   leaseDurationSeconds?: number | undefined;
   workerId?: string | undefined;
+  workItemId?: string | undefined;
   preserveRuntimeOnComplete?: boolean | undefined;
   once?: boolean | undefined;
 };
@@ -166,6 +167,7 @@ export async function processProjectWork(
       concurrency,
       pollIntervalMs,
       leaseDurationSeconds,
+      workItemId: options.workItemId,
       preserveRuntimeOnComplete: options.preserveRuntimeOnComplete,
       once: options.once,
     },

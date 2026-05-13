@@ -27,7 +27,55 @@ import { logWork } from "./work-logger";
 
 const execFileAsync = promisify(execFile);
 
-async function inspectContainerHealthStatus(containerId: string): Promise<string> {
+const ENV_PLACEHOLDER_RE = /^\{env:([^}]+)\}$/u;
+
+function extractReferencedEnvVarNames(
+  mcpServers: OpenCodeMcpServers | null | undefined,
+): string[] {
+  if (!mcpServers) return [];
+
+  const names: string[] = [];
+
+  for (const serverConfig of Object.values(mcpServers)) {
+    if (!("type" in serverConfig) || serverConfig.type !== "local") continue;
+    if (!serverConfig.environment) continue;
+
+    for (const envValue of Object.values(serverConfig.environment)) {
+      const varName = ENV_PLACEHOLDER_RE.exec(envValue)?.[1];
+      if (varName) names.push(varName);
+    }
+  }
+
+  return names;
+}
+
+async function getDevcontainerEnv(
+  containerId: string,
+  varNames: string[],
+): Promise<Record<string, string>> {
+  if (varNames.length === 0) return {};
+
+  const { stdout } = await execFileAsync("docker", [
+    "exec",
+    containerId,
+    "env",
+  ]);
+  const wanted = new Set(varNames);
+  const result: Record<string, string> = {};
+
+  for (const line of stdout.split("\n")) {
+    const eqIdx = line.indexOf("=");
+    if (eqIdx === -1) continue;
+    const key = line.slice(0, eqIdx);
+    if (wanted.has(key)) result[key] = line.slice(eqIdx + 1);
+  }
+
+  return result;
+}
+
+async function inspectContainerHealthStatus(
+  containerId: string,
+): Promise<string> {
   try {
     const { stdout } = await execFileAsync("docker", [
       "inspect",
@@ -40,6 +88,19 @@ async function inspectContainerHealthStatus(containerId: string): Promise<string
     return `unreachable:${error instanceof Error ? error.message : String(error)}`;
   }
 }
+
+async function getContainerNetworks(containerId: string): Promise<string[]> {
+  const { stdout } = await execFileAsync("docker", [
+    "inspect",
+    "--format",
+    "{{json .NetworkSettings.Networks}}",
+    containerId,
+  ]);
+  const networks = JSON.parse(stdout.trim()) as Record<string, unknown> | null;
+  return networks ? Object.keys(networks) : [];
+}
+
+const SYSTEM_NETWORKS = new Set(["bridge", "host", "none"]);
 
 export type LocalProjectRuntimeEnvironment = StepExecutionRuntimeEnvironment;
 
@@ -60,7 +121,8 @@ export class DefaultLocalProjectRuntimeEnvironmentOrchestrator implements LocalP
       gitCloneService: new GitCliCloneService(),
       devcontainerLauncher: new DevcontainerCliLauncher(),
       aiContainerLauncher: new DockerAiContainerLauncher(),
-      runtimeSessionNetworkManager: new LocalDockerRuntimeSessionNetworkManager(),
+      runtimeSessionNetworkManager:
+        new LocalDockerRuntimeSessionNetworkManager(),
       portForwardManager: new LocalDevcontainerPortForwardManager(),
     },
   ) {}
@@ -125,26 +187,46 @@ export class DefaultLocalProjectRuntimeEnvironmentOrchestrator implements LocalP
         devcontainerConfigPath,
       });
 
-      const [devcontainerResult, aiContainerResult] = await Promise.all([
-        this.deps.devcontainerLauncher.launch({
-          sessionId: input.sessionId,
-          projectId: input.projectId,
-          requestedByUserId: input.requestedByUserId,
-          workspacePath,
-          devcontainerConfigPath,
-        }),
-        this.deps.aiContainerLauncher.launch({
-          sessionId: input.sessionId,
-          projectId: input.projectId,
-          requestedByUserId: input.requestedByUserId,
-          workspacePath,
-        }),
-      ]);
+      const devcontainerResult = await this.deps.devcontainerLauncher.launch({
+        sessionId: input.sessionId,
+        projectId: input.projectId,
+        requestedByUserId: input.requestedByUserId,
+        workspacePath,
+        devcontainerConfigPath,
+      });
       devcontainerId = devcontainerResult.containerId;
-      aiContainerId = aiContainerResult.containerId;
-      logWork("runtime", "Runtime containers launched", {
+      logWork("runtime", "Devcontainer launched", {
         sessionId: input.sessionId,
         devcontainerId,
+      });
+
+      const varNames = extractReferencedEnvVarNames(input.opencodeMcpJson);
+      const devcontainerEnv = await getDevcontainerEnv(
+        devcontainerId,
+        varNames,
+      );
+      const extraEnv: Record<string, string> = {};
+      for (const varName of varNames) {
+        const value = process.env[varName] ?? devcontainerEnv[varName];
+        if (value !== undefined) extraEnv[varName] = value;
+      }
+
+      const devcontainerNetworks = await getContainerNetworks(devcontainerId);
+      const composeNetworks = devcontainerNetworks.filter(
+        (n) => !SYSTEM_NETWORKS.has(n),
+      );
+
+      const aiContainerResult = await this.deps.aiContainerLauncher.launch({
+        sessionId: input.sessionId,
+        projectId: input.projectId,
+        requestedByUserId: input.requestedByUserId,
+        workspacePath,
+        extraEnv,
+        additionalNetworks: composeNetworks,
+      });
+      aiContainerId = aiContainerResult.containerId;
+      logWork("runtime", "AI container launched", {
+        sessionId: input.sessionId,
         aiContainerId,
         aiBaseUrl: aiContainerResult.baseUrl,
         aiImage: aiContainerResult.image,
@@ -183,19 +265,20 @@ export class DefaultLocalProjectRuntimeEnvironmentOrchestrator implements LocalP
         alias: PROJECT_RUNTIME_SESSION_AGENT_NETWORK_ALIAS,
       });
 
-      const portForwardExecutionTarget = createProjectRuntimeSessionExecutionTarget({
-        environmentRole: "project",
-        runnerAssignment: "local:devcontainer",
-        environmentRef: "local:session",
-        metadata: {
-          localExecution: {
-            containerId: devcontainerId,
-            agentContainerId: aiContainerId,
-            workspacePath,
-            devcontainerConfigPath,
+      const portForwardExecutionTarget =
+        createProjectRuntimeSessionExecutionTarget({
+          environmentRole: "project",
+          runnerAssignment: "local:devcontainer",
+          environmentRef: "local:session",
+          metadata: {
+            localExecution: {
+              containerId: devcontainerId,
+              agentContainerId: aiContainerId,
+              workspacePath,
+              devcontainerConfigPath,
+            },
           },
-        },
-      });
+        });
       await this.deps.portForwardManager.ensureDefaultAccessPoints({
         workspacePath,
         devcontainerConfigPath,

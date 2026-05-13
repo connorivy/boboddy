@@ -29,6 +29,7 @@ const buildStepExecutionPlaneClient = (
         workerId: string;
         batchSize: number;
         leaseDurationSeconds: number;
+        workItemId?: string | undefined;
       },
       options?: RequestOptions,
     ) =>

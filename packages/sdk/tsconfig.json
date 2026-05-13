@@ -6,6 +6,8 @@
     "paths": {
       "@/*": ["../../../apps/api/src/*"],
       "@boboddy/api/*": ["../../../apps/api/src/*"],
+      "@boboddy/core": ["../../core/src/index.ts"],
+      "@boboddy/core/*": ["../../core/src/*"],
       "@boboddy/containers": ["../../containers/src/index.ts"],
       "@boboddy/containers/*": ["../../containers/src/*"],
       "@boboddy/opencode": ["../../ai/opencode/src/index.ts"],
@@ -15,6 +17,6 @@
     },
     "types": ["bun-types", "node"]
   },
-  "include": ["src/**/*.ts", "script/**/*.ts", "openapi-ts.config.ts"],
+  "include": ["src/**/*.ts", "script/**/*.ts", "test/**/*.ts", "openapi-ts.config.ts"],
   "exclude": ["node_modules"]
 }

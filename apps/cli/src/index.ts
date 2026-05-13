@@ -1,9 +1,11 @@
 import yargs from "yargs/yargs";
 import { hideBin } from "yargs/helpers";
+import dotenv from "dotenv";
 
 import { authCommand } from "./commands/auth";
 import { helloCommand } from "./commands/hello";
 import { runtimeCommand } from "./commands/runtime";
+import { stepsCommand } from "./commands/steps";
 import { workCommand } from "./commands/work";
 import { createCliLogger } from "./lib/logger";
 
@@ -25,9 +27,20 @@ export function createCli(argv: readonly string[]) {
     })
     .showHelpOnFail(false)
     .exitProcess(false)
+    .option("envFile", {
+      alias: "env-file",
+      describe: "Path to an env file to load (defaults to .env)",
+      type: "string",
+      global: true,
+    })
+    .middleware((arguments_) => {
+      dotenv.config({ path: arguments_.envFile ?? ".env", override: false });
+      dotenv.config({ path: ".boboddy.env", override: false });
+    })
     .command(authCommand)
     .command(helloCommand)
     .command(runtimeCommand)
+    .command(stepsCommand)
     .command(workCommand)
     .demandCommand(1, "A command is required.");
 }

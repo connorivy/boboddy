@@ -14,6 +14,7 @@ export interface WorkArguments {
   preserveRuntimeOnComplete: boolean;
   pollIntervalMs: number | undefined;
   workerId: string | undefined;
+  workItemId: string | undefined;
 }
 
 async function handler(
@@ -32,6 +33,7 @@ async function handler(
     preserveRuntimeOnComplete: arguments_.preserveRuntimeOnComplete,
     pollIntervalMs: arguments_.pollIntervalMs,
     workerId: arguments_.workerId,
+    workItemId: arguments_.workItemId,
   });
 
   const result = await processProjectWork({
@@ -44,6 +46,7 @@ async function handler(
     once: arguments_.once,
     pollIntervalMs: arguments_.pollIntervalMs,
     workerId: arguments_.workerId,
+    workItemId: arguments_.workItemId,
   });
 
   if (arguments_.once) {
@@ -110,6 +113,11 @@ export const workCommand: CommandModule<object, WorkArguments> = {
       .option("workerId", {
         alias: "w",
         describe: "Optional worker identifier to use while claiming steps",
+        type: "string",
+      })
+      .option("workItemId", {
+        alias: "work-item-id",
+        describe: "Only process step executions for this work item ID",
         type: "string",
       }),
   handler,

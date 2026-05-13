@@ -88,124 +88,20 @@ describe("CLI processProjectWork", () => {
     vi.restoreAllMocks();
   });
 
-  concurrentTest("resolves the base URL and default worker settings before delegating to core", async () => {
-    const claimStepExecutions: StepExecutionWorkerClient["claimStepExecutions"] =
-      vi.fn(() => Promise.resolve([]));
-    const workerClient = createWorkerClient({ claimStepExecutions });
-    const createWorkerClientForBaseUrl = vi.fn(() =>
-      Promise.resolve(workerClient),
-    );
+  concurrentTest(
+    "resolves the base URL and default worker settings before delegating to core",
+    async () => {
+      const claimStepExecutions: StepExecutionWorkerClient["claimStepExecutions"] =
+        vi.fn(() => Promise.resolve([]));
+      const workerClient = createWorkerClient({ claimStepExecutions });
+      const createWorkerClientForBaseUrl = vi.fn(() =>
+        Promise.resolve(workerClient),
+      );
 
-    const result = await processProjectWork(
-      {
-        projectId,
-        baseUrl: "https://example.com///",
-        once: true,
-      },
-      {
-        createWorkerClient: createWorkerClientForBaseUrl,
-        createRunTracker,
-        runtimeEnvironmentOrchestrator: {
-          launch: vi.fn(() => Promise.reject(new Error("Not used"))),
-        } satisfies StepExecutionRuntimeEnvironmentOrchestrator,
-        agentRunner: {
-          promptAsync: vi.fn(() => Promise.reject(new Error("Not used"))),
-          getSessionStatus: vi.fn(() => Promise.resolve({ running: false })),
-          sendRetryPrompt: vi.fn(() => Promise.resolve(undefined)),
-        } satisfies StepExecutionAgentRunner,
-        runtimeCommandRunner: {
-          executeOneShot: vi.fn(() => Promise.reject(new Error("Not used"))),
-        },
-        runtimeServiceRunner: {
-          start: vi.fn(() => Promise.reject(new Error("Not used"))),
-          stop: vi.fn(() => Promise.reject(new Error("Not used"))),
-        },
-        timeProvider: { now: () => new Date(), nowIso: () => new Date().toISOString() },
-        sleep: () => Promise.resolve(undefined),
-        logger: {
-          log: vi.fn(),
-          error: vi.fn(),
-        },
-      },
-    );
-
-    expect(createWorkerClientForBaseUrl).toHaveBeenCalledWith(
-      "https://example.com",
-    );
-    expect(claimStepExecutions).toHaveBeenCalledWith(
-      expect.objectContaining({
-        projectId: parseUuidV7(projectId),
-        batchSize: 1,
-        leaseDurationSeconds: 30,
-      }),
-    );
-    expect(result).toEqual({
-      claimedCount: 0,
-      processedCount: 0,
-      skippedCount: 0,
-    });
-  });
-
-  concurrentTest("uses concurrency as the default batch size when batch size is omitted", async () => {
-    const claimStepExecutions: StepExecutionWorkerClient["claimStepExecutions"] =
-      vi.fn(() => Promise.resolve([]));
-    const workerClient = createWorkerClient({ claimStepExecutions });
-
-    await processProjectWork(
-      {
-        projectId,
-        concurrency: 2,
-        workerId: "worker-2",
-        once: true,
-      },
-      {
-        createWorkerClient: () => Promise.resolve(workerClient),
-        createRunTracker,
-        runtimeEnvironmentOrchestrator: {
-          launch: vi.fn(() => Promise.reject(new Error("Not used"))),
-        } satisfies StepExecutionRuntimeEnvironmentOrchestrator,
-        agentRunner: {
-          promptAsync: vi.fn(() => Promise.reject(new Error("Not used"))),
-          getSessionStatus: vi.fn(() => Promise.resolve({ running: false })),
-          sendRetryPrompt: vi.fn(() => Promise.resolve(undefined)),
-        } satisfies StepExecutionAgentRunner,
-        runtimeCommandRunner: {
-          executeOneShot: vi.fn(() => Promise.reject(new Error("Not used"))),
-        },
-        runtimeServiceRunner: {
-          start: vi.fn(() => Promise.reject(new Error("Not used"))),
-          stop: vi.fn(() => Promise.reject(new Error("Not used"))),
-        },
-        timeProvider: { now: () => new Date(), nowIso: () => new Date().toISOString() },
-        sleep: () => Promise.resolve(undefined),
-        logger: {
-          log: vi.fn(),
-          error: vi.fn(),
-        },
-      },
-    );
-
-    expect(claimStepExecutions).toHaveBeenCalledWith({
-      projectId: parseUuidV7(projectId),
-      workerId: "worker-2",
-      batchSize: 2,
-      leaseDurationSeconds: 30,
-    });
-  });
-
-  concurrentTest("uses localhost:3000 as the default base URL when no base URL is configured", async () => {
-    const workerClient = createWorkerClient();
-    const createWorkerClientForBaseUrl = vi.fn(() =>
-      Promise.resolve(workerClient),
-    );
-    const previousBaseUrl = process.env["BOBODDY_BASE_URL"];
-
-    delete process.env["BOBODDY_BASE_URL"];
-
-    try {
-      await processProjectWork(
+      const result = await processProjectWork(
         {
           projectId,
+          baseUrl: "https://example.com///",
           once: true,
         },
         {
@@ -226,7 +122,10 @@ describe("CLI processProjectWork", () => {
             start: vi.fn(() => Promise.reject(new Error("Not used"))),
             stop: vi.fn(() => Promise.reject(new Error("Not used"))),
           },
-          timeProvider: { now: () => new Date(), nowIso: () => new Date().toISOString() },
+          timeProvider: {
+            now: () => new Date(),
+            nowIso: () => new Date().toISOString(),
+          },
           sleep: () => Promise.resolve(undefined),
           logger: {
             log: vi.fn(),
@@ -234,16 +133,139 @@ describe("CLI processProjectWork", () => {
           },
         },
       );
-    } finally {
-      if (previousBaseUrl === undefined) {
-        delete process.env["BOBODDY_BASE_URL"];
-      } else {
-        process.env["BOBODDY_BASE_URL"] = previousBaseUrl;
-      }
-    }
 
-    expect(createWorkerClientForBaseUrl).toHaveBeenCalledWith(
-      "http://localhost:3000",
-    );
-  });
+      expect(createWorkerClientForBaseUrl).toHaveBeenCalledWith(
+        "https://example.com",
+      );
+      expect(claimStepExecutions).toHaveBeenCalledWith(
+        expect.objectContaining({
+          projectId: parseUuidV7(projectId),
+          batchSize: 1,
+          leaseDurationSeconds: 30,
+        }),
+      );
+      expect(result).toEqual({
+        claimedCount: 0,
+        processedCount: 0,
+        skippedCount: 0,
+      });
+    },
+  );
+
+  concurrentTest(
+    "uses concurrency as the default batch size when batch size is omitted",
+    async () => {
+      const claimStepExecutions: StepExecutionWorkerClient["claimStepExecutions"] =
+        vi.fn(() => Promise.resolve([]));
+      const workerClient = createWorkerClient({ claimStepExecutions });
+
+      await processProjectWork(
+        {
+          projectId,
+          concurrency: 2,
+          workerId: "worker-2",
+          once: true,
+        },
+        {
+          createWorkerClient: () => Promise.resolve(workerClient),
+          createRunTracker,
+          runtimeEnvironmentOrchestrator: {
+            launch: vi.fn(() => Promise.reject(new Error("Not used"))),
+          } satisfies StepExecutionRuntimeEnvironmentOrchestrator,
+          agentRunner: {
+            promptAsync: vi.fn(() => Promise.reject(new Error("Not used"))),
+            getSessionStatus: vi.fn(() => Promise.resolve({ running: false })),
+            sendRetryPrompt: vi.fn(() => Promise.resolve(undefined)),
+          } satisfies StepExecutionAgentRunner,
+          runtimeCommandRunner: {
+            executeOneShot: vi.fn(() => Promise.reject(new Error("Not used"))),
+          },
+          runtimeServiceRunner: {
+            start: vi.fn(() => Promise.reject(new Error("Not used"))),
+            stop: vi.fn(() => Promise.reject(new Error("Not used"))),
+          },
+          timeProvider: {
+            now: () => new Date(),
+            nowIso: () => new Date().toISOString(),
+          },
+          sleep: () => Promise.resolve(undefined),
+          logger: {
+            log: vi.fn(),
+            error: vi.fn(),
+          },
+        },
+      );
+
+      expect(claimStepExecutions).toHaveBeenCalledWith({
+        projectId: parseUuidV7(projectId),
+        workerId: "worker-2",
+        batchSize: 2,
+        leaseDurationSeconds: 30,
+      });
+    },
+  );
+
+  concurrentTest(
+    "uses prod url as the default base URL when no base URL is configured",
+    async () => {
+      const workerClient = createWorkerClient();
+      const createWorkerClientForBaseUrl = vi.fn(() =>
+        Promise.resolve(workerClient),
+      );
+      const previousBaseUrl = process.env["BOBODDY_BASE_URL"];
+
+      delete process.env["BOBODDY_BASE_URL"];
+
+      try {
+        await processProjectWork(
+          {
+            projectId,
+            once: true,
+          },
+          {
+            createWorkerClient: createWorkerClientForBaseUrl,
+            createRunTracker,
+            runtimeEnvironmentOrchestrator: {
+              launch: vi.fn(() => Promise.reject(new Error("Not used"))),
+            } satisfies StepExecutionRuntimeEnvironmentOrchestrator,
+            agentRunner: {
+              promptAsync: vi.fn(() => Promise.reject(new Error("Not used"))),
+              getSessionStatus: vi.fn(() =>
+                Promise.resolve({ running: false }),
+              ),
+              sendRetryPrompt: vi.fn(() => Promise.resolve(undefined)),
+            } satisfies StepExecutionAgentRunner,
+            runtimeCommandRunner: {
+              executeOneShot: vi.fn(() =>
+                Promise.reject(new Error("Not used")),
+              ),
+            },
+            runtimeServiceRunner: {
+              start: vi.fn(() => Promise.reject(new Error("Not used"))),
+              stop: vi.fn(() => Promise.reject(new Error("Not used"))),
+            },
+            timeProvider: {
+              now: () => new Date(),
+              nowIso: () => new Date().toISOString(),
+            },
+            sleep: () => Promise.resolve(undefined),
+            logger: {
+              log: vi.fn(),
+              error: vi.fn(),
+            },
+          },
+        );
+      } finally {
+        if (previousBaseUrl === undefined) {
+          delete process.env["BOBODDY_BASE_URL"];
+        } else {
+          process.env["BOBODDY_BASE_URL"] = previousBaseUrl;
+        }
+      }
+
+      expect(createWorkerClientForBaseUrl).toHaveBeenCalledWith(
+        "https://boboddy.vercel.app",
+      );
+    },
+  );
 });

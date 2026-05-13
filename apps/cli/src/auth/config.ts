@@ -1,4 +1,4 @@
-const DEFAULT_BASE_URL = "http://localhost:3000";
+const DEFAULT_BASE_URL = "https://boboddy.vercel.app";
 
 export const CLI_AUTH_CLIENT_ID = "boboddy-cli";
 

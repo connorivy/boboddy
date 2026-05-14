@@ -1,4 +1,4 @@
-import { rm } from "node:fs/promises";
+import { cp, readdir, rm } from "node:fs/promises";
 import { resolve } from "node:path";
 
 const projectRoot = resolve(import.meta.dir, "..");
@@ -7,7 +7,13 @@ const distDir = resolve(projectRoot, "dist");
 await rm(distDir, { recursive: true, force: true });
 
 const result = await Bun.build({
-  entrypoints: [resolve(projectRoot, "src/index.ts")],
+  entrypoints: [
+    resolve(projectRoot, "src/index.ts"),
+    resolve(projectRoot, "src/client.ts"),
+    resolve(projectRoot, "src/treaty.ts"),
+    resolve(projectRoot, "src/define-step.ts"),
+    resolve(projectRoot, "src/step-definitions-client.ts"),
+  ],
   outdir: distDir,
   format: "esm",
   target: "browser",
@@ -26,4 +32,18 @@ const tsc = Bun.spawnSync(
   { stdio: ["inherit", "inherit", "inherit"] },
 );
 
-process.exit(tsc.exitCode);
+if (tsc.exitCode !== 0) process.exit(tsc.exitCode);
+
+// tsc outputs nested paths (e.g. dist/packages/sdks/js/src/foo.d.ts) because the
+// monorepo tsconfig pulls in files from outside this package. Flatten to dist/.
+const nestedSrcDir = resolve(distDir, "packages/sdks/js/src");
+const entries = await readdir(nestedSrcDir).catch(() => []);
+for (const entry of entries) {
+  await cp(resolve(nestedSrcDir, entry), resolve(distDir, entry), {
+    recursive: true,
+  });
+}
+// Remove the monorepo-structure directories left behind by tsc
+for (const dir of ["packages", "apps"]) {
+  await rm(resolve(distDir, dir), { recursive: true, force: true });
+}

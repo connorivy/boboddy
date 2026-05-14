@@ -4,6 +4,7 @@ const { spawnSync } = require("node:child_process");
 const { existsSync } = require("node:fs");
 const { resolve } = require("node:path");
 const pino = require("pino");
+const PinoPretty = require("pino-pretty");
 
 const cliName = "boboddy";
 const projectRoot = resolve(__dirname, "..");
@@ -11,14 +12,11 @@ const distDirectory = process.env.BOBODDY_DIST_DIR ?? resolve(projectRoot, "dist
 const platform = process.env.BOBODDY_PLATFORM ?? process.platform;
 const arch = process.env.BOBODDY_ARCH ?? process.arch;
 const transport = process.stdout.isTTY
-  ? pino.transport({
-      target: "pino-pretty",
-      options: {
-        colorize: true,
-        translateTime: "SYS:standard",
-        destination: 1,
-        ignore: "pid,hostname",
-      },
+  ? PinoPretty({
+      colorize: true,
+      translateTime: "SYS:standard",
+      destination: 1,
+      ignore: "pid,hostname",
     })
   : undefined;
 const logger = pino(

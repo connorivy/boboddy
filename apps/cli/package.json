@@ -14,6 +14,7 @@
   },
   "scripts": {
     "build": "bun run script/build.ts",
+    "link:local": "bun run build && npm link",
     "test": "bun test test",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },

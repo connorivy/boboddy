@@ -1,4 +1,5 @@
-import pino, { type DestinationStream } from "pino";
+import { type DestinationStream } from "pino";
+import PinoPretty from "pino-pretty";
 import { createLogger, type Logger } from "@boboddy/core/lib/logger";
 
 function createTransport(): DestinationStream | undefined {
@@ -6,15 +7,12 @@ function createTransport(): DestinationStream | undefined {
     return undefined;
   }
 
-  return pino.transport({
-    target: "pino-pretty",
-    options: {
-      colorize: true,
-      translateTime: "SYS:standard",
-      destination: 1,
-      ignore: "pid,hostname",
-    },
-  }) as DestinationStream;
+  return PinoPretty({
+    colorize: true,
+    translateTime: "SYS:standard",
+    destination: 1,
+    ignore: "pid,hostname",
+  });
 }
 
 export const cliLogger: Logger = createLogger(

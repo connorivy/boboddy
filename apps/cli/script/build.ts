@@ -4,6 +4,7 @@ import { resolve } from "node:path";
 interface BuildTarget {
   readonly bunTarget: string;
   readonly outputName: string;
+  readonly codesign?: boolean;
 }
 
 const CLI_NAME = "boboddy";
@@ -12,7 +13,7 @@ const distDirectory = resolve(projectRoot, "dist");
 const entrypoint = resolve(projectRoot, "src/index.ts");
 
 const buildTargets: readonly BuildTarget[] = [
-  { bunTarget: "bun-darwin-arm64", outputName: `${CLI_NAME}-darwin-arm64` },
+  { bunTarget: "bun-darwin-arm64", outputName: `${CLI_NAME}-darwin-arm64`, codesign: true },
   { bunTarget: "bun-darwin-x64", outputName: `${CLI_NAME}-darwin-x64` },
   { bunTarget: "bun-linux-x64", outputName: `${CLI_NAME}-linux-x64` },
   { bunTarget: "bun-linux-arm64", outputName: `${CLI_NAME}-linux-arm64` },
@@ -41,6 +42,25 @@ async function buildTarget(target: BuildTarget): Promise<void> {
 
   if (exitCode !== 0) {
     throw new Error(`Build failed for ${target.bunTarget}.`);
+  }
+
+  if (target.codesign && process.platform === "darwin") {
+    process.stdout.write(`Signing ${target.outputName}...\n`);
+    // Bun --compile embeds the JS bundle after the initial binary signature,
+    // leaving an invalid LC_CODE_SIGNATURE. Strip it before re-signing.
+    const stripProc = Bun.spawn(["codesign", "--remove-signature", outfile], {
+      stdout: "inherit",
+      stderr: "inherit",
+    });
+    await stripProc.exited;
+    const signProc = Bun.spawn(["codesign", "--sign", "-", "--force", outfile], {
+      stdout: "inherit",
+      stderr: "inherit",
+    });
+    const signExit = await signProc.exited;
+    if (signExit !== 0) {
+      throw new Error(`codesign failed for ${target.outputName}.`);
+    }
   }
 }
 

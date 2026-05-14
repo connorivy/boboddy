@@ -14,7 +14,7 @@ const entrypoint = resolve(projectRoot, "src/index.ts");
 
 const buildTargets: readonly BuildTarget[] = [
   { bunTarget: "bun-darwin-arm64", outputName: `${CLI_NAME}-darwin-arm64`, codesign: true },
-  { bunTarget: "bun-darwin-x64", outputName: `${CLI_NAME}-darwin-x64` },
+  { bunTarget: "bun-darwin-x64", outputName: `${CLI_NAME}-darwin-x64`, codesign: true },
   { bunTarget: "bun-linux-x64", outputName: `${CLI_NAME}-linux-x64` },
   { bunTarget: "bun-linux-arm64", outputName: `${CLI_NAME}-linux-arm64` },
   { bunTarget: "bun-windows-x64", outputName: `${CLI_NAME}-windows-x64.exe` },
@@ -46,6 +46,8 @@ async function buildTarget(target: BuildTarget): Promise<void> {
 
   if (target.codesign && process.platform === "darwin") {
     process.stdout.write(`Signing ${target.outputName}...\n`);
+    // CI signs darwin binaries in the sign-cli-macos workflow job instead.
+    // This branch only runs for local macOS builds.
     // Bun --compile embeds the JS bundle after the initial binary signature,
     // leaving an invalid LC_CODE_SIGNATURE. Strip it before re-signing.
     const stripProc = Bun.spawn(["codesign", "--remove-signature", outfile], {

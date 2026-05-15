@@ -1,45 +1,58 @@
-import type { App } from "@boboddy/api/app";
+import { createClient } from "./generated/client";
+import { StepDefinitions } from "./generated/sdk.gen";
 import type {
-  CreateStepDefinitionInput,
-  UpdateStepDefinitionInput,
-} from "@boboddy/core/pipeline-definitions/step-definition/contracts/step-definition-contracts";
-import { createBoboddyTreaty, unwrapTreatyResponse } from "./treaty";
+  PostApiStepDefinitionsData,
+  PutApiStepDefinitionsByStepDefinitionIdData,
+} from "./generated/types.gen";
 
 type RequestOptions = {
   headers?: Record<string, unknown> | undefined;
 };
 
+export type CreateStepDefinitionInput = PostApiStepDefinitionsData["body"];
+export type UpdateStepDefinitionInput =
+  PutApiStepDefinitionsByStepDefinitionIdData["body"];
+
 export function createStepDefinitionsClient(
-  baseUrlOrApp: string | App,
+  baseUrl: string,
 ): ReturnType<typeof buildStepDefinitionsClient> {
-  return buildStepDefinitionsClient(createBoboddyTreaty(baseUrlOrApp));
+  const client = createClient({ baseUrl });
+  return buildStepDefinitionsClient(new StepDefinitions({ client }));
 }
 
-const buildStepDefinitionsClient = (
-  apiClient: ReturnType<typeof createBoboddyTreaty>,
-) => {
+const buildStepDefinitionsClient = (stepDefinitions: StepDefinitions) => {
   return {
-    listByProjectId: async (projectId: string, options?: RequestOptions) =>
-      await unwrapTreatyResponse(
-        apiClient.api["step-definitions"].get({
-          query: { projectId },
-          headers: options?.headers,
-        } as never),
-      ),
-    create: async (body: CreateStepDefinitionInput, options?: RequestOptions) =>
-      await unwrapTreatyResponse(
-        apiClient.api["step-definitions"].post(body as never, options as never),
-      ),
+    listByProjectId: async (projectId: string, options?: RequestOptions) => {
+      const result = await stepDefinitions.listStepDefinitions({
+        query: { projectId },
+        headers: options?.headers,
+      });
+      if (result.error) throw new Error(JSON.stringify(result.error));
+      return result.data;
+    },
+    create: async (
+      body: CreateStepDefinitionInput,
+      options?: RequestOptions,
+    ) => {
+      const result = await stepDefinitions.createStepDefinition({
+        body,
+        headers: options?.headers,
+      });
+      if (result.error) throw new Error(JSON.stringify(result.error));
+      return result.data;
+    },
     update: async (
       stepDefinitionId: string,
       body: UpdateStepDefinitionInput,
       options?: RequestOptions,
-    ) =>
-      await unwrapTreatyResponse(
-        apiClient.api["step-definitions"]({ stepDefinitionId }).put(
-          body as never,
-          options as never,
-        ),
-      ),
+    ) => {
+      const result = await stepDefinitions.updateStepDefinition({
+        path: { stepDefinitionId },
+        body,
+        headers: options?.headers,
+      });
+      if (result.error) throw new Error(JSON.stringify(result.error));
+      return result.data;
+    },
   };
 };

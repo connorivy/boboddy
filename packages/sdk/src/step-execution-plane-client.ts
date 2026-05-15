@@ -1,5 +1,9 @@
-import type { App } from "@boboddy/api/app";
-import { createBoboddyTreaty, unwrapTreatyResponse } from "./treaty";
+import { createClient } from "./generated/client";
+import { StepExecutions } from "./generated/sdk.gen";
+
+type RequestOptions = {
+  headers?: Record<string, unknown> | undefined;
+};
 
 type JsonValue =
   | string
@@ -9,19 +13,14 @@ type JsonValue =
   | { [key: string]: JsonValue }
   | JsonValue[];
 
-type RequestOptions = {
-  headers?: Record<string, unknown> | undefined;
-};
-
 export function createStepExecutionPlaneClient(
-  baseUrlOrApp: string | App,
+  baseUrl: string,
 ): ReturnType<typeof buildStepExecutionPlaneClient> {
-  return buildStepExecutionPlaneClient(createBoboddyTreaty(baseUrlOrApp));
+  const client = createClient({ baseUrl });
+  return buildStepExecutionPlaneClient(new StepExecutions({ client }));
 }
 
-const buildStepExecutionPlaneClient = (
-  apiClient: ReturnType<typeof createBoboddyTreaty>,
-) => {
+const buildStepExecutionPlaneClient = (stepExecutions: StepExecutions) => {
   return {
     claimStepExecutions: async (
       body: {
@@ -32,13 +31,14 @@ const buildStepExecutionPlaneClient = (
         workItemId?: string | undefined;
       },
       options?: RequestOptions,
-    ) =>
-      await unwrapTreatyResponse(
-        apiClient.api["step-executions"].claims.post(
-          body as never,
-          options as never,
-        ),
-      ),
+    ) => {
+      const result = await stepExecutions.claimStepExecutions({
+        body,
+        headers: options?.headers,
+      });
+      if (result.error) throw new Error(JSON.stringify(result.error));
+      return result.data;
+    },
     heartbeatStepExecution: async (
       stepExecutionId: string,
       body: {
@@ -46,33 +46,40 @@ const buildStepExecutionPlaneClient = (
         leaseDurationSeconds: number;
       },
       options?: RequestOptions,
-    ) =>
-      await unwrapTreatyResponse(
-        apiClient.api["step-executions"]({
-          stepExecutionId: stepExecutionId,
-        }).heartbeat.put(body, options as never),
-      ),
+    ) => {
+      const result = await stepExecutions.heartbeatStepExecution({
+        path: { stepExecutionId },
+        body,
+        headers: options?.headers,
+      });
+      if (result.error) throw new Error(JSON.stringify(result.error));
+    },
     getStepExecution: async (
       stepExecutionId: string,
       options?: RequestOptions,
-    ) =>
-      await unwrapTreatyResponse(
-        apiClient.api["step-executions"]({
-          stepExecutionId: stepExecutionId,
-        }).get(options as never),
-      ),
+    ) => {
+      const result = await stepExecutions.getStepExecution({
+        path: { stepExecutionId },
+        headers: options?.headers,
+      });
+      if (result.error) throw new Error(JSON.stringify(result.error));
+      return result.data;
+    },
     getStepExecutionWorkerContext: async (
       stepExecutionId: string,
       body: {
         claimToken: string;
       },
       options?: RequestOptions,
-    ) =>
-      await unwrapTreatyResponse(
-        apiClient.api["step-executions"]({
-          stepExecutionId: stepExecutionId,
-        })["worker-context"].post(body as never, options as never),
-      ),
+    ) => {
+      const result = await stepExecutions.getStepExecutionWorkerContext({
+        path: { stepExecutionId },
+        body,
+        headers: options?.headers,
+      });
+      if (result.error) throw new Error(JSON.stringify(result.error));
+      return result.data;
+    },
     completeStepExecution: async (
       stepExecutionId: string,
       body: {
@@ -82,12 +89,14 @@ const buildStepExecutionPlaneClient = (
         errorJson: JsonValue;
       },
       options?: RequestOptions,
-    ) =>
-      await unwrapTreatyResponse(
-        apiClient.api["step-executions"]({
-          stepExecutionId: stepExecutionId,
-        }).completions.post(body as never, options as never),
-      ),
+    ) => {
+      const result = await stepExecutions.completeStepExecution({
+        path: { stepExecutionId },
+        body,
+        headers: options?.headers,
+      });
+      if (result.error) throw new Error(JSON.stringify(result.error));
+    },
     failStepExecution: async (
       stepExecutionId: string,
       body: {
@@ -96,17 +105,13 @@ const buildStepExecutionPlaneClient = (
         errorJson: JsonValue;
       },
       options?: RequestOptions,
-    ) =>
-      await unwrapTreatyResponse(
-        apiClient.api["step-executions"]({
-          stepExecutionId: stepExecutionId,
-        }).completions.post(
-          {
-            ...body,
-            status: "failed",
-          } as never,
-          options as never,
-        ),
-      ),
+    ) => {
+      const result = await stepExecutions.completeStepExecution({
+        path: { stepExecutionId },
+        body: { ...body, status: "failed" as const },
+        headers: options?.headers,
+      });
+      if (result.error) throw new Error(JSON.stringify(result.error));
+    },
   };
 };

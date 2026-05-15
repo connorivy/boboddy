@@ -2,15 +2,6 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "types": ["bun-types", "node"],
-    "baseUrl": ".",
-    "paths": {
-      "@boboddy/core": ["../../packages/core/src/index.ts"],
-      "@boboddy/core/*": ["../../packages/core/src/*"],
-      "@boboddy/opencode": ["../../packages/ai/opencode/src/index.ts"],
-      "@boboddy/opencode/*": ["../../packages/ai/opencode/src/*"],
-      "@boboddy/sdk": ["../../packages/sdks/js/src/index.ts"],
-      "@boboddy/sdk/*": ["../../packages/sdks/js/src/*"]
-    },
     "noEmit": true
   },
   "include": ["src/**/*.ts", "script/**/*.ts", "test/**/*.ts"],

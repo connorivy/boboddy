@@ -5,25 +5,24 @@
   "type": "module",
   "exports": {
     ".": {
-      "import": "./dist/index.js",
-      "types": "./dist/index.d.ts"
+      "types": "./dist/index.d.ts",
+      "bun": "./src/index.ts",
+      "import": "./dist/index.js"
     },
     "./client": {
-      "import": "./dist/client.js",
-      "types": "./dist/client.d.ts"
-    },
-    "./treaty": {
-      "import": "./dist/treaty.js",
-      "types": "./dist/treaty.d.ts"
+      "types": "./dist/client.d.ts",
+      "bun": "./src/client.ts",
+      "import": "./dist/client.js"
     },
     "./define-step": {
+      "types": "./dist/define-step.d.ts",
       "bun": "./src/define-step.ts",
-      "import": "./dist/define-step.js",
-      "types": "./dist/define-step.d.ts"
+      "import": "./dist/define-step.js"
     },
     "./step-definitions-client": {
-      "import": "./dist/step-definitions-client.js",
-      "types": "./dist/step-definitions-client.d.ts"
+      "types": "./dist/step-definitions-client.d.ts",
+      "bun": "./src/step-definitions-client.ts",
+      "import": "./dist/step-definitions-client.js"
     }
   },
   "files": [
@@ -34,16 +33,13 @@
     "access": "public"
   },
   "scripts": {
+    "generate": "openapi-ts",
     "build": "bun run script/build.ts",
+    "declarations": "bun run script/declarations.ts",
     "test": "bun test test",
-    "typecheck": "tsc -p tsconfig.json --noEmit"
+    "typecheck": "tsgo -p tsconfig.json --noEmit"
   },
-  "dependencies": {
-    "@boboddy/api": "workspace:*",
-    "@boboddy/core": "workspace:*",
-    "@elysiajs/eden": "^1.4.9",
-    "elysia": "^1.4.28"
-  },
+  "dependencies": {},
   "peerDependencies": {
     "zod": ">=4.0.0"
   },

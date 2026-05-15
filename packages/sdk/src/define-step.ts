@@ -1,7 +1,35 @@
 import { toJSONSchema } from "zod/v4/core";
 import type { $ZodType } from "zod/v4/core";
 import type { ZodType } from "zod";
-import type { OpenCodeMcpServers } from "@boboddy/core/common/contracts/opencode-mcp";
+
+type OpenCodeMcpServers = Record<
+  string,
+  | {
+      type: "local";
+      command: string[];
+      environment?: Record<string, string>;
+      enabled?: boolean;
+      timeout?: number;
+    }
+  | {
+      type: "remote";
+      url: string;
+      enabled?: boolean;
+      headers?: Record<string, string>;
+      oauth?:
+        | {
+            clientId?: string;
+            clientSecret?: string;
+            scope?: string;
+            redirectUri?: string;
+          }
+        | boolean;
+      timeout?: number;
+    }
+  | {
+      enabled: boolean;
+    }
+>;
 
 type SignalTypeStr = "string" | "number" | "boolean" | "object" | "array";
 

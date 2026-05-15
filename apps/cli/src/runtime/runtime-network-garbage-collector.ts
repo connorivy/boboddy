@@ -1,6 +1,6 @@
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
-import { RUNTIME_SESSION_NETWORK_NAME_PREFIX } from "@boboddy/core/agent-sessions/project-runtime-session/infra/local-docker-runtime-session-network-manager";
+import { RUNTIME_SESSION_NETWORK_NAME_PREFIX } from "./infra/local-docker-runtime-session-network-manager";
 
 const execFileAsync = promisify(execFile);
 

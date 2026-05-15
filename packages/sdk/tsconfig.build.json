@@ -4,6 +4,9 @@
     "noEmit": false,
     "emitDeclarationOnly": true,
     "declaration": true,
-    "declarationDir": "dist"
-  }
+    "declarationDir": "dist",
+    "rootDir": "src",
+    "paths": {}
+  },
+  "exclude": ["node_modules", "openapi-ts.config.ts", "script/**", "test/**"]
 }

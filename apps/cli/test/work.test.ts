@@ -1,12 +1,12 @@
 import { afterEach, describe, expect, vi } from "bun:test";
-import { parseUuidV7 } from "@boboddy/core/common/contracts/uuid-v7";
+import { parseUuidV7 } from "../src/lib/uuid-v7";
 import type {
   StepExecutionAgentRunner,
   StepExecutionRunTracker,
   StepExecutionRuntimeEnvironmentOrchestrator,
   StepExecutionWorkerClient,
   StepExecutionWorkerContext,
-} from "@boboddy/core/pipeline-executions/step-execution/application/process-project-work";
+} from "../src/work/engine/process-project-work.types";
 import { processProjectWork } from "../src/work/process-project-work";
 import { concurrentTest } from "./utils";
 

@@ -1,17 +1,8 @@
 {
   "extends": "../../../tsconfig.base.json",
   "compilerOptions": {
-    "baseUrl": ".",
     "exactOptionalPropertyTypes": false,
     "paths": {
-      "@/*": ["../../../apps/api/src/*"],
-      "@boboddy/api/*": ["../../../apps/api/src/*"],
-      "@boboddy/core": ["../../core/src/index.ts"],
-      "@boboddy/core/*": ["../../core/src/*"],
-      "@boboddy/containers": ["../../containers/src/index.ts"],
-      "@boboddy/containers/*": ["../../containers/src/*"],
-      "@boboddy/opencode": ["../../ai/opencode/src/index.ts"],
-      "@boboddy/opencode/*": ["../../ai/opencode/src/*"],
       "@boboddy/sdk": ["./src/index.ts"],
       "@boboddy/sdk/*": ["./src/*"]
     },

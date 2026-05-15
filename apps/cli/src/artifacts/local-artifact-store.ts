@@ -4,7 +4,7 @@ import type {
   ArtifactStore,
   SaveArtifactInput,
   SaveArtifactResult,
-} from "@boboddy/core/artifacts/artifact-store";
+} from "./artifact-store";
 
 export class LocalArtifactStore implements ArtifactStore {
   constructor(private readonly baseDir: string) {}

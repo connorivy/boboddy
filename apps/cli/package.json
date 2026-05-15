@@ -16,18 +16,22 @@
     "build": "bun run script/build.ts",
     "link:local": "bun run build && npm link",
     "test": "bun test test",
-    "typecheck": "tsc -p tsconfig.json --noEmit"
+    "typecheck": "tsgo -p tsconfig.json --noEmit"
   },
   "dependencies": {
     "@boboddy/opencode": "workspace:*",
-    "@boboddy/core": "workspace:*",
+    "@boboddy/runtime-proxy": "workspace:*",
     "@boboddy/sdk": "workspace:*",
+    "@devcontainers/cli": "0.86.0",
     "@opencode-ai/sdk": "1.14.34",
+    "ajv": "^8.20.0",
     "better-auth": "^1.6.7",
     "dotenv": "^16.0.0",
     "pino": "^9.14.0",
     "pino-pretty": "^13.1.2",
-    "yargs": "^17.7.2"
+    "uuid": "^13.0.0",
+    "yargs": "^17.7.2",
+    "zod": "^3"
   },
   "devDependencies": {
     "@types/yargs": "^17.0.33",

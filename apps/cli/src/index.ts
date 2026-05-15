@@ -4,6 +4,7 @@ import dotenv from "dotenv";
 
 import { authCommand } from "./commands/auth";
 import { helloCommand } from "./commands/hello";
+import { proxyCommand } from "./commands/proxy";
 import { runtimeCommand } from "./commands/runtime";
 import { stepsCommand } from "./commands/steps";
 import { workCommand } from "./commands/work";
@@ -38,6 +39,7 @@ export function createCli(argv: readonly string[]) {
     })
     .command(authCommand)
     .command(helloCommand)
+    .command(proxyCommand)
     .command(runtimeCommand)
     .command(stepsCommand)
     .command(workCommand)

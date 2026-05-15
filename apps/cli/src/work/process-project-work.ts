@@ -1,14 +1,14 @@
 import os, { hostname } from "node:os";
 import path from "node:path";
-import { parseUuidV7 } from "@boboddy/core/common/contracts/uuid-v7";
-import type { RuntimeCommandRunner } from "@boboddy/core/agent-sessions/runtime-command/application/runtime-command-runner";
-import { systemTimeProvider } from "@boboddy/core/lib/time-provider";
-import type { TimeProvider } from "@boboddy/core/lib/time-provider";
+import { parseUuidV7 } from "../lib/uuid-v7";
+import type { RuntimeCommandRunner } from "../runtime/application/runtime-command-runner";
+import { systemTimeProvider } from "../lib/time-provider";
+import type { TimeProvider } from "../lib/time-provider";
 import { LocalArtifactStore } from "../artifacts/local-artifact-store";
-import { LocalRuntimeCommandRunner } from "@boboddy/core/agent-sessions/runtime-command/infra/local-runtime-command-runner";
-import { LocalDevcontainerPortForwardManager } from "@boboddy/core/agent-sessions/project-runtime-session/infra/local-devcontainer-port-forward-manager";
-import type { RuntimeServiceRunner } from "@boboddy/core/agent-sessions/runtime-service/application/runtime-service-runner";
-import { LocalRuntimeServiceRunner } from "@boboddy/core/agent-sessions/runtime-service/infra/local-runtime-service-runner";
+import { LocalRuntimeCommandRunner } from "../runtime/infra/local-runtime-command-runner";
+import { LocalDevcontainerPortForwardManager } from "../runtime/infra/local-devcontainer-port-forward-manager";
+import type { RuntimeServiceRunner } from "../runtime/application/runtime-service-runner";
+import { LocalRuntimeServiceRunner } from "../runtime/infra/local-runtime-service-runner";
 import {
   processProjectWork as processProjectWorkInCore,
   type ProcessProjectWorkResult,
@@ -17,7 +17,7 @@ import {
   type StepExecutionRunTracker,
   type StepExecutionRuntimeEnvironmentOrchestrator,
   type StepExecutionWorkerClient,
-} from "@boboddy/core/pipeline-executions/step-execution/application/process-project-work";
+} from "./engine/process-project-work";
 import { resolveBoboddyBaseUrl } from "../auth/config";
 import { cliLogger } from "../lib/logger";
 import {

@@ -1,9 +1,7 @@
 import { createStepExecutionPlaneClient } from "@boboddy/sdk";
-import { parseUuidV7 } from "@boboddy/core/common/contracts/uuid-v7";
-import type {
-  StepExecutionWorkerClient,
-} from "@boboddy/core/pipeline-executions/step-execution/application/process-project-work";
-import type { StepExecutionWorkerContextContract } from "@boboddy/core/pipeline-executions/step-execution/contracts/step-execution-contracts";
+import { parseUuidV7, type UuidV7 } from "../lib/uuid-v7";
+import type { StepExecutionWorkerClient } from "./engine/process-project-work.types";
+import type { StepExecutionWorkerContextContract } from "./engine/contracts/step-execution-contracts";
 import { loadAuthenticatedSession } from "../auth/session";
 
 export type StepExecutionWorkerContext = StepExecutionWorkerContextContract;
@@ -29,14 +27,20 @@ export async function createStepExecutionPlaneWorkerClient(baseUrl: string) {
   return {
     userId: parseUuidV7(authenticated.session.user.id),
     claimStepExecutions: async (input: {
-      projectId: string;
+      projectId: UuidV7;
       workerId: string;
       batchSize: number;
       leaseDurationSeconds: number;
       workItemId?: string | undefined;
-    }) => await planeClient.claimStepExecutions(input, { headers }),
+    }) => {
+      const results = await planeClient.claimStepExecutions(input, { headers });
+      return results.map((r) => ({
+        stepExecution: { id: parseUuidV7(r.stepExecution.id) },
+        claimToken: r.claimToken,
+      }));
+    },
     heartbeatStepExecution: async (input: {
-      stepExecutionId: string;
+      stepExecutionId: UuidV7;
       claimToken: string;
       leaseDurationSeconds: number;
     }) => {
@@ -50,7 +54,7 @@ export async function createStepExecutionPlaneWorkerClient(baseUrl: string) {
       );
     },
     failStepExecution: async (input: {
-      stepExecutionId: string;
+      stepExecutionId: UuidV7;
       claimToken: string;
       resultJson: unknown;
       errorJson: unknown;
@@ -66,7 +70,7 @@ export async function createStepExecutionPlaneWorkerClient(baseUrl: string) {
       );
     },
     completeStepExecution: async (input: {
-      stepExecutionId: string;
+      stepExecutionId: UuidV7;
       claimToken: string;
       resultJson: unknown;
       errorJson: unknown;
@@ -82,18 +86,18 @@ export async function createStepExecutionPlaneWorkerClient(baseUrl: string) {
         { headers },
       );
     },
-    getStepExecution: async (input: { stepExecutionId: string }) =>
+    getStepExecution: async (input: { stepExecutionId: UuidV7 }) =>
       await planeClient.getStepExecution(input.stepExecutionId, { headers }),
     getStepExecutionWorkerContext: async (input: {
-      stepExecutionId: string;
+      stepExecutionId: UuidV7;
       claimToken: string;
     }) =>
-      await planeClient.getStepExecutionWorkerContext(
+      (await planeClient.getStepExecutionWorkerContext(
         input.stepExecutionId,
         {
           claimToken: input.claimToken,
         },
         { headers },
-      ),
+      )) as unknown as StepExecutionWorkerContextContract,
   } satisfies StepExecutionPlaneWorkerClient;
 }

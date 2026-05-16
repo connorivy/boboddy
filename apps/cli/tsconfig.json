@@ -2,7 +2,8 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "types": ["bun-types", "node"],
-    "noEmit": true
+    "noEmit": true,
+    "exactOptionalPropertyTypes": false
   },
   "include": ["src/**/*.ts", "script/**/*.ts", "test/**/*.ts"],
   "exclude": ["node_modules", "dist"]

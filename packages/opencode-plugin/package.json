@@ -1,22 +1,29 @@
 {
-  "name": "@boboddy/opencode",
-  "private": true,
+  "name": "@boboddy/opencode-plugin",
+  "version": "0.0.0",
   "type": "module",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
       "bun": "./src/index.ts",
-      "default": "./src/index.ts"
+      "default": "./dist/plugin.js"
     }
   },
+  "main": "./dist/plugin.js",
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
-    "build": "tsgo -p tsconfig.json --noEmit",
+    "build": "bun build src/plugin.ts --bundle --outfile dist/plugin.js --target bun --external @opencode-ai/plugin",
     "declarations": "bunx tsgo -p tsconfig.build.json",
     "typecheck": "tsgo -p tsconfig.json --noEmit",
     "test": "bun test"
   },
   "dependencies": {
-    "@boboddy/core": "workspace:*",
+    "@boboddy/sdk": "workspace:*",
     "@opencode-ai/sdk": "1.14.34",
     "ajv": "^8.17.1",
     "@opencode-ai/plugin": "1.14.34"

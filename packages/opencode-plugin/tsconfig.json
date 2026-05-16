@@ -9,6 +9,6 @@
       "#boboddy/*": ["../../boboddy/src/*"]
     }
   },
-  "include": ["src/**/*.ts", "tools/**/*.ts", "plugins/**/*.ts"],
+  "include": ["src/**/*.ts"],
   "exclude": ["node_modules"]
 }

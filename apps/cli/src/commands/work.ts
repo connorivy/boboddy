@@ -3,9 +3,10 @@ import { processProjectWork } from "../work/process-project-work";
 import { logWork } from "../work/work-logger";
 import { resolveBoboddyBaseUrl } from "../auth/config";
 import { createCliLogger } from "../lib/logger";
+import { readProjectConfig } from "../init/project-config";
 
 export interface WorkArguments {
-  projectId: string;
+  projectId: string | undefined;
   baseUrl: string | undefined;
   batchSize: number | undefined;
   concurrency: number | undefined;
@@ -23,8 +24,18 @@ async function handler(
   const logger = createCliLogger("work-command");
   const baseUrl = resolveBoboddyBaseUrl(arguments_.baseUrl);
 
+  const projectId =
+    arguments_.projectId ?? (await readProjectConfig())?.projectId;
+
+  if (!projectId) {
+    logger.error(
+      "No project ID provided. Pass one as an argument or run `boboddy init` first.",
+    );
+    process.exit(1);
+  }
+
   logWork("cli", "Starting worker command", {
-    projectId: arguments_.projectId,
+    projectId,
     baseUrl,
     batchSize: arguments_.batchSize,
     concurrency: arguments_.concurrency,
@@ -37,7 +48,7 @@ async function handler(
   });
 
   const result = await processProjectWork({
-    projectId: arguments_.projectId,
+    projectId,
     baseUrl,
     batchSize: arguments_.batchSize,
     concurrency: arguments_.concurrency,
@@ -51,12 +62,12 @@ async function handler(
 
   if (arguments_.once) {
     logWork("cli", "Worker command completed single-pass run", {
-      projectId: arguments_.projectId,
+      projectId,
       ...result,
     });
     logger.info(
       {
-        projectId: arguments_.projectId,
+        projectId,
         ...result,
       },
       "Single-pass work result",
@@ -65,14 +76,14 @@ async function handler(
 }
 
 export const workCommand: CommandModule<object, WorkArguments> = {
-  command: "work <projectId>",
+  command: "work [projectId]",
   describe: "Run the Boboddy host worker for a project",
   builder: (argv: Argv<object>) =>
     argv
       .positional("projectId", {
-        describe: "The project id to process work for",
+        describe:
+          "The project id to process work for (defaults to the id in .boboddy/boboddy.jsonc)",
         type: "string",
-        demandOption: true,
       })
       .option("baseUrl", {
         alias: "base-url",

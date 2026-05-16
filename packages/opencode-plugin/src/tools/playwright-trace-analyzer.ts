@@ -1,7 +1,7 @@
 import { constants } from 'node:fs';
 import { access } from 'node:fs/promises';
 import { spawn } from 'node:child_process';
-import { tool } from '@opencode-ai/plugin';
+import { tool, type ToolDefinition } from '@opencode-ai/plugin';
 
 const subcommands = ['actions', 'console', 'network'] as const;
 
@@ -34,7 +34,7 @@ function runPlaywrightTraceAnalyzer(
   });
 }
 
-export default tool({
+const playwrightTraceAnalyzer: ToolDefinition = tool({
   description:
     'Run playwright-trace-analyzer subcommands against a trace zip on Unix systems',
   args: {
@@ -50,3 +50,5 @@ export default tool({
     return await runPlaywrightTraceAnalyzer(args.subcommand, args.tracePath);
   },
 });
+
+export default playwrightTraceAnalyzer;

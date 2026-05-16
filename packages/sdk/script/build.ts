@@ -10,9 +10,11 @@ const result = await Bun.build({
   entrypoints: [
     resolve(projectRoot, "src/index.ts"),
     resolve(projectRoot, "src/client.ts"),
-    resolve(projectRoot, "src/treaty.ts"),
     resolve(projectRoot, "src/define-step.ts"),
     resolve(projectRoot, "src/step-definitions-client.ts"),
+    resolve(projectRoot, "src/opencode-mcp.ts"),
+    resolve(projectRoot, "src/jsonc.ts"),
+    resolve(projectRoot, "src/boboddy-config-parser.ts"),
   ],
   outdir: distDir,
   format: "esm",

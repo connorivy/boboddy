@@ -1,16 +1,15 @@
-import { tool } from "@opencode-ai/plugin";
+import { tool, type ToolDefinition } from "@opencode-ai/plugin";
 import {
   assertWorkspaceReadable,
   toRuntimeResponseJson,
   waitForRuntimeResponse,
   writeRuntimeRequest,
 } from "./_shared/runtime-request";
-import { getWorkspaceRoot } from "./_shared/workspace";
 
 const POLL_INTERVAL_MS = 250;
 const TIMEOUT_MS = 90_000;
 
-export default tool({
+const boboddyEnsureRuntimeService: ToolDefinition = tool({
   description:
     "Ensure a Boboddy runtime service defined in .boboddy/opencode.jsonc is started inside the user's devcontainer and return its access details.",
   args: {
@@ -18,8 +17,8 @@ export default tool({
       .string()
       .describe("Name of the configured service to start or reuse"),
   },
-  async execute(args) {
-    const workspacePath = getWorkspaceRoot(import.meta.url);
+  async execute(args, context) {
+    const workspacePath = context.worktree;
     await assertWorkspaceReadable(workspacePath);
     const requestId = crypto.randomUUID();
     await writeRuntimeRequest({
@@ -43,3 +42,5 @@ export default tool({
     );
   },
 });
+
+export default boboddyEnsureRuntimeService;

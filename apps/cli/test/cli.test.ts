@@ -49,7 +49,10 @@ function parseLogLines(stdout: string): LogLine[] {
     .map((line) => JSON.parse(line) as LogLine);
 }
 
-function hasLogLine(logs: readonly LogLine[], expected: Partial<LogLine>): boolean {
+function hasLogLine(
+  logs: readonly LogLine[],
+  expected: Partial<LogLine>,
+): boolean {
   return logs.some((log) =>
     Object.entries(expected).every(([key, value]) => log[key] === value),
   );
@@ -91,7 +94,7 @@ describe("boboddy CLI", () => {
     expect(result.stderr).toBe("");
     expect(result.stdout).toContain("hello [name]");
     expect(result.stdout).toContain("runtime <command>");
-    expect(result.stdout).toContain("work <projectId>");
+    expect(result.stdout).toContain("work");
     expect(result.stdout).toContain("--help");
     expect(result.stdout).toContain("--version");
   });
@@ -113,9 +116,9 @@ describe("boboddy CLI", () => {
 
     expect(result.exitCode).toBe(1);
     expect(result.stderr).toBe("");
-    expect(hasLogLine(parseLogLines(result.stdout), { msg: "CLI wrapper failed" })).toBe(
-      true,
-    );
+    expect(
+      hasLogLine(parseLogLines(result.stdout), { msg: "CLI wrapper failed" }),
+    ).toBe(true);
   });
 
   concurrentTest("reports an unsupported platform in the wrapper", () => {
@@ -126,9 +129,9 @@ describe("boboddy CLI", () => {
 
     expect(result.exitCode).toBe(1);
     expect(result.stderr).toBe("");
-    expect(hasLogLine(parseLogLines(result.stdout), { msg: "CLI wrapper failed" })).toBe(
-      true,
-    );
+    expect(
+      hasLogLine(parseLogLines(result.stdout), { msg: "CLI wrapper failed" }),
+    ).toBe(true);
   });
 
   concurrentTest("reports auth status when not signed in", () => {

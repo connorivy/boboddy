@@ -1,38 +1,109 @@
-import { mkdtemp, readFile } from "node:fs/promises";
+import { mkdtemp, readFile, access } from "node:fs/promises";
+import { fileURLToPath } from "node:url";
 import os from "node:os";
 import path from "node:path";
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test, afterEach, beforeEach } from "bun:test";
 import { buildOpencodeContext } from "./build-opencode-context";
 
-describe("buildOpencodeContext", () => {
-  test.concurrent(
-    "writes a runtime package with only runtime-safe tool dependencies",
-    async () => {
-      const workspacePath = await mkdtemp(
-        path.join(os.tmpdir(), "build-opencode-context-test-"),
-      );
+const PACKAGE_ROOT = path.resolve(
+  path.dirname(fileURLToPath(import.meta.url)),
+  "..",
+);
+const BUNDLE_PATH = path.join(PACKAGE_ROOT, "dist", "plugin.js");
 
-      await buildOpencodeContext({
-        workspacePath,
-        stepMcpServers: null,
-      });
+describe("buildOpencodeContext (prod mode)", () => {
+  let originalEnv: string | undefined;
 
-      const runtimePackageJson = JSON.parse(
-        await readFile(
-          path.join(workspacePath, ".opencode", "package.json"),
-          "utf8",
-        ),
-      ) as {
-        dependencies?: Record<string, string>;
-      };
+  beforeEach(() => {
+    originalEnv = process.env["BOBODDY_PLUGIN_DEV"];
+    delete process.env["BOBODDY_PLUGIN_DEV"];
+  });
 
-      expect(runtimePackageJson.dependencies).toEqual({
-        "@opencode-ai/plugin": "1.14.34",
-        ajv: "^8.17.1",
-      });
-      expect(runtimePackageJson.dependencies).not.toHaveProperty(
-        "@boboddy/core",
-      );
-    },
-  );
+  afterEach(() => {
+    if (originalEnv === undefined) {
+      delete process.env["BOBODDY_PLUGIN_DEV"];
+    } else {
+      process.env["BOBODDY_PLUGIN_DEV"] = originalEnv;
+    }
+  });
+
+  test("writes opencode.jsonc with npm plugin reference and no .opencode directory", async () => {
+    const workspacePath = await mkdtemp(
+      path.join(os.tmpdir(), "build-opencode-context-test-"),
+    );
+
+    await buildOpencodeContext({ workspacePath, stepMcpServers: null });
+
+    const config = JSON.parse(
+      await readFile(path.join(workspacePath, "opencode.jsonc"), "utf8"),
+    ) as { plugin?: unknown };
+
+    expect(config.plugin).toEqual(["@boboddy/opencode-plugin"]);
+
+    const dotOpencodeExists = await access(
+      path.join(workspacePath, ".opencode"),
+    )
+      .then(() => true)
+      .catch(() => false);
+    expect(dotOpencodeExists).toBe(false);
+  });
+});
+
+describe("buildOpencodeContext (dev mode)", () => {
+  let savedDev: string | undefined;
+  let savedBundlePath: string | undefined;
+
+  beforeEach(() => {
+    savedDev = process.env["BOBODDY_PLUGIN_DEV"];
+    savedBundlePath = process.env["BOBODDY_PLUGIN_BUNDLE_PATH"];
+    process.env["BOBODDY_PLUGIN_DEV"] = "true";
+    process.env["BOBODDY_PLUGIN_BUNDLE_PATH"] = BUNDLE_PATH;
+  });
+
+  afterEach(() => {
+    if (savedDev === undefined) {
+      delete process.env["BOBODDY_PLUGIN_DEV"];
+    } else {
+      process.env["BOBODDY_PLUGIN_DEV"] = savedDev;
+    }
+    if (savedBundlePath === undefined) {
+      delete process.env["BOBODDY_PLUGIN_BUNDLE_PATH"];
+    } else {
+      process.env["BOBODDY_PLUGIN_BUNDLE_PATH"] = savedBundlePath;
+    }
+  });
+
+  test("copies bundle to .opencode/plugins/ and writes package.json with only plugin sdk dep", async () => {
+    const workspacePath = await mkdtemp(
+      path.join(os.tmpdir(), "build-opencode-context-test-"),
+    );
+
+    await buildOpencodeContext({ workspacePath, stepMcpServers: null });
+
+    const runtimePackageJson = JSON.parse(
+      await readFile(
+        path.join(workspacePath, ".opencode", "package.json"),
+        "utf8",
+      ),
+    ) as { dependencies?: Record<string, string> };
+
+    expect(Object.keys(runtimePackageJson.dependencies ?? {})).toEqual([
+      "@opencode-ai/plugin",
+    ]);
+    expect(runtimePackageJson.dependencies).not.toHaveProperty("@boboddy/core");
+    expect(runtimePackageJson.dependencies).not.toHaveProperty("@boboddy/sdk");
+    expect(runtimePackageJson.dependencies).not.toHaveProperty("ajv");
+
+    const bundleExists = await access(
+      path.join(workspacePath, ".opencode", "plugins", "boboddy.js"),
+    )
+      .then(() => true)
+      .catch(() => false);
+    expect(bundleExists).toBe(true);
+
+    const config = JSON.parse(
+      await readFile(path.join(workspacePath, "opencode.jsonc"), "utf8"),
+    ) as { plugin?: unknown };
+    expect(config.plugin).toBeUndefined();
+  });
 });

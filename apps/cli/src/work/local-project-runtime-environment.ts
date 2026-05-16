@@ -1,4 +1,4 @@
-import { buildOpencodeContext } from "@boboddy/opencode";
+import { buildOpencodeContext } from "@boboddy/opencode-plugin";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import type { OpenCodeMcpServers } from "../lib/opencode-mcp";

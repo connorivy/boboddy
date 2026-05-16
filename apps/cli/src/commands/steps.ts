@@ -7,6 +7,7 @@ import { loadAuthenticatedSession } from "../auth/session";
 import { createCliLogger } from "../lib/logger";
 import { loadStepsFromDirectory } from "../steps/step-file-loader";
 import { scaffoldStepsDirectory } from "../steps/step-scaffolder";
+import { readProjectConfig } from "../init/project-config";
 
 const STEPS_DIR = ".boboddy/steps";
 
@@ -35,7 +36,7 @@ const runInit = (): void => {
 
   logger.info(
     { dir },
-    `Initialized steps directory at ${STEPS_DIR}. Run \`bun install\` then \`boboddy steps push <projectId>\``,
+    `Initialized steps directory at ${STEPS_DIR}. Run \`bun install\` then \`boboddy steps push\``,
   );
 };
 
@@ -48,7 +49,7 @@ const initCommand: CommandModule<object, object> = {
 // push
 
 interface PushArguments {
-  projectId: string;
+  projectId: string | undefined;
   baseUrl: string | undefined;
 }
 
@@ -57,6 +58,15 @@ const runPush = async (
 ): Promise<void> => {
   const logger = createCliLogger("steps-push");
   const baseUrl = resolveBoboddyBaseUrl(args.baseUrl);
+
+  const projectId = args.projectId ?? (await readProjectConfig())?.projectId;
+
+  if (!projectId) {
+    logger.error(
+      "No project ID provided. Pass one as an argument or run `boboddy init` first.",
+    );
+    process.exit(1);
+  }
 
   const authenticated = await loadAuthenticatedSession(baseUrl);
   if (!authenticated) {
@@ -75,7 +85,7 @@ const runPush = async (
   }
 
   const client = createStepDefinitionsClient(baseUrl);
-  const existing = await client.listByProjectId(args.projectId, { headers });
+  const existing = await client.listByProjectId(projectId, { headers });
 
   const existingById = new Map<string, string>();
   for (const step of existing) {
@@ -88,7 +98,7 @@ const runPush = async (
   for (const spec of specs) {
     const lookup = `${spec.key}@v${String(spec.version)}`;
     const existingId = existingById.get(lookup);
-    const payload = { ...spec, projectId: args.projectId };
+    const payload = { ...spec, projectId };
 
     if (existingId) {
       await client.update(existingId, payload, { headers });
@@ -108,14 +118,14 @@ const runPush = async (
 };
 
 const pushCommand: CommandModule<object, PushArguments> = {
-  command: "push <projectId>",
+  command: "push [projectId]",
   describe: `Push step definitions from ${STEPS_DIR} to the server`,
   builder: (argv: Argv<object>) =>
     argv
       .positional("projectId", {
-        describe: "The project to push steps to",
+        describe:
+          "The project to push steps to (defaults to the id in .boboddy/boboddy.jsonc)",
         type: "string",
-        demandOption: true,
       })
       .option("baseUrl", {
         alias: "base-url",

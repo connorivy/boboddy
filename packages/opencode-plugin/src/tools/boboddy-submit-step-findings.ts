@@ -1,12 +1,11 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import Ajv from "ajv";
-import { tool } from "@opencode-ai/plugin";
-import { getWorkspaceRoot } from "./_shared/workspace";
+import { tool, type ToolDefinition } from "@opencode-ai/plugin";
 
 const DEFAULT_OUTPUT_PATH = ".boboddy/step-findings-submission.json";
 
-export default tool({
+const boboddySubmitStepFindings: ToolDefinition = tool({
   description:
     "Submit Boboddy step findings as JSON. findingsJson must validate against resultSchemaJson.",
   args: {
@@ -17,7 +16,7 @@ export default tool({
       .json()
       .describe("JSON schema from the step definition resultSchemaJson"),
   },
-  async execute(args) {
+  async execute(args, context) {
     if (
       args.resultSchemaJson === null ||
       typeof args.resultSchemaJson !== "object" ||
@@ -47,7 +46,7 @@ export default tool({
       );
     }
 
-    const filePath = path.join(getWorkspaceRoot(import.meta.url), DEFAULT_OUTPUT_PATH);
+    const filePath = path.join(context.worktree, DEFAULT_OUTPUT_PATH);
     await mkdir(path.dirname(filePath), { recursive: true });
     await writeFile(
       filePath,
@@ -65,3 +64,5 @@ export default tool({
     );
   },
 });
+
+export default boboddySubmitStepFindings;

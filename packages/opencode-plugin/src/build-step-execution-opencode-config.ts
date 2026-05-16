@@ -1,5 +1,5 @@
 import { OpencodeClient, type Config } from "@opencode-ai/sdk";
-import type { OpenCodeMcpServers } from "@boboddy/core/common/contracts/opencode-mcp";
+import type { OpenCodeMcpServers } from "@boboddy/sdk/opencode-mcp";
 
 const STEP_EXECUTION_AGENT = "step-execution";
 

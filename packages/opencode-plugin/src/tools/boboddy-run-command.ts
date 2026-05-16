@@ -1,15 +1,14 @@
-import { tool } from "@opencode-ai/plugin";
+import { tool, type ToolDefinition } from "@opencode-ai/plugin";
 import {
   assertWorkspaceReadable,
   toRuntimeResponseJson,
   waitForRuntimeResponse,
   writeRuntimeRequest,
 } from "./_shared/runtime-request";
-import { getWorkspaceRoot } from "./_shared/workspace";
 
 const POLL_INTERVAL_MS = 250;
 
-export default tool({
+const boboddyRunCommand: ToolDefinition = tool({
   description:
     "Run any shell command inside the devcontainer. Returns full stdout and stderr output. For long-running processes like dev servers, returns partial output after timeoutSeconds and provides a commandId for later cancellation via boboddy-cancel-command.",
   args: {
@@ -27,8 +26,8 @@ export default tool({
     //     "Seconds to wait before returning. If the process exits first, returns immediately with full output. If still running at the timeout, returns partial output with status 'running' — the process keeps running. Use a short value (e.g. 5) for dev servers; a longer value for slow commands like typechecks.",
     //   ),
   },
-  async execute(args) {
-    const workspacePath = getWorkspaceRoot(import.meta.url);
+  async execute(args, context) {
+    const workspacePath = context.worktree;
     await assertWorkspaceReadable(workspacePath);
     const requestId = crypto.randomUUID();
     await writeRuntimeRequest({
@@ -56,3 +55,5 @@ export default tool({
     );
   },
 });
+
+export default boboddyRunCommand;

@@ -5,24 +5,39 @@
   "type": "module",
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
+      "types": "./src/index.ts",
       "bun": "./src/index.ts",
       "import": "./dist/index.js"
     },
     "./client": {
-      "types": "./dist/client.d.ts",
+      "types": "./src/client.ts",
       "bun": "./src/client.ts",
       "import": "./dist/client.js"
     },
     "./define-step": {
-      "types": "./dist/define-step.d.ts",
+      "types": "./src/define-step.ts",
       "bun": "./src/define-step.ts",
       "import": "./dist/define-step.js"
     },
     "./step-definitions-client": {
-      "types": "./dist/step-definitions-client.d.ts",
+      "types": "./src/step-definitions-client.ts",
       "bun": "./src/step-definitions-client.ts",
       "import": "./dist/step-definitions-client.js"
+    },
+    "./opencode-mcp": {
+      "types": "./src/opencode-mcp.ts",
+      "bun": "./src/opencode-mcp.ts",
+      "import": "./dist/opencode-mcp.js"
+    },
+    "./jsonc": {
+      "types": "./src/jsonc.ts",
+      "bun": "./src/jsonc.ts",
+      "import": "./dist/jsonc.js"
+    },
+    "./boboddy-config-parser": {
+      "types": "./src/boboddy-config-parser.ts",
+      "bun": "./src/boboddy-config-parser.ts",
+      "import": "./dist/boboddy-config-parser.js"
     }
   },
   "files": [

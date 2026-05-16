@@ -14,12 +14,12 @@
   },
   "scripts": {
     "build": "bun run script/build.ts",
-    "link:local": "bun run build && npm link",
+    "link:local": "bun run build && bun link --global .",
     "test": "bun test test",
     "typecheck": "tsgo -p tsconfig.json --noEmit"
   },
   "dependencies": {
-    "@boboddy/opencode": "workspace:*",
+    "@boboddy/opencode-plugin": "workspace:*",
     "@boboddy/runtime-proxy": "workspace:*",
     "@boboddy/sdk": "workspace:*",
     "@devcontainers/cli": "0.86.0",

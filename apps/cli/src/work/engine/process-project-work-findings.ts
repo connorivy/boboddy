@@ -1,15 +1,50 @@
 import Ajv from "ajv";
-import { access, readFile, rm } from "node:fs/promises";
+import { access, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import type { AnyJsonValue } from "../../lib/json";
-import type { startProcessClaimedExecution } from "./process-claimed-step-execution";
-import type { ProcessProjectWorkDeps } from "./process-project-work.types";
+import type {
+  ProcessProjectWorkDeps,
+  StartedClaimedExecution,
+} from "./process-project-work.types";
 
 const STEP_FINDINGS_SUBMISSION_RELATIVE_PATH =
   ".boboddy/step-findings-submission.json";
+const CURRENT_EXECUTION_DIRECTORY_RELATIVE_PATH = ".boboddy/current-execution";
+const CURRENT_EXECUTION_INFO_RELATIVE_PATH =
+  `${CURRENT_EXECUTION_DIRECTORY_RELATIVE_PATH}/execution.json`;
+const CURRENT_EXECUTION_GITIGNORE_RELATIVE_PATH =
+  `${CURRENT_EXECUTION_DIRECTORY_RELATIVE_PATH}/.gitignore`;
+const CURRENT_EXECUTION_GITIGNORE_CONTENT = "*\n.*\n!.gitignore\n";
+
+type CurrentExecutionInfo = {
+  stepExecutionId: string;
+  resultSchemaJson: Record<string, unknown> | null;
+};
 
 export function buildFindingsSubmissionPath(workspacePath: string): string {
   return path.join(workspacePath, STEP_FINDINGS_SUBMISSION_RELATIVE_PATH);
+}
+
+export function buildCurrentExecutionInfoPath(workspacePath: string): string {
+  return path.join(workspacePath, CURRENT_EXECUTION_INFO_RELATIVE_PATH);
+}
+
+export async function writeCurrentExecutionInfoFile(
+  workspacePath: string,
+  input: CurrentExecutionInfo,
+): Promise<void> {
+  const currentExecutionInfoPath = buildCurrentExecutionInfoPath(workspacePath);
+  await mkdir(path.dirname(currentExecutionInfoPath), { recursive: true });
+  await writeFile(
+    path.join(workspacePath, CURRENT_EXECUTION_GITIGNORE_RELATIVE_PATH),
+    CURRENT_EXECUTION_GITIGNORE_CONTENT,
+    "utf8",
+  );
+  await writeFile(
+    currentExecutionInfoPath,
+    `${JSON.stringify(input, null, 2)}\n`,
+    "utf8",
+  );
 }
 
 async function tryReadFindingsSubmission(
@@ -28,6 +63,53 @@ async function tryReadFindingsSubmission(
   return parsed && typeof parsed === "object" && !Array.isArray(parsed)
     ? (parsed as Record<string, unknown>)
     : null;
+}
+
+async function readCurrentExecutionInfo(
+  workspacePath: string,
+): Promise<CurrentExecutionInfo> {
+  const currentExecutionInfoPath = buildCurrentExecutionInfoPath(workspacePath);
+
+  try {
+    await access(currentExecutionInfoPath);
+  } catch {
+    throw new Error(
+      `Current execution metadata file not found at ${currentExecutionInfoPath}`,
+    );
+  }
+
+  const rawPayload = await readFile(currentExecutionInfoPath, "utf8");
+  const parsed: unknown = JSON.parse(rawPayload);
+
+  if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+    throw new Error(
+      `Current execution metadata file at ${currentExecutionInfoPath} must contain a JSON object`,
+    );
+  }
+
+  const parsedRecord = parsed as Record<string, unknown>;
+  const stepExecutionId = parsedRecord["stepExecutionId"];
+  const resultSchemaJson = parsedRecord["resultSchemaJson"];
+
+  if (typeof stepExecutionId !== "string" || stepExecutionId.length === 0) {
+    throw new Error(
+      `Current execution metadata file at ${currentExecutionInfoPath} must contain a non-empty stepExecutionId`,
+    );
+  }
+
+  if (
+    resultSchemaJson !== null &&
+    (typeof resultSchemaJson !== "object" || Array.isArray(resultSchemaJson))
+  ) {
+    throw new Error(
+      `Current execution metadata file at ${currentExecutionInfoPath} must contain a JSON object or null resultSchemaJson`,
+    );
+  }
+
+  return {
+    stepExecutionId,
+    resultSchemaJson: resultSchemaJson as Record<string, unknown> | null,
+  };
 }
 
 function validateFindingsAgainstSchema(
@@ -74,7 +156,7 @@ function validateFindingsAgainstSchema(
 
 export async function tryPersistAgentFindings(
   deps: ProcessProjectWorkDeps,
-  startedExecution: Awaited<ReturnType<typeof startProcessClaimedExecution>>,
+  startedExecution: StartedClaimedExecution,
 ): Promise<"submitted" | "missing"> {
   const parsedPayload = await tryReadFindingsSubmission(
     startedExecution.environment.workspacePath,
@@ -84,10 +166,20 @@ export async function tryPersistAgentFindings(
     return "missing";
   }
 
+  const currentExecutionInfo = await readCurrentExecutionInfo(
+    startedExecution.environment.workspacePath,
+  );
+
+  if (currentExecutionInfo.stepExecutionId !== startedExecution.stepExecutionId) {
+    throw new Error(
+      `Current execution metadata stepExecutionId ${currentExecutionInfo.stepExecutionId} does not match running step execution ${startedExecution.stepExecutionId}`,
+    );
+  }
+
   const findingsJson = parsedPayload["findingsJson"] as AnyJsonValue;
   const validation = validateFindingsAgainstSchema(
     findingsJson,
-    startedExecution.resultSchemaJson,
+    currentExecutionInfo.resultSchemaJson,
   );
 
   if (!validation.ok) {

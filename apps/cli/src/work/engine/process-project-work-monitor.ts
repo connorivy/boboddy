@@ -22,7 +22,8 @@ const FINDINGS_RETRY_PROMPT = [
   "You finished without submitting Boboddy findings.",
   "Use the `boboddy-submit-step-findings` tool now.",
   "Write findings to `.boboddy/step-findings-submission.json`.",
-  "Pass `findingsJson` that validates against the provided result schema.",
+  "Pass only `findingsJson`.",
+  "The tool will load `.boboddy/current-execution/execution.json` and validate your findings against the stored schema.",
   "Do not end the task without calling that tool.",
 ].join(" ");
 

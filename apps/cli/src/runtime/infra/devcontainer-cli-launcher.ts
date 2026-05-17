@@ -2,6 +2,7 @@ import { execFile } from "node:child_process";
 import { access, readFile } from "node:fs/promises";
 import { createRequire } from "node:module";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
 import { ConfigurationError } from "../../lib/errors";
 import type {
@@ -20,12 +21,44 @@ const DEVCONTAINER_CONFIG_CANDIDATES = [
 
 let cachedDevcontainerCliScriptPath: string | null = null;
 
+export function resolveDevcontainerCliPackageJsonPath(
+  basePaths: readonly string[] = [
+    path.join(path.resolve(path.dirname(process.execPath), ".."), "package.json"),
+    path.join(
+      path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../.."),
+      "package.json",
+    ),
+  ],
+): string {
+  const attemptedBasePaths = new Set<string>();
+
+  for (const basePath of basePaths) {
+    attemptedBasePaths.add(basePath);
+
+    try {
+      return createRequire(basePath).resolve("@devcontainers/cli/package.json");
+    } catch {
+      // Try the next candidate.
+    }
+  }
+
+  try {
+    return require.resolve("@devcontainers/cli/package.json");
+  } catch {
+    throw new ConfigurationError(
+      "Could not resolve @devcontainers/cli from the installed CLI package. Tried:\n" +
+        [...attemptedBasePaths].map((basePath) => `  - ${basePath}`).join("\n"),
+      "DEVCONTAINER_CLI_NOT_FOUND",
+    );
+  }
+}
+
 async function resolveDevcontainerCliScriptPath(): Promise<string> {
   if (cachedDevcontainerCliScriptPath) {
     return cachedDevcontainerCliScriptPath;
   }
 
-  const packageJsonPath = require.resolve("@devcontainers/cli/package.json");
+  const packageJsonPath = resolveDevcontainerCliPackageJsonPath();
   const packageJson = JSON.parse(await readFile(packageJsonPath, "utf8")) as {
     bin?: string | Record<string, string>;
   };
@@ -56,12 +89,20 @@ function extractContainerId(output: string): string | null {
   return null;
 }
 
+export function buildDevcontainerCliCommand(
+  cliScriptPath: string,
+  args: readonly string[],
+): readonly [string, ...string[]] {
+  return ["node", cliScriptPath, ...args];
+}
+
 async function runDevcontainerCli(args: string[]): Promise<string> {
   const cliScriptPath = await resolveDevcontainerCliScriptPath();
-  const { stdout, stderr } = await execFileAsync(process.execPath, [
+  const [command, ...commandArgs] = buildDevcontainerCliCommand(
     cliScriptPath,
-    ...args,
-  ]);
+    args,
+  );
+  const { stdout, stderr } = await execFileAsync(command, commandArgs);
 
   return [stdout, stderr].filter(Boolean).join("\n");
 }

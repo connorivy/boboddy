@@ -55,13 +55,9 @@ describe("buildStepExecutionOpencodeConfig", () => {
         enabled: true,
       });
       expect(config.tools?.["playwright*"]).toBe(false);
-      expect(config.agent?.build?.tools?.["playwright*"]).toBeUndefined();
-      expect(config.agent?.["step-execution"]?.tools?.["playwright*"]).toBe(
-        true,
-      );
-      expect(
-        config.agent?.["step-execution"]?.tools?.["datadog*"],
-      ).toBeUndefined();
+      expect(config.agent?.build?.tools?.["playwright*"]).toBe(true);
+      expect(config.agent?.["step-execution"]).toBeUndefined();
+      expect(config.agent?.build?.tools?.["datadog*"]).toBe(true);
     },
   );
 

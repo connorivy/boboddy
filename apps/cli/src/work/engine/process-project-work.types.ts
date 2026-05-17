@@ -124,7 +124,6 @@ export type StartedClaimedExecution = {
   stepExecutionId: UuidV7;
   claimToken: string;
   agentSessionId: string;
-  resultSchemaJson: Record<string, unknown> | null;
   environment: StepExecutionRuntimeEnvironment;
 };
 

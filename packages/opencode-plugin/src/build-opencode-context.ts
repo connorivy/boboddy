@@ -1,3 +1,4 @@
+import { existsSync } from "node:fs";
 import { cp, mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -16,11 +17,18 @@ const NPM_PACKAGE_NAME = "@boboddy/opencode-plugin";
 // root — and therefore opencode.jsonc, opencodeignore.txt, etc. — can be
 // derived without import.meta.url.
 function resolvePackageRoot(): string {
+  const sourcePackageRoot = path.resolve(
+    path.dirname(fileURLToPath(import.meta.url)),
+    "..",
+  );
   const envBundlePath = process.env["BOBODDY_PLUGIN_BUNDLE_PATH"];
   if (envBundlePath) {
-    return path.resolve(path.dirname(envBundlePath), "..");
+    const derivedPackageRoot = path.resolve(path.dirname(envBundlePath), "..");
+    if (existsSync(path.join(derivedPackageRoot, "package.json"))) {
+      return derivedPackageRoot;
+    }
   }
-  return path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+  return sourcePackageRoot;
 }
 
 function parseJsoncConfig(content: string): Config {

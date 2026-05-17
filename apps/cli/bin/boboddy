@@ -54,8 +54,20 @@ if (!existsSync(binaryPath)) {
   fail(`Missing compiled binary: ${binaryPath}`);
 }
 
+const isDevMode = existsSync(resolve(distDirectory, ".dev"));
+const devEnv = isDevMode
+  ? {
+      BOBODDY_PLUGIN_DEV: "true",
+      BOBODDY_PLUGIN_BUNDLE_PATH: resolve(
+        projectRoot,
+        "../../packages/ai/opencode/dist/plugin.js",
+      ),
+    }
+  : {};
+
 const result = spawnSync(binaryPath, process.argv.slice(2), {
   stdio: "inherit",
+  env: { ...process.env, ...devEnv },
 });
 
 if (result.error instanceof Error) {

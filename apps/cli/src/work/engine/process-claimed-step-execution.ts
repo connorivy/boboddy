@@ -1,11 +1,8 @@
 import { mkdir } from "node:fs/promises";
 import path from "node:path";
-import {
-  createUuidV7,
-  parseUuidV7,
-  type UuidV7,
-} from "../../lib/uuid-v7";
+import { createUuidV7, parseUuidV7, type UuidV7 } from "../../lib/uuid-v7";
 import { failClaimedStepIfStillRunning } from "./fail-claimed-step-if-still-running";
+import { writeCurrentExecutionInfoFile } from "./process-project-work-findings";
 import { resolveProjectWorkLogger } from "./process-project-work-logger";
 import type {
   ProcessProjectWorkDeps,
@@ -233,6 +230,10 @@ export async function startProcessClaimedExecution(
     const resolvedPromptText = workerContext.agentPrompt.promptText
       .replaceAll("{{stepArtifactsDir}}/", `${containerStepArtifactsDir}/`)
       .replaceAll("{{stepArtifactsDir}}", `${containerStepArtifactsDir}/`);
+    await writeCurrentExecutionInfoFile(environment.workspacePath, {
+      stepExecutionId: workerContext.stepExecution.id,
+      resultSchemaJson: workerContext.stepDefinition.resultSchemaJson,
+    });
 
     logger.log("step", "Starting agent run", {
       stepExecutionId: input.claim.stepExecution.id,
@@ -245,7 +246,7 @@ export async function startProcessClaimedExecution(
       aiBaseUrl: environment.aiBaseUrl,
       sessionTitle: workerContext.agentPrompt.sessionTitle,
       promptText: resolvedPromptText,
-      agent: "step-execution",
+      agent: "build",
     });
     logger.log("step", "Agent session started", {
       stepExecutionId: input.claim.stepExecution.id,
@@ -268,7 +269,6 @@ export async function startProcessClaimedExecution(
       stepExecutionId,
       claimToken: input.claim.claimToken,
       agentSessionId: agentRunResult.sessionId,
-      resultSchemaJson: workerContext.stepDefinition.resultSchemaJson,
       environment,
     };
   } catch (error) {

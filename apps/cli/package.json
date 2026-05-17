@@ -14,6 +14,8 @@
   },
   "scripts": {
     "build": "bun run script/build.ts",
+    "build:dev": "bun run script/build.ts --dev",
+    "link": "bun run script/link.ts",
     "link:local": "bun run build && bun link --global .",
     "test": "bun test test",
     "typecheck": "tsgo -p tsconfig.json --noEmit"

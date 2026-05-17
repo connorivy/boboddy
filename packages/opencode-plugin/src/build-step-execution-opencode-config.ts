@@ -1,7 +1,7 @@
 import { OpencodeClient, type Config } from "@opencode-ai/sdk";
 import type { OpenCodeMcpServers } from "@boboddy/sdk/opencode-mcp";
 
-const STEP_EXECUTION_AGENT = "step-execution";
+const STEP_EXECUTION_AGENT = "build";
 
 type OpenCodeConfig = Config;
 

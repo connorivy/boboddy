@@ -1,16 +1,8 @@
-import { mkdtemp, readFile, access } from "node:fs/promises";
-import { fileURLToPath } from "node:url";
+import { mkdtemp, readFile, access, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { describe, expect, test, afterEach, beforeEach } from "bun:test";
 import { buildOpencodeContext } from "./build-opencode-context";
-
-const PACKAGE_ROOT = path.resolve(
-  path.dirname(fileURLToPath(import.meta.url)),
-  "..",
-);
-const BUNDLE_PATH = path.join(PACKAGE_ROOT, "dist", "plugin.js");
-
 describe("buildOpencodeContext (prod mode)", () => {
   let originalEnv: string | undefined;
 
@@ -57,7 +49,6 @@ describe("buildOpencodeContext (dev mode)", () => {
     savedDev = process.env["BOBODDY_PLUGIN_DEV"];
     savedBundlePath = process.env["BOBODDY_PLUGIN_BUNDLE_PATH"];
     process.env["BOBODDY_PLUGIN_DEV"] = "true";
-    process.env["BOBODDY_PLUGIN_BUNDLE_PATH"] = BUNDLE_PATH;
   });
 
   afterEach(() => {
@@ -77,6 +68,9 @@ describe("buildOpencodeContext (dev mode)", () => {
     const workspacePath = await mkdtemp(
       path.join(os.tmpdir(), "build-opencode-context-test-"),
     );
+    const fakeBundlePath = path.join(workspacePath, "fake-plugin.js");
+    await writeFile(fakeBundlePath, "export default {};\n", "utf8");
+    process.env["BOBODDY_PLUGIN_BUNDLE_PATH"] = fakeBundlePath;
 
     await buildOpencodeContext({ workspacePath, stepMcpServers: null });
 

@@ -1,4 +1,4 @@
-import { mkdir, rm } from "node:fs/promises";
+import { mkdir, rm, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
 
 interface BuildTarget {
@@ -12,7 +12,23 @@ const projectRoot = resolve(import.meta.dir, "..");
 const distDirectory = resolve(projectRoot, "dist");
 const entrypoint = resolve(projectRoot, "src/index.ts");
 
-const buildTargets: readonly BuildTarget[] = [
+const platformTargetMap: Record<string, string> = {
+  "darwin:arm64": "bun-darwin-arm64",
+  "darwin:x64": "bun-darwin-x64",
+  "linux:arm64": "bun-linux-arm64",
+  "linux:x64": "bun-linux-x64",
+  "win32:x64": "bun-windows-x64",
+};
+
+const binaryNameMap: Record<string, string> = {
+  "darwin:arm64": `${CLI_NAME}-darwin-arm64`,
+  "darwin:x64": `${CLI_NAME}-darwin-x64`,
+  "linux:arm64": `${CLI_NAME}-linux-arm64`,
+  "linux:x64": `${CLI_NAME}-linux-x64`,
+  "win32:x64": `${CLI_NAME}-windows-x64.exe`,
+};
+
+const allTargets: readonly BuildTarget[] = [
   { bunTarget: "bun-darwin-arm64", outputName: `${CLI_NAME}-darwin-arm64`, codesign: true },
   { bunTarget: "bun-darwin-x64", outputName: `${CLI_NAME}-darwin-x64`, codesign: true },
   { bunTarget: "bun-linux-x64", outputName: `${CLI_NAME}-linux-x64` },
@@ -20,7 +36,10 @@ const buildTargets: readonly BuildTarget[] = [
   { bunTarget: "bun-windows-x64", outputName: `${CLI_NAME}-windows-x64.exe` },
 ];
 
-async function buildTarget(target: BuildTarget): Promise<void> {
+async function buildTarget(
+  target: BuildTarget,
+  extraDefines: readonly string[] = [],
+): Promise<void> {
   const outfile = resolve(distDirectory, target.outputName);
   const subprocess = Bun.spawn(
     [
@@ -30,6 +49,7 @@ async function buildTarget(target: BuildTarget): Promise<void> {
       "--compile",
       `--target=${target.bunTarget}`,
       `--outfile=${outfile}`,
+      ...extraDefines,
     ],
     {
       cwd: projectRoot,
@@ -67,12 +87,45 @@ async function buildTarget(target: BuildTarget): Promise<void> {
 }
 
 async function main(): Promise<void> {
+  const isDev = process.argv.includes("--dev");
+
   await rm(distDirectory, { recursive: true, force: true });
   await mkdir(distDirectory, { recursive: true });
 
-  for (const target of buildTargets) {
-    process.stdout.write(`Building ${target.outputName}...\n`);
-    await buildTarget(target);
+  if (isDev) {
+    const hostKey = `${process.platform}:${process.arch}`;
+    const hostBunTarget = platformTargetMap[hostKey];
+    const hostOutputName = binaryNameMap[hostKey];
+
+    if (!hostBunTarget || !hostOutputName) {
+      throw new Error(`Unsupported platform/arch: ${hostKey}`);
+    }
+
+    const defines = ["--define", `process.env.BOBODDY_BASE_URL="http://localhost:3000"`];
+    const targets: BuildTarget[] = [{ bunTarget: hostBunTarget, outputName: hostOutputName, codesign: true }];
+
+    // Always include Linux binaries — they're injected into the devcontainer at runtime.
+    if (process.platform !== "linux") {
+      targets.push(
+        { bunTarget: "bun-linux-arm64", outputName: `${CLI_NAME}-linux-arm64` },
+        { bunTarget: "bun-linux-x64", outputName: `${CLI_NAME}-linux-x64` },
+      );
+    }
+
+    for (const target of targets) {
+      process.stdout.write(`Building dev binary ${target.outputName}...\n`);
+      await buildTarget(target, defines);
+    }
+
+    // Marker so bin/boboddy knows to inject plugin dev env vars at runtime.
+    await writeFile(resolve(distDirectory, ".dev"), "", "utf8");
+
+    process.stdout.write(`Dev build complete: ${resolve(distDirectory, hostOutputName)}\n`);
+  } else {
+    for (const target of allTargets) {
+      process.stdout.write(`Building ${target.outputName}...\n`);
+      await buildTarget(target);
+    }
   }
 }
 

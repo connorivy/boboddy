@@ -9,6 +9,7 @@ import playwrightTraceAnalyzer from "./tools/playwright-trace-analyzer";
 import { BlockDirectDependencyCommandsPlugin } from "./plugins/block-direct-dependency-commands";
 
 const BoboddyOpencodePlugin: PluginModule = {
+  id: "boboddy",
   server: async (input, options) => {
     const blockHooks = await BlockDirectDependencyCommandsPlugin(
       input,

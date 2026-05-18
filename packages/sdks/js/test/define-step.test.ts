@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { z } from "zod";
-import { defineStep } from "../src/define-step";
+import { defineStep } from "../src/definitions/steps/define-step";
 
 describe("defineStep", () => {
   test("applies sensible defaults", () => {

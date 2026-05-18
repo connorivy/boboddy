@@ -42,7 +42,7 @@ const TSCONFIG_JSON = JSON.stringify(
 const GITIGNORE = `*
 `;
 
-const EXAMPLE_STEP = `import { defineStep } from "@boboddy/sdk/define-step";
+const EXAMPLE_STEP = `import { defineStep } from "@boboddy/sdk/definitions/steps";
 import { z } from "zod";
 
 export default defineStep({

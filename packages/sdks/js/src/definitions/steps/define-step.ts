@@ -35,7 +35,7 @@ type SignalTypeStr = "string" | "number" | "boolean" | "object" | "array";
 
 // Produces dot-notation paths for an object type up to 4 levels deep.
 // Falls back to `string` for any, unknown, arrays, or primitives.
-type DotPaths<T, D extends readonly unknown[] = []> = D["length"] extends 4
+export type DotPaths<T, D extends readonly unknown[] = []> = D["length"] extends 4
   ? string
   : unknown extends T
     ? string
@@ -52,7 +52,7 @@ type DotPaths<T, D extends readonly unknown[] = []> = D["length"] extends 4
         : string;
 
 // Resolves the TypeScript type at a dot-notation path within T.
-type TypeAtPath<T, P extends string> = P extends `${infer K}.${infer Rest}`
+export type TypeAtPath<T, P extends string> = P extends `${infer K}.${infer Rest}`
   ? K extends keyof NonNullable<T>
     ? TypeAtPath<NonNullable<NonNullable<T>[K]>, Rest>
     : unknown
@@ -147,6 +147,32 @@ export type StepDefinitionSpec = {
   opencodeMcpJson: OpenCodeMcpServers | null;
 };
 
+// Phantom-typed extension of StepDefinitionSpec carrying input/result/signal-key types.
+// The phantom fields (__inputType, __resultType, __signalKeys) are never present at
+// runtime — they exist only to thread type information into definePipeline.
+export type TypedStepDefinitionSpec<
+  TInput = unknown,
+  TResult = unknown,
+  TSignalKeys extends string = string,
+> = StepDefinitionSpec & {
+  readonly __inputType: TInput;
+  readonly __resultType: TResult;
+  readonly __signalKeys: TSignalKeys;
+};
+
+// Infers the signal key from a single signal spec object:
+// uses the explicit `key` if provided, otherwise falls back to `sourcePath`.
+type ExtractSignalKey<T> =
+  T extends { key: infer K extends string }
+    ? K
+    : T extends { sourcePath: infer S extends string }
+      ? S
+      : string;
+
+// Unions all signal keys across a const-inferred signals tuple.
+export type SignalKeysOf<TSignals extends readonly unknown[]> =
+  TSignals extends readonly (infer S)[] ? ExtractSignalKey<S> : string;
+
 // Structural type for Zod v4's internal _def — avoids `any` while accessing private internals.
 // In Zod v4: _def.type uses lowercase strings, shape is a plain object (not a function).
 type ZodInternal = {
@@ -197,8 +223,11 @@ function deriveSignalType(
 export function defineStep<
   TInput extends ZodType = ZodType,
   TResult extends ZodType = ZodType,
->(config: DefineStepInput<TInput, TResult>): StepDefinitionSpec {
-  return {
+  const TSignals extends ReadonlyArray<SignalSpecInput<TResult["_output"]>> = never[],
+>(
+  config: Omit<DefineStepInput<TInput, TResult>, "signals"> & { signals?: TSignals },
+): TypedStepDefinitionSpec<TInput["_output"], TResult["_output"], SignalKeysOf<TSignals>> {
+  const spec: StepDefinitionSpec = {
     key: config.key,
     name: config.name,
     description: config.description ?? null,
@@ -212,7 +241,7 @@ export function defineStep<
     resultSchemaJson: config.result
       ? toJSONSchema(config.result as unknown as $ZodType)
       : null,
-    signalExtractorDefinitions: (config.signals ?? []).map((s) => ({
+    signalExtractorDefinitions: ((config.signals ?? []) as StepSignalSpec[]).map((s) => ({
       key: s.key ?? s.sourcePath,
       sourcePath: s.sourcePath,
       type: s.type ?? deriveSignalType(config.result, s.sourcePath),
@@ -228,4 +257,9 @@ export function defineStep<
     })),
     opencodeMcpJson: config.mcpServers ?? null,
   };
+  return spec as TypedStepDefinitionSpec<
+    TInput["_output"],
+    TResult["_output"],
+    SignalKeysOf<TSignals>
+  >;
 }

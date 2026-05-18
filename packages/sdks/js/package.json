@@ -16,17 +16,17 @@
       "import": "./src/client.ts",
       "default": "./src/client.ts"
     },
-    "./define-step": {
-      "types": "./src/define-step.ts",
-      "bun": "./src/define-step.ts",
-      "import": "./src/define-step.ts",
-      "default": "./src/define-step.ts"
+    "./definitions/steps": {
+      "types": "./src/definitions/steps/index.ts",
+      "bun": "./src/definitions/steps/index.ts",
+      "import": "./src/definitions/steps/index.ts",
+      "default": "./src/definitions/steps/index.ts"
     },
-    "./step-definitions-client": {
-      "types": "./src/step-definitions-client.ts",
-      "bun": "./src/step-definitions-client.ts",
-      "import": "./src/step-definitions-client.ts",
-      "default": "./src/step-definitions-client.ts"
+    "./definitions/pipelines": {
+      "types": "./src/definitions/pipelines/index.ts",
+      "bun": "./src/definitions/pipelines/index.ts",
+      "import": "./src/definitions/pipelines/index.ts",
+      "default": "./src/definitions/pipelines/index.ts"
     },
     "./opencode-mcp": {
       "types": "./src/opencode-mcp.ts",

@@ -1,9 +1,9 @@
-import { createClient } from "./generated/client";
-import { StepDefinitions } from "./generated/sdk.gen";
+import { createClient } from "../../generated/client";
+import { StepDefinitions } from "../../generated/sdk.gen";
 import type {
   PostApiStepDefinitionsData,
   PutApiStepDefinitionsByStepDefinitionIdData,
-} from "./generated/types.gen";
+} from "../../generated/types.gen";
 
 type RequestOptions = {
   headers?: Record<string, unknown> | undefined;

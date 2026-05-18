@@ -1,7 +1,7 @@
 import type { ArgumentsCamelCase, Argv, CommandModule } from "yargs";
 import { join } from "node:path";
 import { existsSync } from "node:fs";
-import { createStepDefinitionsClient } from "@boboddy/sdk/step-definitions-client";
+import { createStepDefinitionsClient } from "@boboddy/sdk/definitions/steps";
 import { resolveBoboddyBaseUrl } from "../auth/config";
 import { loadAuthenticatedSession } from "../auth/session";
 import { createCliLogger } from "../lib/logger";

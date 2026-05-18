@@ -153,7 +153,7 @@ jobs:
         env:
           VERSION: ${{ needs.resolve-version.outputs.version }}
         run: |
-          npm pkg set version="$VERSION" --prefix packages/sdk
+          npm pkg set version="$VERSION" --prefix packages/sdks/js
 
           npm pkg set version="$VERSION" --prefix packages/opencode-plugin
           npm pkg set dependencies."@boboddy/sdk"="^$VERSION" --prefix packages/opencode-plugin
@@ -167,7 +167,7 @@ jobs:
           npm pkg delete dependencies."@boboddy/sdk" --prefix apps/cli
 
       - name: Publish SDK
-        working-directory: packages/sdk
+        working-directory: packages/sdks/js
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |

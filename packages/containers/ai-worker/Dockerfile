@@ -56,8 +56,10 @@ RUN uv tool install --python /opt/postgres-mcp/bin/python playwright-trace-analy
 RUN mkdir -p /workspace "${OPENCODE_HOME}" \
   && chown -R node:node /workspace "${OPENCODE_HOME}"
 
-COPY ai-worker/entrypoint.sh /usr/local/bin/opencode-entrypoint
+COPY packages/containers/ai-worker/entrypoint.sh /usr/local/bin/opencode-entrypoint
 RUN chmod +x /usr/local/bin/opencode-entrypoint
+
+COPY packages/opencode-plugin/dist/plugin.js /opt/boboddy/plugin.js
 
 USER node
 WORKDIR /workspace

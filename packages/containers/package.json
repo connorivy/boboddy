@@ -9,6 +9,10 @@
       "default": "./src/index.ts"
     }
   },
+  "files": [
+    "dist",
+    "README.md"
+  ],
   "scripts": {
     "build": "tsgo -p tsconfig.json --noEmit",
     "declarations": "bunx tsgo -p tsconfig.build.json",

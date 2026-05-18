@@ -1,13 +1,7 @@
 {
-  "extends": "../../../tsconfig.base.json",
+  "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "types": ["node", "bun-types"],
-    "paths": {
-      "@/*": ["../../boboddy/src/*"],
-      "@/lib/*": ["../../boboddy/src/lib/*"],
-      "@/modules/*": ["../../boboddy/src/*"],
-      "#boboddy/*": ["../../boboddy/src/*"]
-    }
+    "types": ["node", "bun-types"]
   },
   "include": ["src/**/*.ts"],
   "exclude": ["node_modules"]

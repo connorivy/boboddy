@@ -13,6 +13,8 @@ if [ -f /opencode-host-share/auth.json ]; then
 	chmod 600 "$OPENCODE_DATA_DIR/auth.json"
 fi
 
+cp /opt/boboddy/plugin.js "$RUNTIME_OPENCODE_DIR/plugins/boboddy.js"
+
 if [ -f "$RUNTIME_OPENCODE_DIR/package.json" ]; then
 	cd "$RUNTIME_OPENCODE_DIR"
 	npm install --no-audit --no-fund --silent

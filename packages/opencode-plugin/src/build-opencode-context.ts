@@ -1,59 +1,24 @@
-import { existsSync } from "node:fs";
-import { cp, mkdir, readFile, writeFile } from "node:fs/promises";
+import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
 import type { Config } from "@opencode-ai/sdk";
 import type { OpenCodeMcpServers } from "@boboddy/sdk/opencode-mcp";
 import { parseJsonc } from "@boboddy/sdk/jsonc";
 import { buildStepExecutionOpencodeConfig } from "./build-step-execution-opencode-config";
 import embeddedOpencodeJsonc from "../opencode.jsonc" with { type: "text" };
+import embeddedOpencodeignore from "../opencodeignore.txt" with { type: "text" };
+import packageJson from "../package.json" with { type: "json" };
 
-const NPM_PACKAGE_NAME = "@boboddy/opencode-plugin";
-
-// When running as a compiled binary, import.meta.url resolves to the binary
-// path rather than the source file, breaking relative path resolution.
-// BOBODDY_PLUGIN_BUNDLE_PATH lets callers point directly at the built bundle
-// (e.g. /repo/packages/ai/opencode/dist/plugin.js), from which the package
-// root — and therefore opencode.jsonc, opencodeignore.txt, etc. — can be
-// derived without import.meta.url.
-function resolvePackageRoot(): string {
-  const sourcePackageRoot = path.resolve(
-    path.dirname(fileURLToPath(import.meta.url)),
-    "..",
-  );
-  const envBundlePath = process.env["BOBODDY_PLUGIN_BUNDLE_PATH"];
-  if (envBundlePath) {
-    const derivedPackageRoot = path.resolve(path.dirname(envBundlePath), "..");
-    if (existsSync(path.join(derivedPackageRoot, "package.json"))) {
-      return derivedPackageRoot;
-    }
-  }
-  return sourcePackageRoot;
-}
+const PLUGIN_SDK_VERSION =
+  (packageJson as unknown as { dependencies?: Record<string, string> })
+    .dependencies?.["@opencode-ai/plugin"] ?? "*";
 
 function parseJsoncConfig(content: string): Config {
   return parseJsonc(content) as Config;
 }
 
-async function deployDevPlugin(
-  targetRoot: string,
-  packageRoot: string,
-): Promise<void> {
-  const pluginsDir = path.join(targetRoot, "plugins");
-  await mkdir(pluginsDir, { recursive: true });
-
-  const bundlePath =
-    process.env["BOBODDY_PLUGIN_BUNDLE_PATH"] ??
-    path.join(packageRoot, "dist", "plugin.js");
-
-  const packageJson = JSON.parse(
-    await readFile(path.join(packageRoot, "package.json"), "utf8"),
-  ) as { dependencies?: Record<string, string> };
-  const pluginSdkVersion =
-    packageJson.dependencies?.["@opencode-ai/plugin"] ?? "*";
-
+async function prepareOpencodeDir(targetRoot: string): Promise<void> {
+  await mkdir(path.join(targetRoot, "plugins"), { recursive: true });
   await Promise.all([
-    cp(bundlePath, path.join(pluginsDir, "boboddy.js"), { force: true }),
     writeFile(
       path.join(targetRoot, "package.json"),
       `${JSON.stringify(
@@ -62,7 +27,7 @@ async function deployDevPlugin(
           private: true,
           type: "module",
           dependencies: {
-            "@opencode-ai/plugin": pluginSdkVersion,
+            "@opencode-ai/plugin": PLUGIN_SDK_VERSION,
           },
         },
         null,
@@ -70,10 +35,10 @@ async function deployDevPlugin(
       )}\n`,
       "utf8",
     ),
-    cp(
-      path.join(packageRoot, "opencodeignore.txt"),
+    writeFile(
       path.join(targetRoot, ".gitignore"),
-      { force: true },
+      embeddedOpencodeignore as string,
+      "utf8",
     ),
   ]);
 }
@@ -84,18 +49,12 @@ export async function buildOpencodeContext(input: {
 }): Promise<void> {
   const targetRoot = path.join(input.workspacePath, ".opencode");
   const targetConfigPath = path.join(input.workspacePath, "opencode.jsonc");
-  const packageRoot = resolvePackageRoot();
 
   const baselineConfig = JSON.parse(
     JSON.stringify(parseJsoncConfig(embeddedOpencodeJsonc as string)),
   ) as Config;
 
-  if (process.env["BOBODDY_PLUGIN_DEV"] === "true") {
-    await mkdir(targetRoot, { recursive: true });
-    await deployDevPlugin(targetRoot, packageRoot);
-  } else {
-    (baselineConfig as Record<string, unknown>)["plugin"] = [NPM_PACKAGE_NAME];
-  }
+  await prepareOpencodeDir(targetRoot);
 
   const mergedConfig = buildStepExecutionOpencodeConfig({
     baseConfig: baselineConfig,

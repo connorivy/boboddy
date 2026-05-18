@@ -1,0 +1,27 @@
+{
+  "name": "boboddy",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "packageManager": "bun@1.3.12",
+  "overrides": {
+    "@opencode-ai/sdk": "1.14.34",
+    "@opencode-ai/plugin": "1.14.34"
+  },
+  "devDependencies": {
+    "@types/node": "^22.14.1",
+    "@typescript/native-preview": "latest",
+    "typescript": "^5.8.3"
+  },
+  "scripts": {
+    "build": "bun run --filter '*' build",
+    "typecheck": "bun run --filter '@boboddy/containers' --filter '@boboddy/opencode-plugin' declarations && bun run --filter '*' typecheck",
+    "test": "bun run --filter '*' test",
+    "release": "bash scripts/release.sh",
+    "cli:link": "bun run --filter @boboddy/cli build && bun run --filter @boboddy/cli link",
+    "cli:link:dev": "bun run --filter @boboddy/opencode-plugin build && bun run --filter @boboddy/cli build:dev && bun run --filter @boboddy/cli link",
+    "cli:unlink": "cd apps/cli && npm unlink"
+  }
+}

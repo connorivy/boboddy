@@ -8,7 +8,7 @@ if [ -z "$VERSION" ] || ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9] ]]; then
   exit 1
 fi
 
-for pkg in packages/sdk packages/containers packages/opencode-plugin apps/cli; do
+for pkg in packages/sdks/js packages/containers packages/opencode-plugin apps/cli; do
   bun -e "
     const fs = require('fs');
     const p = JSON.parse(fs.readFileSync('${pkg}/package.json', 'utf8'));

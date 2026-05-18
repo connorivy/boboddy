@@ -1,31 +1,206 @@
 name: Release
 
 on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to release (e.g. 1.2.3)"
+        required: true
+        type: string
+      prerelease:
+        description: "Is this a prerelease?"
+        required: true
+        type: boolean
+        default: false
   push:
-    tags:
-      - "v*"
+    tags: ["v*"]
+
+concurrency:
+  group: release
+  cancel-in-progress: false
 
 jobs:
+  resolve-version:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.v.outputs.version }}
+      prerelease: ${{ steps.v.outputs.prerelease }}
+    steps:
+      - name: Resolve version
+        id: v
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            VERSION="${{ inputs.version }}"
+            PRERELEASE="${{ inputs.prerelease }}"
+          else
+            RAW_TAG="${{ github.ref_name }}"
+            VERSION="${RAW_TAG#v}"
+            if echo "$VERSION" | grep -qE '-(alpha|beta|rc|next)'; then
+              PRERELEASE="true"
+            else
+              PRERELEASE="false"
+            fi
+          fi
+          if [ -z "$VERSION" ]; then
+            echo "Version is empty." >&2
+            exit 1
+          fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "prerelease=$PRERELEASE" >> "$GITHUB_OUTPUT"
+
+  build-cli-linux:
+    runs-on: ubuntu-latest
+    needs: resolve-version
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.12
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Stamp CLI version
+        working-directory: apps/cli
+        run: npm pkg set version="${{ needs.resolve-version.outputs.version }}"
+
+      - name: Build CLI binaries
+        run: bun run --filter @boboddy/cli build
+
+      - name: Upload binaries
+        uses: actions/upload-artifact@v4
+        with:
+          name: cli-dist
+          path: apps/cli/dist/
+
+  sign-cli-macos:
+    runs-on: macos-latest
+    needs: build-cli-linux
+    permissions:
+      contents: read
+    steps:
+      - name: Download binaries
+        uses: actions/download-artifact@v4
+        with:
+          name: cli-dist
+          path: dist/
+
+      - name: Sign macOS binaries
+        run: |
+          chmod +x dist/boboddy-darwin-*
+          for bin in dist/boboddy-darwin-*; do
+            codesign --remove-signature "$bin" || true
+            codesign --sign - --force "$bin"
+          done
+
+      - name: Upload signed binaries
+        uses: actions/upload-artifact@v4
+        with:
+          name: cli-dist-signed
+          path: dist/
+
   publish:
     runs-on: ubuntu-latest
+    needs: [resolve-version, sign-cli-macos]
     permissions:
       contents: write
     steps:
       - uses: actions/checkout@v4
+
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: 1.3.12
+
       - uses: actions/setup-node@v4
         with:
-          node-version: "20"
-          registry-url: "https://registry.npmjs.org"
-      - run: bun install --frozen-lockfile
-      - run: bun run build
-      - name: Publish packages
-        run: npm publish --workspaces --access public
+          node-version: 22
+          registry-url: https://registry.npmjs.org
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Build SDK
+        run: bun run --filter @boboddy/sdk build
+
+      - name: Build opencode plugin
+        run: |
+          bun run --filter @boboddy/opencode-plugin declarations
+          bun run --filter @boboddy/opencode-plugin build
+
+      - name: Download signed CLI binaries
+        uses: actions/download-artifact@v4
+        with:
+          name: cli-dist-signed
+          path: apps/cli/dist/
+
+      - name: Restore binary permissions
+        run: chmod +x apps/cli/dist/boboddy-darwin-* apps/cli/dist/boboddy-linux-*
+
+      - name: Stamp package versions
+        env:
+          VERSION: ${{ needs.resolve-version.outputs.version }}
+        run: |
+          npm pkg set version="$VERSION" --prefix packages/sdk
+
+          npm pkg set version="$VERSION" --prefix packages/opencode-plugin
+          npm pkg set dependencies."@boboddy/sdk"="^$VERSION" --prefix packages/opencode-plugin
+          npm pkg delete dependencies."@opencode-ai/sdk" --prefix packages/opencode-plugin
+          npm pkg delete dependencies."ajv" --prefix packages/opencode-plugin
+
+          npm pkg set version="$VERSION" --prefix apps/cli
+          npm pkg delete private --prefix apps/cli
+          npm pkg delete dependencies."@boboddy/opencode-plugin" --prefix apps/cli
+          npm pkg delete dependencies."@boboddy/runtime-proxy" --prefix apps/cli
+          npm pkg delete dependencies."@boboddy/sdk" --prefix apps/cli
+
+      - name: Publish SDK
+        working-directory: packages/sdk
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          if [ "${{ needs.resolve-version.outputs.prerelease }}" = "true" ]; then
+            npm publish --access public --tag next
+          else
+            npm publish --access public --tag latest
+          fi
+
+      - name: Publish opencode plugin
+        working-directory: packages/opencode-plugin
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          if [ "${{ needs.resolve-version.outputs.prerelease }}" = "true" ]; then
+            npm publish --access public --tag next
+          else
+            npm publish --access public --tag latest
+          fi
+
+      - name: Publish CLI
+        working-directory: apps/cli
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          if [ "${{ needs.resolve-version.outputs.prerelease }}" = "true" ]; then
+            npm publish --access public --tag next
+          else
+            npm publish --access public --tag latest
+          fi
+
+      - name: Create git tag
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag "v${{ needs.resolve-version.outputs.version }}"
+          git push origin "v${{ needs.resolve-version.outputs.version }}"
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: "v${{ needs.resolve-version.outputs.version }}"
           generate_release_notes: true
+          prerelease: ${{ needs.resolve-version.outputs.prerelease == 'true' }}
+          files: apps/cli/dist/boboddy-*

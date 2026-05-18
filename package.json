@@ -3,7 +3,8 @@
   "private": true,
   "workspaces": [
     "apps/*",
-    "packages/*"
+    "packages/*",
+    "packages/sdks/*"
   ],
   "packageManager": "bun@1.3.12",
   "overrides": {

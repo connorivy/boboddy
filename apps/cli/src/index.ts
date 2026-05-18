@@ -8,6 +8,7 @@ import { initCommand } from "./commands/init";
 import { proxyCommand } from "./commands/proxy";
 import { runtimeCommand } from "./commands/runtime";
 import { stepsCommand } from "./commands/steps";
+import { pipelinesCommand } from "./commands/pipelines";
 import { workCommand } from "./commands/work";
 import { createCliLogger } from "./lib/logger";
 import { version as CLI_VERSION } from "../package.json";
@@ -44,6 +45,7 @@ export function createCli(argv: readonly string[]) {
     .command(proxyCommand)
     .command(runtimeCommand)
     .command(stepsCommand)
+    .command(pipelinesCommand)
     .command(workCommand)
     .demandCommand(1, "A command is required.");
 }

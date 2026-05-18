@@ -1,5 +1,4 @@
 import { rm, mkdir, symlink } from "node:fs/promises";
-import { existsSync } from "node:fs";
 import { join, relative } from "node:path";
 import { execFileSync } from "node:child_process";
 
@@ -17,9 +16,7 @@ const binLink = join(binDir, "boboddy");
 
 await mkdir(scopeDir, { recursive: true });
 
-if (existsSync(pkgLink)) {
-  await rm(pkgLink, { force: true });
-}
+await rm(pkgLink, { force: true });
 await symlink(projectRoot, pkgLink);
 
 await rm(binLink, { force: true });

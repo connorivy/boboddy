@@ -7,7 +7,7 @@ import {
 } from "../advancement-policies/define-advancement-policy";
 
 export type { AdvancementPolicy } from "../advancement-policies/define-advancement-policy";
-export { whenSignal, rawRule } from "../advancement-policies/define-advancement-policy";
+export { Rule } from "../advancement-policies/define-advancement-policy";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type AnyTypedStep = TypedStepDefinitionSpec<any, any, any>;
@@ -30,7 +30,10 @@ export type StepOutputBinding = {
   step: AnyTypedStep;
 };
 
-export type AnyBinding = PipelineInputBinding | StepSignalBinding | StepOutputBinding;
+export type AnyBinding =
+  | PipelineInputBinding
+  | StepSignalBinding
+  | StepOutputBinding;
 
 // ─── Input binding helpers ────────────────────────────────────────────────────
 
@@ -173,11 +176,15 @@ export function definePipeline<
       position: index + 1,
       inputBindingsJson: Object.fromEntries(
         Object.entries(stepConfig.input ?? {})
-          .filter((entry): entry is [string, AnyBinding] => entry[1] !== undefined)
+          .filter(
+            (entry): entry is [string, AnyBinding] => entry[1] !== undefined,
+          )
           .map(([key, binding]) => [key, serializeBinding(binding)]),
       ),
       timeoutSeconds: stepConfig.timeout ?? null,
-      advancementPolicyDefinition: serializeAdvancementPolicy(stepConfig.advancement),
+      advancementPolicyDefinition: serializeAdvancementPolicy(
+        stepConfig.advancement,
+      ),
     })),
   };
 }

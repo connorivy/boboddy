@@ -28,6 +28,12 @@
       "import": "./src/definitions/pipelines/index.ts",
       "default": "./src/definitions/pipelines/index.ts"
     },
+    "./definitions/advancement-policies": {
+      "types": "./src/definitions/advancement-policies/index.ts",
+      "bun": "./src/definitions/advancement-policies/index.ts",
+      "import": "./src/definitions/advancement-policies/index.ts",
+      "default": "./src/definitions/advancement-policies/index.ts"
+    },
     "./opencode-mcp": {
       "types": "./src/opencode-mcp.ts",
       "bun": "./src/opencode-mcp.ts",

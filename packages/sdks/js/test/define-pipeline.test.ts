@@ -6,6 +6,7 @@ import {
   fromPipelineInput,
   fromSignal,
   stepOutput,
+  whenSignal,
 } from "../src/definitions/pipelines/define-pipeline";
 
 // ─── Shared fixtures ──────────────────────────────────────────────────────────
@@ -199,7 +200,9 @@ describe("definePipeline", () => {
 
         const bindings = pipeline.steps[1]!.inputBindingsJson;
         expect(bindings["reproUrl"]).toMatchObject({ source: "step_signal" });
-        expect(bindings["checkSuccess"]).toMatchObject({ source: "step_output" });
+        expect(bindings["checkSuccess"]).toMatchObject({
+          source: "step_output",
+        });
       },
     );
   });
@@ -220,11 +223,13 @@ describe("definePipeline", () => {
       });
     });
 
-    test.concurrent("serializes block advancement policy", () => {
+    test.concurrent("serializes block defaultOutcome", () => {
       const pipeline = definePipeline({
         key: "p",
         name: "P",
-        steps: [{ step: reproduceStep, advancement: { default: "block" } }],
+        steps: [
+          { step: reproduceStep, advancement: { defaultOutcome: "block" } },
+        ],
       });
 
       expect(pipeline.steps[0]!.advancementPolicyDefinition).toMatchObject({
@@ -240,8 +245,8 @@ describe("definePipeline", () => {
           key: "p",
           name: "P",
           steps: [
-            { step: reproduceStep, advancement: { default: "block" } },
-            { step: verifyStep, advancement: { default: "continue" } },
+            { step: reproduceStep, advancement: { defaultOutcome: "block" } },
+            { step: verifyStep, advancement: { defaultOutcome: "continue" } },
           ],
         });
 
@@ -251,6 +256,68 @@ describe("definePipeline", () => {
         expect(
           pipeline.steps[1]!.advancementPolicyDefinition.defaultEventType,
         ).toBe("continue");
+      },
+    );
+
+    test.concurrent(
+      "whenSignal rule serializes to a json-rules-engine condition",
+      () => {
+        const pipeline = definePipeline({
+          key: "p",
+          name: "P",
+          steps: [
+            {
+              step: reproduceStep,
+              advancement: {
+                defaultOutcome: "block",
+                rules: [whenSignal("success", "equal", true, "continue")],
+              },
+            },
+          ],
+        });
+
+        const policy = pipeline.steps[0]!.advancementPolicyDefinition;
+        expect(policy.defaultEventType).toBe("block");
+        expect(policy.allowedEventTypes).toEqual(
+          expect.arrayContaining(["block", "continue"]),
+        );
+        expect(policy.rulesJson.rules[0]).toEqual({
+          conditions: {
+            all: [{ fact: "success", operator: "equal", value: true }],
+          },
+          event: { type: "continue" },
+        });
+      },
+    );
+
+    test.concurrent(
+      "whenSignal with object outcome serializes outcomeJson as params",
+      () => {
+        const pipeline = definePipeline({
+          key: "p",
+          name: "P",
+          steps: [
+            {
+              step: reproduceStep,
+              advancement: {
+                defaultOutcome: "block",
+                rules: [
+                  whenSignal("success", "equal", false, {
+                    outcome: "needs_review",
+                    outcomeJson: { reason: "failed check" },
+                  }),
+                ],
+              },
+            },
+          ],
+        });
+
+        const rule =
+          pipeline.steps[0]!.advancementPolicyDefinition.rulesJson.rules[0]!;
+        expect(rule.event).toEqual({
+          type: "needs_review",
+          params: { reason: "failed check" },
+        });
       },
     );
   });

@@ -20,6 +20,12 @@ const DUMMY_STEPS: StepInfo[] = [
     version: 1,
     signals: [{ key: "clarity_score", sourcePath: "score", type: "number" }],
   },
+  {
+    key: "evaluate-tone",
+    name: "Evaluate Tone",
+    version: 1,
+    signals: [{ key: "tone_score", sourcePath: "score", type: "number" }],
+  },
 ];
 
 // pull

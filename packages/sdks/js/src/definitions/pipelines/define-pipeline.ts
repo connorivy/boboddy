@@ -19,7 +19,6 @@ export type StepSignalBinding = {
 export type StepOutputBinding = {
   source: "step_output";
   step: AnyTypedStep;
-  path: string;
 };
 
 export type AnyBinding = PipelineInputBinding | StepSignalBinding | StepOutputBinding;
@@ -49,14 +48,12 @@ export function fromSignal<TStep extends AnyTypedStep>(
 }
 
 /**
- * Binds a step input field to a dot-notation path within a prior step's full agent output.
- * `path` is validated against the prior step's result type at compile time.
+ * Binds a step input field to the entire agent output of a prior step.
+ * Use this when your consumer handles the full output object directly.
+ * For a stable contract, prefer fromSignal() instead.
  */
-export function fromOutput<TStep extends AnyTypedStep>(
-  step: TStep,
-  path: DotPaths<TStep["__resultType"]>,
-): StepOutputBinding {
-  return { source: "step_output", step, path };
+export function stepOutput(step: AnyTypedStep): StepOutputBinding {
+  return { source: "step_output", step };
 }
 
 // ─── Advancement policy ───────────────────────────────────────────────────────
@@ -101,7 +98,7 @@ export type PipelineStepConfig<TStep extends AnyTypedStep = AnyTypedStep> = {
 type SerializedBinding =
   | { source: "pipeline_input"; path: string }
   | { source: "step_signal"; stepKey: string; signalKey: string }
-  | { source: "step_output"; stepKey: string; path: string };
+  | { source: "step_output"; stepKey: string };
 
 export type PipelineDefinitionSpec = {
   key: string;
@@ -142,7 +139,7 @@ function serializeBinding(binding: AnyBinding): SerializedBinding {
       signalKey: binding.signalKey,
     };
   }
-  return { source: "step_output", stepKey: binding.step.key, path: binding.path };
+  return { source: "step_output", stepKey: binding.step.key };
 }
 
 export function definePipeline(config: DefinePipelineInput): PipelineDefinitionSpec {

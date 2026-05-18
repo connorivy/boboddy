@@ -3,9 +3,9 @@ import { z } from "zod";
 import { defineStep } from "../src/definitions/steps/define-step";
 import {
   definePipeline,
-  fromOutput,
   fromPipelineInput,
   fromSignal,
+  stepOutput,
 } from "../src/definitions/pipelines/define-pipeline";
 
 // ─── Shared fixtures ──────────────────────────────────────────────────────────
@@ -148,9 +148,9 @@ describe("definePipeline", () => {
     );
   });
 
-  describe("fromOutput", () => {
+  describe("stepOutput", () => {
     test.concurrent(
-      "serializes to source:step_output with the prior step's key and dot-path",
+      "serializes to source:step_output with the prior step's key and no path",
       () => {
         const pipeline = definePipeline({
           key: "p",
@@ -160,24 +160,16 @@ describe("definePipeline", () => {
             {
               step: verifyStep,
               input: {
-                reproUrl: fromOutput(reproduceStep, "url"),
-                checkSuccess: fromOutput(reproduceStep, "success"),
+                reproUrl: stepOutput(reproduceStep),
+                checkSuccess: stepOutput(reproduceStep),
               },
             },
           ],
         });
 
         expect(pipeline.steps[1]!.inputBindingsJson).toEqual({
-          reproUrl: {
-            source: "step_output",
-            stepKey: "reproduce",
-            path: "url",
-          },
-          checkSuccess: {
-            source: "step_output",
-            stepKey: "reproduce",
-            path: "success",
-          },
+          reproUrl: { source: "step_output", stepKey: "reproduce" },
+          checkSuccess: { source: "step_output", stepKey: "reproduce" },
         });
       },
     );
@@ -199,7 +191,7 @@ describe("definePipeline", () => {
               step: verifyStep,
               input: {
                 reproUrl: fromSignal(reproduceStep, "repro_url"),
-                checkSuccess: fromOutput(reproduceStep, "success"),
+                checkSuccess: stepOutput(reproduceStep),
               },
             },
           ],
@@ -207,9 +199,7 @@ describe("definePipeline", () => {
 
         const bindings = pipeline.steps[1]!.inputBindingsJson;
         expect(bindings["reproUrl"]).toMatchObject({ source: "step_signal" });
-        expect(bindings["checkSuccess"]).toMatchObject({
-          source: "step_output",
-        });
+        expect(bindings["checkSuccess"]).toMatchObject({ source: "step_output" });
       },
     );
   });

@@ -235,6 +235,5 @@ export type ProjectOpencodeArbitraryCommandResult = {
   stderr: string;
 };
 
-// eslint-disable-next-line local/no-unknown-parameter-type
 export const isJsonObjectRecord = (value: unknown): value is AnyJsonObject =>
   value !== null && typeof value === "object" && !Array.isArray(value);

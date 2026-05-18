@@ -199,7 +199,7 @@ function deriveSignalType(
   path: string,
 ): SignalTypeStr {
   if (!schema) return "string";
-  // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+   
   let current = unwrapZodType(schema as ZodInternal);
 
   for (const part of path.split(".")) {

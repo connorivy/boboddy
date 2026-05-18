@@ -324,7 +324,6 @@ export class ProjectOpencodeRuntimeActions {
         signal: outcome.signal,
         ...output,
       });
-    // eslint-disable-next-line local/no-unknown-parameter-type
     }).catch(async (error: unknown) => {
       clearTimeout(timeoutHandle);
       this.runningProcesses.delete(input.requestId);

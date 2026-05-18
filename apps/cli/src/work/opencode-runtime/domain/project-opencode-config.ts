@@ -77,7 +77,6 @@ const normalizeTrimmedText = (input: {
   return normalizedValue;
 };
 
-// eslint-disable-next-line local/no-unknown-parameter-type
 const normalizeOptionalCwd = (value: unknown, fieldName: string): string | null => {
   if (value === undefined || value === null) {
     return null;
@@ -98,7 +97,6 @@ const normalizeOptionalCwd = (value: unknown, fieldName: string): string | null 
   return normalizedValue === "." ? "." : normalizedValue.replace(/\/$/u, "");
 };
 
-// eslint-disable-next-line local/no-unknown-parameter-type
 const normalizeTargetPort = (value: unknown, fieldName: string): number => {
   if (
     typeof value !== "number" ||
@@ -115,7 +113,6 @@ const normalizeTargetPort = (value: unknown, fieldName: string): number => {
   return value;
 };
 
-// eslint-disable-next-line local/no-unknown-parameter-type
 const normalizeProtocol = (value: unknown, fieldName: string): ProjectOpencodeRuntimeProtocol => {
   if (
     typeof value !== "string" ||
@@ -130,7 +127,6 @@ const normalizeProtocol = (value: unknown, fieldName: string): ProjectOpencodeRu
   return value as ProjectOpencodeRuntimeProtocol;
 };
 
-// eslint-disable-next-line local/no-unknown-parameter-type
 const normalizeDependencyRef = (value: unknown): ProjectOpencodeCommandDependencyRef => {
   const normalizedValue = normalizeTrimmedText({
     value,
@@ -157,11 +153,9 @@ const normalizeDependencyRef = (value: unknown): ProjectOpencodeCommandDependenc
   return withPrefix as ProjectOpencodeCommandDependencyRef;
 };
 
-// eslint-disable-next-line local/no-unknown-parameter-type
 const normalizeDescription = (value: unknown, fieldName: string): string =>
   normalizeTrimmedText({ value, fieldName, errorCode: "PROJECT_OPENCODE_CONFIG_DESCRIPTION_REQUIRED" });
 
-// eslint-disable-next-line local/no-unknown-parameter-type
 const normalizeRun = (value: unknown, fieldName: string): string =>
   normalizeTrimmedText({ value, fieldName, errorCode: "PROJECT_OPENCODE_CONFIG_RUN_REQUIRED" });
 
@@ -185,7 +179,6 @@ const normalizeCommands = (
     }));
 };
 
-// eslint-disable-next-line local/no-unknown-parameter-type
 const normalizeHealthcheckPath = (value: unknown): string | null => {
   if (value === undefined || value === null) {
     return null;
@@ -201,7 +194,6 @@ const normalizeHealthcheckPath = (value: unknown): string | null => {
     : `/${normalizedValue}`;
 };
 
-// eslint-disable-next-line local/no-unknown-parameter-type
 const normalizeExpectedStatus = (value: unknown): number | null => {
   if (value === undefined || value === null) {
     return null;

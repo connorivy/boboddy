@@ -226,7 +226,7 @@ export async function monitorStartedClaimedExecution(
           stepExecutionId: startedExecution.stepExecutionId,
           localRuntimeSessionId: startedExecution.localRuntimeSessionId,
         });
-        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+         
       } else if (submissionResult === "missing") {
         if (!hasWaitedForSessionStop) {
           hasWaitedForSessionStop = true;

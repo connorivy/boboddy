@@ -200,11 +200,9 @@ export type ParseBoboddyConfigResult =
   | { found: false }
   | { found: true; config: BoboddyConfig };
 
-// eslint-disable-next-line local/no-unknown-parameter-type
 const asString = (value: unknown): string | null =>
   typeof value === "string" ? value : null;
 
-// eslint-disable-next-line local/no-unknown-parameter-type
 const asNumber = (value: unknown): number | null =>
   typeof value === "number" ? value : null;
 

@@ -59,7 +59,7 @@ describe("defineStep", () => {
 
     expect(spec.resultSchemaJson).toMatchObject({
       type: "object",
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+       
       required: expect.arrayContaining(["outcome", "summaryOfFindings", "stepsTried"]),
       properties: {
         outcome: {
@@ -75,7 +75,7 @@ describe("defineStep", () => {
           type: "array",
           items: {
             type: "object",
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+             
             required: expect.arrayContaining(["question", "category", "suggestedKey"]),
             properties: {
               question: { type: "string" },

@@ -89,6 +89,7 @@ const boboddySubmitStepFindings: ToolDefinition = tool({
         `Invalid resultSchemaJson in ${CURRENT_EXECUTION_INFO_RELATIVE_PATH}: ${
           error instanceof Error ? error.message : String(error)
         }`,
+        { cause: error },
       );
     }
 

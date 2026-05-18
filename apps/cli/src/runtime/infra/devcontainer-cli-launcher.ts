@@ -160,7 +160,7 @@ export class DevcontainerCliLauncher implements DevcontainerLauncher {
       };
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      throw new Error(`Failed to launch devcontainer: ${message}`);
+      throw new Error(`Failed to launch devcontainer: ${message}`, { cause: error });
     }
   }
 

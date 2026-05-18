@@ -12,15 +12,20 @@
     "@opencode-ai/plugin": "1.14.34"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "@types/node": "^22.14.1",
     "@typescript/native-preview": "latest",
-    "typescript": "^5.8.3"
+    "eslint": "^10.4.0",
+    "typescript": "^5.8.3",
+    "typescript-eslint": "^8.59.4"
   },
   "scripts": {
     "clientGen:ts": "bun run --filter @boboddy/sdk generate",
     "build": "bun run --filter '*' build",
     "typecheck": "bun run --filter '@boboddy/containers' --filter '@boboddy/opencode-plugin' declarations && bun run --filter '*' typecheck",
+    "lint": "eslint .",
     "test": "bun run --filter '*' test",
+    "validate": "bash scripts/validate.sh",
     "release": "bash scripts/release.sh",
     "cli:link": "bun run --filter @boboddy/cli build && bun run --filter @boboddy/cli link",
     "cli:link:dev": "bun run --filter @boboddy/opencode-plugin build && bun run --filter @boboddy/cli build:dev && bun run --filter @boboddy/cli link",

@@ -95,6 +95,7 @@ export class LocalDockerRuntimeSessionNetworkManager implements RuntimeSessionNe
       const message = readErrorMessage(error as ErrorLike);
       throw new Error(
         `Failed to inspect runtime session network ${networkName}: ${message}`,
+        { cause: error },
       );
     }
   }
@@ -144,6 +145,7 @@ export class LocalDockerRuntimeSessionNetworkManager implements RuntimeSessionNe
       const message = readErrorMessage(error as ErrorLike);
       throw new Error(
         `Failed to create runtime session network ${networkName}: ${message}`,
+        { cause: error },
       );
     }
   }
@@ -165,6 +167,7 @@ export class LocalDockerRuntimeSessionNetworkManager implements RuntimeSessionNe
       const message = readErrorMessage(error as ErrorLike);
       throw new Error(
         `Failed to attach container ${containerId} to runtime session network ${networkName}: ${message}`,
+        { cause: error },
       );
     }
   }

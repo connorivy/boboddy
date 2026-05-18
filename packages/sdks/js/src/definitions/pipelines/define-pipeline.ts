@@ -1,6 +1,7 @@
 import type { ZodType } from "zod";
 import type { DotPaths, TypedStepDefinitionSpec } from "../steps/define-step";
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type AnyTypedStep = TypedStepDefinitionSpec<any, any, any>;
 
 // ─── Input binding types ──────────────────────────────────────────────────────

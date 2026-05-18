@@ -3,7 +3,6 @@ import type { ProjectOpencodeRuntimeActions } from "../opencode-runtime/applicat
 import type { startProcessClaimedExecution } from "./process-claimed-step-execution";
 import type { ProcessProjectWorkDeps } from "./process-project-work.types";
 
-// eslint-disable-next-line local/no-unknown-parameter-type
 export function isExpectedStepOutputFailure(error: unknown): boolean {
   return (
     error instanceof Error &&

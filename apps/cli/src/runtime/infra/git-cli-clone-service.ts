@@ -51,7 +51,7 @@ export class GitCliCloneService implements GitCloneService {
       };
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      throw new Error(`Failed to clone runtime session repository: ${message}`);
+      throw new Error(`Failed to clone runtime session repository: ${message}`, { cause: error });
     }
   }
 }

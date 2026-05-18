@@ -2,7 +2,6 @@ import { readdirSync } from "node:fs";
 import { join, resolve } from "node:path";
 import type { StepDefinitionSpec } from "@boboddy/sdk/definitions/steps";
 
-// eslint-disable-next-line local/no-unknown-parameter-type
 function isStepDefinitionSpec(value: unknown): value is StepDefinitionSpec {
   if (typeof value !== "object" || value === null) return false;
   const obj = value as Record<string, unknown>;

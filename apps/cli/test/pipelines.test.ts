@@ -99,7 +99,11 @@ describe("boboddy pipelines", () => {
           expect(existsSync(join(builderDir, "package.json"))).toBe(true);
           expect(existsSync(join(builderDir, "tsconfig.json"))).toBe(true);
           expect(existsSync(join(builderDir, ".gitignore"))).toBe(true);
-          expect(existsSync(join(builderDir, "pipeline.ts"))).toBe(true);
+          expect(existsSync(join(builderDir, "steps"))).toBe(true);
+          expect(existsSync(join(builderDir, "pipelines"))).toBe(true);
+          expect(
+            existsSync(join(builderDir, "pipelines", "example-pipeline.ts")),
+          ).toBe(true);
         } finally {
           rmSync(fakeProjectDir, { recursive: true, force: true });
         }
@@ -107,7 +111,7 @@ describe("boboddy pipelines", () => {
     );
 
     concurrentTest(
-      "creates pipeline.ts with step definitions from dummy data when no project config exists",
+      "creates example step file from dummy data when no project config exists",
       () => {
         const fakeProjectDir = mkdtempSync(
           join(tmpdir(), "boboddy-pipelines-pull-test-"),
@@ -116,12 +120,13 @@ describe("boboddy pipelines", () => {
           createFakeGitRoot(fakeProjectDir);
           run(["pipelines", "pull"], { cwd: fakeProjectDir });
 
-          const builderDir = join(
+          const stepsDir = join(
             fakeProjectDir,
             ".boboddy",
             "pipeline-builder",
+            "steps",
           );
-          expect(existsSync(join(builderDir, "pipeline.ts"))).toBe(true);
+          expect(existsSync(join(stepsDir, "evaluate-clarity.ts"))).toBe(true);
         } finally {
           rmSync(fakeProjectDir, { recursive: true, force: true });
         }
@@ -144,7 +149,9 @@ describe("boboddy pipelines", () => {
         expect(createdFiles.some((f) => f.includes("package.json"))).toBe(true);
         expect(createdFiles.some((f) => f.includes("tsconfig.json"))).toBe(true);
         expect(createdFiles.some((f) => f.includes(".gitignore"))).toBe(true);
-        expect(createdFiles.some((f) => f.includes("pipeline.ts"))).toBe(true);
+        expect(
+          createdFiles.some((f) => f.includes("example-pipeline.ts")),
+        ).toBe(true);
       } finally {
         rmSync(fakeProjectDir, { recursive: true, force: true });
       }

@@ -17,6 +17,7 @@
     "typescript": "^5.8.3"
   },
   "scripts": {
+    "clientGen:ts": "bun run --filter @boboddy/sdk generate",
     "build": "bun run --filter '*' build",
     "typecheck": "bun run --filter '@boboddy/containers' --filter '@boboddy/opencode-plugin' declarations && bun run --filter '*' typecheck",
     "test": "bun run --filter '*' test",

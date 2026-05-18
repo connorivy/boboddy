@@ -63,6 +63,16 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
+      - name: Check generated client is in sync
+        run: |
+          bun run clientGen:ts
+          if [ -n "$(git status --porcelain packages/sdks/js/src/generated/)" ]; then
+            echo "Generated API client is out of sync with the OpenAPI spec."
+            echo "Run 'bun run clientGen:ts' locally and commit the changes."
+            git diff packages/sdks/js/src/generated/
+            exit 1
+          fi
+
       - name: Stamp CLI version
         working-directory: apps/cli
         run: npm pkg set version="${{ needs.resolve-version.outputs.version }}"

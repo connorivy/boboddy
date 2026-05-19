@@ -1,15 +1,12 @@
 import type { ArgumentsCamelCase, Argv, CommandModule } from "yargs";
 import { join } from "node:path";
 import { existsSync } from "node:fs";
-import { createStepDefinitionsClient } from "@boboddy/sdk/definitions/steps";
 import { resolveBoboddyBaseUrl } from "../auth/config";
 import { loadAuthenticatedSession } from "../auth/session";
 import { createCliLogger } from "../lib/logger";
-import { loadStepsFromDirectory } from "../steps/step-file-loader";
+import { pushStepDefinitions, STEPS_DIR } from "../steps/push-step-definitions";
 import { scaffoldStepsDirectory } from "../steps/step-scaffolder";
 import { readProjectConfig } from "../init/project-config";
-
-const STEPS_DIR = ".boboddy/steps";
 
 // init
 
@@ -74,47 +71,7 @@ const runPush = async (
   }
 
   const headers = { Authorization: `Bearer ${authenticated.profile.accessToken}` };
-  const dir = join(process.cwd(), STEPS_DIR);
-
-  const specs = await loadStepsFromDirectory(dir);
-  logger.info({ count: specs.length }, `Found ${String(specs.length)} step definition(s)`);
-
-  if (specs.length === 0) {
-    logger.info("Nothing to push.");
-    return;
-  }
-
-  const client = createStepDefinitionsClient(baseUrl);
-  const existing = await client.listByProjectId(projectId, { headers });
-
-  const existingById = new Map<string, string>();
-  for (const step of existing) {
-    existingById.set(`${step.key}@v${String(step.version)}`, step.id);
-  }
-
-  let created = 0;
-  let updated = 0;
-
-  for (const spec of specs) {
-    const lookup = `${spec.key}@v${String(spec.version)}`;
-    const existingId = existingById.get(lookup);
-    const payload = { ...spec, projectId };
-
-    if (existingId) {
-      await client.update(existingId, payload, { headers });
-      updated++;
-      logger.info({ key: spec.key, version: spec.version }, `✓ ${spec.key} v${String(spec.version)} → updated`);
-    } else {
-      await client.create(payload, { headers });
-      created++;
-      logger.info({ key: spec.key, version: spec.version }, `✓ ${spec.key} v${String(spec.version)} → created`);
-    }
-  }
-
-  logger.info(
-    { created, updated },
-    `Pushed ${String(created + updated)} step definition(s) (${String(created)} created, ${String(updated)} updated)`,
-  );
+  await pushStepDefinitions({ projectId, baseUrl, headers, logger });
 };
 
 const pushCommand: CommandModule<object, PushArguments> = {

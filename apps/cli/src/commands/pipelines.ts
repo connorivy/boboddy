@@ -11,9 +11,12 @@ import {
   type StepInfo,
 } from "../pipelines/pipeline-builder-scaffolder";
 import { loadPipelinesFromDirectory } from "../pipelines/pipeline-file-loader";
+import { loadPipelineStepsFromDirectory } from "../pipelines/pipeline-step-file-loader";
 import { readProjectConfig } from "../init/project-config";
-
-const PIPELINE_BUILDER_DIR = ".boboddy/pipeline-builder";
+import {
+  PIPELINE_BUILDER_DIR,
+  pushStepDefinitions,
+} from "../steps/push-step-definitions";
 
 const DUMMY_STEPS: StepInfo[] = [
   {
@@ -102,6 +105,16 @@ const runPush = async (
     logger.info("Nothing to push.");
     return;
   }
+
+  await pushStepDefinitions({
+    projectId,
+    baseUrl,
+    headers,
+    logger,
+    dir: PIPELINE_BUILDER_DIR,
+    skipMissingDirectory: true,
+    loadSteps: loadPipelineStepsFromDirectory,
+  });
 
   // Build a map of step key → server step def (needed to resolve IDs)
   const stepDefsClient = createStepDefinitionsClient(baseUrl);

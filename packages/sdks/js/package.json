@@ -5,49 +5,49 @@
   "type": "module",
   "exports": {
     ".": {
-      "types": "./src/index.ts",
+      "types": "./dist/index.d.ts",
       "bun": "./src/index.ts",
       "import": "./src/index.ts",
       "default": "./src/index.ts"
     },
     "./client": {
-      "types": "./src/client.ts",
+      "types": "./dist/client.d.ts",
       "bun": "./src/client.ts",
       "import": "./src/client.ts",
       "default": "./src/client.ts"
     },
     "./definitions/steps": {
-      "types": "./src/definitions/steps/index.ts",
+      "types": "./dist/definitions/steps/index.d.ts",
       "bun": "./src/definitions/steps/index.ts",
       "import": "./src/definitions/steps/index.ts",
       "default": "./src/definitions/steps/index.ts"
     },
     "./definitions/pipelines": {
-      "types": "./src/definitions/pipelines/index.ts",
+      "types": "./dist/definitions/pipelines/index.d.ts",
       "bun": "./src/definitions/pipelines/index.ts",
       "import": "./src/definitions/pipelines/index.ts",
       "default": "./src/definitions/pipelines/index.ts"
     },
     "./definitions/advancement-policies": {
-      "types": "./src/definitions/advancement-policies/index.ts",
+      "types": "./dist/definitions/advancement-policies/index.d.ts",
       "bun": "./src/definitions/advancement-policies/index.ts",
       "import": "./src/definitions/advancement-policies/index.ts",
       "default": "./src/definitions/advancement-policies/index.ts"
     },
     "./opencode-mcp": {
-      "types": "./src/opencode-mcp.ts",
+      "types": "./dist/opencode-mcp.d.ts",
       "bun": "./src/opencode-mcp.ts",
       "import": "./src/opencode-mcp.ts",
       "default": "./src/opencode-mcp.ts"
     },
     "./jsonc": {
-      "types": "./src/jsonc.ts",
+      "types": "./dist/jsonc.d.ts",
       "bun": "./src/jsonc.ts",
       "import": "./src/jsonc.ts",
       "default": "./src/jsonc.ts"
     },
     "./boboddy-config-parser": {
-      "types": "./src/boboddy-config-parser.ts",
+      "types": "./dist/boboddy-config-parser.d.ts",
       "bun": "./src/boboddy-config-parser.ts",
       "import": "./src/boboddy-config-parser.ts",
       "default": "./src/boboddy-config-parser.ts"

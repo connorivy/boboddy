@@ -117,6 +117,7 @@ jobs:
     needs: [resolve-version, sign-cli-macos]
     permissions:
       contents: write
+      id-token: write
     steps:
       - uses: actions/checkout@v4
 
@@ -168,8 +169,6 @@ jobs:
 
       - name: Publish SDK
         working-directory: packages/sdks/js
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
           if [ "${{ needs.resolve-version.outputs.prerelease }}" = "true" ]; then
             npm publish --access public --tag next
@@ -179,8 +178,6 @@ jobs:
 
       # - name: Publish opencode plugin
       #   working-directory: packages/opencode-plugin
-      #   env:
-      #     NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
       #   run: |
       #     if [ "${{ needs.resolve-version.outputs.prerelease }}" = "true" ]; then
       #       npm publish --access public --tag next
@@ -190,8 +187,6 @@ jobs:
 
       - name: Publish CLI
         working-directory: apps/cli
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
           if [ "${{ needs.resolve-version.outputs.prerelease }}" = "true" ]; then
             npm publish --access public --tag next

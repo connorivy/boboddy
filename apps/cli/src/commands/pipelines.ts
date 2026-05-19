@@ -50,7 +50,7 @@ const runInit = async (): Promise<void> => {
 
   logger.info(
     { dir },
-    `Pipeline builder scaffolded at ${PIPELINE_BUILDER_DIR}. Run \`bun install\` to get started.`,
+    `Pipeline builder scaffolded at ${PIPELINE_BUILDER_DIR}. Run \`npm install\` or \`bun install\` to get started.`,
   );
 };
 

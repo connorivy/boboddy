@@ -25,6 +25,15 @@ function kebabToCamel(str: string): string {
   return str.replace(/-([a-z])/g, (_, c: string) => c.toUpperCase());
 }
 
+function resolveSdkDependency(): string {
+  const devSdkPath = process.env.BOBODDY_DEV_SDK_PATH;
+  if (devSdkPath) {
+    return `file:${devSdkPath.replaceAll("\\", "/")}`;
+  }
+
+  return `^${version}`;
+}
+
 function buildPackageJson(): string {
   return JSON.stringify(
     {
@@ -32,7 +41,7 @@ function buildPackageJson(): string {
       private: true,
       type: "module",
       dependencies: {
-        "@boboddy/sdk": `^${version}`,
+        "@boboddy/sdk": resolveSdkDependency(),
         zod: "^4.4.2",
       },
     },

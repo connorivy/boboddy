@@ -1,6 +1,7 @@
 import { readdirSync } from "node:fs";
 import { join, resolve } from "node:path";
 import type { StepDefinitionSpec } from "@boboddy/sdk/definitions/steps";
+import { importUserModule } from "../lib/import-user-module";
 
 function isStepDefinitionSpec(value: unknown): value is StepDefinitionSpec {
   if (typeof value !== "object" || value === null) return false;
@@ -30,7 +31,7 @@ export async function loadStepsFromDirectory(
 
   for (const file of stepFiles) {
     const absPath = join(absDir, file);
-    const imported: unknown = await import(absPath);
+    const imported: unknown = await importUserModule(absPath);
     const mod = imported as { default: unknown };
     const spec = mod.default;
 

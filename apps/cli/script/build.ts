@@ -96,12 +96,34 @@ async function main(): Promise<void> {
     const hostKey = `${process.platform}:${process.arch}`;
     const hostBunTarget = platformTargetMap[hostKey];
     const hostOutputName = binaryNameMap[hostKey];
+    const sdkProjectRoot = resolve(projectRoot, "../../packages/sdks/js");
 
     if (!hostBunTarget || !hostOutputName) {
       throw new Error(`Unsupported platform/arch: ${hostKey}`);
     }
 
-    const defines = ["--define", `process.env.BOBODDY_BASE_URL="http://localhost:3000"`];
+    const sdkPackageBuild = Bun.spawnSync(
+      [process.execPath, "run", "script/package-artifact.ts"],
+      {
+        cwd: sdkProjectRoot,
+        stdout: "pipe",
+        stderr: "inherit",
+      },
+    );
+    if (sdkPackageBuild.exitCode !== 0) {
+      throw new Error("Failed to create dev SDK package artifact.");
+    }
+    const devSdkPackagePath = sdkPackageBuild.stdout.toString().trim();
+    if (!devSdkPackagePath) {
+      throw new Error("Dev SDK package artifact path was empty.");
+    }
+
+    const defines = [
+      "--define",
+      `process.env.BOBODDY_BASE_URL=${JSON.stringify("http://localhost:3000")}`,
+      "--define",
+      `process.env.BOBODDY_DEV_SDK_PATH=${JSON.stringify(devSdkPackagePath)}`,
+    ];
     const targets: BuildTarget[] = [{ bunTarget: hostBunTarget, outputName: hostOutputName, codesign: true }];
 
     // Always include Linux binaries — they're injected into the devcontainer at runtime.

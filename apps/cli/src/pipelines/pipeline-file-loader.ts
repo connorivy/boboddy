@@ -1,6 +1,7 @@
 import { readdirSync } from "node:fs";
 import { join, resolve } from "node:path";
 import type { PipelineDefinitionSpec } from "@boboddy/sdk/definitions/pipelines";
+import { importUserModule } from "../lib/import-user-module";
 
 function isPipelineDefinitionSpec(value: unknown): value is PipelineDefinitionSpec {
   if (typeof value !== "object" || value === null) return false;
@@ -30,7 +31,21 @@ export async function loadPipelinesFromDirectory(
 
   for (const file of sourceFiles) {
     const absPath = join(absDir, file);
-    const imported: unknown = await import(absPath);
+    let imported: unknown;
+    try {
+      imported = await importUserModule(absPath);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      if (
+        message.includes("Cannot find module") ||
+        message.includes("Cannot find package")
+      ) {
+        throw new Error(
+          `Failed to import ${file}: ${message}\n\nRun \`npm install\` or \`bun install\` inside .boboddy/pipeline-builder/ to install dependencies first.`,
+        );
+      }
+      throw err;
+    }
     const mod = imported as { default: unknown };
     const spec = mod.default;
 

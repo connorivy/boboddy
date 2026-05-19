@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { loadPipelinesFromDirectory } from "../../src/pipelines/pipeline-file-loader";
@@ -132,6 +132,60 @@ describe("loadPipelinesFromDirectory", () => {
         status: "active",
         steps: [],
       });
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  test("loads a pipeline file that imports a bare package from node_modules", async () => {
+    const dir = makeTempDir();
+    try {
+      mkdirSync(join(dir, "node_modules", "pipeline-helper"), { recursive: true });
+      writeFileSync(
+        join(dir, "node_modules", "pipeline-helper", "package.json"),
+        JSON.stringify({
+          name: "pipeline-helper",
+          type: "module",
+          exports: {
+            ".": "./index.js",
+          },
+        }),
+      );
+      writeFileSync(
+        join(dir, "node_modules", "pipeline-helper", "index.js"),
+        `export const key = "bare-import-pipeline";`,
+      );
+      writeFileSync(
+        join(dir, "with-package.ts"),
+        `import { key } from "pipeline-helper";
+
+export default {
+  key,
+  name: "With Package",
+  version: 1,
+  steps: [],
+};`,
+      );
+
+      const specs = await loadPipelinesFromDirectory(dir);
+      expect(specs).toHaveLength(1);
+      expect(specs[0]?.key).toBe("bare-import-pipeline");
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  test("wraps missing dependency errors with install guidance", async () => {
+    const dir = makeTempDir();
+    try {
+      writeFileSync(
+        join(dir, "missing-dep.ts"),
+        `import "@boboddy/sdk/definitions/steps"; export default { key: "x", name: "X", version: 1, steps: [] };`,
+      );
+
+      await expect(loadPipelinesFromDirectory(dir)).rejects.toThrow(
+        "Run `npm install` or `bun install` inside .boboddy/pipeline-builder/ to install dependencies first.",
+      );
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }

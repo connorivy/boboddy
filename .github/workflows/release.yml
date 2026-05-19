@@ -177,16 +177,16 @@ jobs:
             npm publish --access public --tag latest
           fi
 
-      - name: Publish opencode plugin
-        working-directory: packages/opencode-plugin
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: |
-          if [ "${{ needs.resolve-version.outputs.prerelease }}" = "true" ]; then
-            npm publish --access public --tag next
-          else
-            npm publish --access public --tag latest
-          fi
+      # - name: Publish opencode plugin
+      #   working-directory: packages/opencode-plugin
+      #   env:
+      #     NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      #   run: |
+      #     if [ "${{ needs.resolve-version.outputs.prerelease }}" = "true" ]; then
+      #       npm publish --access public --tag next
+      #     else
+      #       npm publish --access public --tag latest
+      #     fi
 
       - name: Publish CLI
         working-directory: apps/cli
@@ -214,3 +214,36 @@ jobs:
           generate_release_notes: true
           prerelease: ${{ needs.resolve-version.outputs.prerelease == 'true' }}
           files: apps/cli/dist/boboddy-*
+
+  deploy-docs:
+    runs-on: ubuntu-latest
+    needs: publish
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install docs dependencies
+        working-directory: docs
+        run: npm install
+
+      - name: Build docs
+        working-directory: docs
+        run: npm run build
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs/dist/
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

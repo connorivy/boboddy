@@ -1,11 +1,7 @@
-import type { ArgumentsCamelCase, Argv, CommandModule } from "yargs";
+import type { CommandModule } from "yargs";
 import { join } from "node:path";
 import { existsSync } from "node:fs";
-import { createStepDefinitionsClient } from "@boboddy/sdk/definitions/steps";
-import { resolveBoboddyBaseUrl } from "../auth/config";
-import { loadAuthenticatedSession } from "../auth/session";
 import { createCliLogger } from "../lib/logger";
-import { readProjectConfig } from "../init/project-config";
 import {
   scaffoldPipelineBuilderDirectory,
   type StepInfo,
@@ -15,85 +11,29 @@ const PIPELINE_BUILDER_DIR = ".boboddy/pipeline-builder";
 
 const DUMMY_STEPS: StepInfo[] = [
   {
-    key: "evaluate-clarity",
-    name: "Evaluate Clarity",
+    key: "investigate",
+    name: "Investigate",
     version: 1,
-    signals: [{ key: "clarity_score", sourcePath: "score", type: "number" }],
+    prompt:
+      "You are an expert investigator. Analyze the provided content thoroughly to identify the root cause, assess the severity, and recommend next steps.",
+    signals: [{ key: "confidence", sourcePath: "confidence", type: "number" }],
   },
 ];
 
-// pull
+// init
 
-interface PullArguments {
-  baseUrl: string | undefined;
-}
-
-const runPull = async (
-  args: ArgumentsCamelCase<PullArguments>,
-): Promise<void> => {
-  const logger = createCliLogger("pipelines-pull");
-  const baseUrl = resolveBoboddyBaseUrl(args.baseUrl);
+const runInit = async (): Promise<void> => {
+  const logger = createCliLogger("pipelines-init");
 
   if (!existsSync(join(process.cwd(), ".git"))) {
     logger.error(
-      "`boboddy pipelines pull` must be run from the root of a git repository. Navigate to your repo root and try again.",
+      "`boboddy pipelines init` must be run from the root of a git repository. Navigate to your repo root and try again.",
     );
     process.exit(1);
   }
 
-  let steps: StepInfo[] = DUMMY_STEPS;
-
-  const projectConfig = await readProjectConfig();
-  const projectId = projectConfig?.projectId;
-
-  if (projectId) {
-    const authenticated = await loadAuthenticatedSession(baseUrl);
-    if (authenticated) {
-      const headers = {
-        Authorization: `Bearer ${authenticated.profile.accessToken}`,
-      };
-      try {
-        const client = createStepDefinitionsClient(baseUrl);
-        const apiSteps = await client.listByProjectId(projectId, { headers });
-        if (apiSteps.length > 0) {
-          steps = apiSteps.map((s) => ({
-            key: s.key,
-            name: s.name,
-            version: s.version,
-            signals: s.signalExtractorDefinitions.map((sig) => ({
-              key: sig.key,
-              sourcePath: sig.sourcePath,
-              type: sig.type,
-            })),
-          }));
-          logger.info(
-            { count: steps.length },
-            `Fetched ${String(steps.length)} step definition(s) from the API`,
-          );
-        } else {
-          logger.info(
-            "No step definitions found for this project — using example data",
-          );
-        }
-      } catch (err) {
-        logger.warn(
-          { err },
-          "Failed to fetch step definitions from the API — using example data",
-        );
-      }
-    } else {
-      logger.info(
-        "Not signed in — using example data. Run `boboddy auth login` to pull your real steps.",
-      );
-    }
-  } else {
-    logger.info(
-      "No project ID found — using example data. Run `boboddy init` to connect a project.",
-    );
-  }
-
   const dir = join(process.cwd(), PIPELINE_BUILDER_DIR);
-  const result = scaffoldPipelineBuilderDirectory(dir, steps);
+  const result = scaffoldPipelineBuilderDirectory(dir, DUMMY_STEPS);
 
   for (const file of result.created) {
     logger.info({ file }, `Created ${file}`);
@@ -108,16 +48,11 @@ const runPull = async (
   );
 };
 
-const pullCommand: CommandModule<object, PullArguments> = {
-  command: "pull",
-  describe: `Scaffold ${PIPELINE_BUILDER_DIR} with step and pipeline definitions`,
-  builder: (argv: Argv<object>) =>
-    argv.option("baseUrl", {
-      alias: "base-url",
-      type: "string",
-      describe: "Boboddy app base URL",
-    }),
-  handler: runPull,
+const initCommand: CommandModule<object, object> = {
+  command: "init",
+  describe: `Scaffold ${PIPELINE_BUILDER_DIR} with an example pipeline`,
+  builder: (argv) => argv,
+  handler: runInit,
 };
 
 // parent
@@ -126,6 +61,8 @@ export const pipelinesCommand: CommandModule<object, object> = {
   command: "pipelines <command>",
   describe: "Manage pipeline definitions",
   builder: (argv) =>
-    argv.command(pullCommand).demandCommand(1, "A pipelines command is required."),
+    argv
+      .command(initCommand)
+      .demandCommand(1, "A pipelines command is required."),
   handler: () => undefined,
 };

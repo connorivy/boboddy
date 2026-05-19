@@ -12,15 +12,17 @@ function makeTempDir(): string {
 }
 
 const EXAMPLE_STEP: StepInfo = {
-  key: "evaluate-clarity",
-  name: "Evaluate Clarity",
+  key: "investigate",
+  name: "Investigate",
   version: 1,
-  signals: [{ key: "clarity_score", sourcePath: "score", type: "number" }],
+  prompt:
+    "You are an expert investigator. Analyze the provided content thoroughly to identify the root cause, assess the severity, and recommend next steps.",
+  signals: [{ key: "confidence", sourcePath: "confidence", type: "number" }],
 };
 
 describe("scaffoldPipelineBuilderDirectory", () => {
   describe("fresh directory", () => {
-    test("creates package.json, tsconfig.json, .gitignore, step files, and example pipeline", () => {
+    test("creates package.json, tsconfig.json, .gitignore, and example-pipeline.ts", () => {
       const dir = makeTempDir();
       try {
         const result = scaffoldPipelineBuilderDirectory(dir, [EXAMPLE_STEP]);
@@ -28,8 +30,7 @@ describe("scaffoldPipelineBuilderDirectory", () => {
         expect(result.created).toContain("package.json");
         expect(result.created).toContain("tsconfig.json");
         expect(result.created).toContain(".gitignore");
-        expect(result.created).toContain(join("steps", "evaluate-clarity.ts"));
-        expect(result.created).toContain(join("pipelines", "example-pipeline.ts"));
+        expect(result.created).toContain("example-pipeline.ts");
         expect(result.skipped).toEqual([]);
       } finally {
         rmSync(dir, { recursive: true, force: true });
@@ -44,20 +45,19 @@ describe("scaffoldPipelineBuilderDirectory", () => {
         expect(existsSync(join(dir, "package.json"))).toBe(true);
         expect(existsSync(join(dir, "tsconfig.json"))).toBe(true);
         expect(existsSync(join(dir, ".gitignore"))).toBe(true);
-        expect(existsSync(join(dir, "steps", "evaluate-clarity.ts"))).toBe(true);
-        expect(existsSync(join(dir, "pipelines", "example-pipeline.ts"))).toBe(true);
+        expect(existsSync(join(dir, "example-pipeline.ts"))).toBe(true);
       } finally {
         rmSync(dir, { recursive: true, force: true });
       }
     });
 
-    test("creates steps and pipelines subdirectories", () => {
+    test("does not create steps or pipelines subdirectories", () => {
       const dir = makeTempDir();
       try {
         scaffoldPipelineBuilderDirectory(dir, []);
 
-        expect(existsSync(join(dir, "steps"))).toBe(true);
-        expect(existsSync(join(dir, "pipelines"))).toBe(true);
+        expect(existsSync(join(dir, "steps"))).toBe(false);
+        expect(existsSync(join(dir, "pipelines"))).toBe(false);
       } finally {
         rmSync(dir, { recursive: true, force: true });
       }
@@ -97,7 +97,10 @@ describe("scaffoldPipelineBuilderDirectory", () => {
         const content = readFileSync(join(dir, "tsconfig.json"), "utf-8");
         const parsed = JSON.parse(content) as Record<string, unknown>;
         expect(parsed["extends"]).toBeUndefined();
-        const compilerOptions = parsed["compilerOptions"] as Record<string, unknown>;
+        const compilerOptions = parsed["compilerOptions"] as Record<
+          string,
+          unknown
+        >;
         expect(compilerOptions["strict"]).toBe(true);
         expect(compilerOptions["moduleResolution"]).toBe("Bundler");
       } finally {
@@ -105,66 +108,58 @@ describe("scaffoldPipelineBuilderDirectory", () => {
       }
     });
 
-    test("step file contains correct key, name, version, and signals", () => {
+    test("example-pipeline.ts contains step key, name, version, signals, input, and result", () => {
       const dir = makeTempDir();
       try {
         scaffoldPipelineBuilderDirectory(dir, [EXAMPLE_STEP]);
-        const content = readFileSync(
-          join(dir, "steps", "evaluate-clarity.ts"),
-          "utf-8",
-        );
+        const content = readFileSync(join(dir, "example-pipeline.ts"), "utf-8");
         expect(content).toContain("defineStep");
-        expect(content).toContain("evaluate-clarity");
-        expect(content).toContain("Evaluate Clarity");
-        expect(content).toContain("clarity_score");
-        expect(content).toContain("score");
+        expect(content).toContain("investigate");
+        expect(content).toContain("Investigate");
+        expect(content).toContain("confidence");
+        expect(content).toContain("prompt:");
+        expect(content).toContain("input:");
+        expect(content).toContain("result:");
+        expect(content).toContain("z.object");
         expect(content).toContain("export default");
       } finally {
         rmSync(dir, { recursive: true, force: true });
       }
     });
 
-    test("example pipeline imports the step and uses definePipeline", () => {
+    test("example-pipeline.ts defines both the step and the pipeline in one file", () => {
       const dir = makeTempDir();
       try {
         scaffoldPipelineBuilderDirectory(dir, [EXAMPLE_STEP]);
-        const content = readFileSync(
-          join(dir, "pipelines", "example-pipeline.ts"),
-          "utf-8",
-        );
+        const content = readFileSync(join(dir, "example-pipeline.ts"), "utf-8");
+        expect(content).toContain("defineStep");
         expect(content).toContain("definePipeline");
-        expect(content).toContain("evaluateClarity");
-        expect(content).toContain("example-pipeline");
+        expect(content).toContain("investigate");
+        expect(content).toContain("investigation");
         expect(content).toContain("export default");
       } finally {
         rmSync(dir, { recursive: true, force: true });
       }
     });
 
-    test("example pipeline includes Rule.when for step with signals", () => {
+    test("example-pipeline.ts includes Rule.when for step with signals", () => {
       const dir = makeTempDir();
       try {
         scaffoldPipelineBuilderDirectory(dir, [EXAMPLE_STEP]);
-        const content = readFileSync(
-          join(dir, "pipelines", "example-pipeline.ts"),
-          "utf-8",
-        );
+        const content = readFileSync(join(dir, "example-pipeline.ts"), "utf-8");
         expect(content).toContain("Rule");
         expect(content).toContain("Rule.when");
-        expect(content).toContain("clarity_score");
+        expect(content).toContain("confidence");
       } finally {
         rmSync(dir, { recursive: true, force: true });
       }
     });
 
-    test("example pipeline with no steps uses an empty steps array", () => {
+    test("example-pipeline.ts with no steps uses an empty steps array", () => {
       const dir = makeTempDir();
       try {
         scaffoldPipelineBuilderDirectory(dir, []);
-        const content = readFileSync(
-          join(dir, "pipelines", "example-pipeline.ts"),
-          "utf-8",
-        );
+        const content = readFileSync(join(dir, "example-pipeline.ts"), "utf-8");
         expect(content).toContain("steps: []");
         expect(content).not.toContain("Rule");
       } finally {
@@ -172,7 +167,7 @@ describe("scaffoldPipelineBuilderDirectory", () => {
       }
     });
 
-    test("multiple steps each get their own file and are all imported in the pipeline", () => {
+    test("multiple steps are all defined and referenced in example-pipeline.ts", () => {
       const dir = makeTempDir();
       const steps: StepInfo[] = [
         {
@@ -191,15 +186,9 @@ describe("scaffoldPipelineBuilderDirectory", () => {
       try {
         scaffoldPipelineBuilderDirectory(dir, steps);
 
-        expect(existsSync(join(dir, "steps", "step-one.ts"))).toBe(true);
-        expect(existsSync(join(dir, "steps", "step-two.ts"))).toBe(true);
-
-        const pipelineContent = readFileSync(
-          join(dir, "pipelines", "example-pipeline.ts"),
-          "utf-8",
-        );
-        expect(pipelineContent).toContain("stepOne");
-        expect(pipelineContent).toContain("stepTwo");
+        const content = readFileSync(join(dir, "example-pipeline.ts"), "utf-8");
+        expect(content).toContain("stepOne");
+        expect(content).toContain("stepTwo");
       } finally {
         rmSync(dir, { recursive: true, force: true });
       }
@@ -217,8 +206,7 @@ describe("scaffoldPipelineBuilderDirectory", () => {
         expect(second.skipped).toContain("package.json");
         expect(second.skipped).toContain("tsconfig.json");
         expect(second.skipped).toContain(".gitignore");
-        expect(second.skipped).toContain(join("steps", "evaluate-clarity.ts"));
-        expect(second.skipped).toContain(join("pipelines", "example-pipeline.ts"));
+        expect(second.skipped).toContain("example-pipeline.ts");
       } finally {
         rmSync(dir, { recursive: true, force: true });
       }
@@ -228,15 +216,14 @@ describe("scaffoldPipelineBuilderDirectory", () => {
       const dir = makeTempDir();
       try {
         scaffoldPipelineBuilderDirectory(dir, [EXAMPLE_STEP]);
-        rmSync(join(dir, "steps", "evaluate-clarity.ts"));
+        rmSync(join(dir, "example-pipeline.ts"));
 
         const second = scaffoldPipelineBuilderDirectory(dir, [EXAMPLE_STEP]);
 
-        expect(second.created).toEqual([join("steps", "evaluate-clarity.ts")]);
+        expect(second.created).toEqual(["example-pipeline.ts"]);
         expect(second.skipped).toContain("package.json");
         expect(second.skipped).toContain("tsconfig.json");
         expect(second.skipped).toContain(".gitignore");
-        expect(second.skipped).toContain(join("pipelines", "example-pipeline.ts"));
       } finally {
         rmSync(dir, { recursive: true, force: true });
       }

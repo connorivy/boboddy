@@ -60,12 +60,12 @@ function createFakeGitRoot(dir: string): void {
 
 describe("boboddy pipelines", () => {
   describe("help output", () => {
-    concurrentTest("pipelines --help lists pull subcommand", () => {
+    concurrentTest("pipelines --help lists init subcommand", () => {
       const result = run(["pipelines", "--help"]);
 
       expect(result.exitCode).toBe(0);
       expect(result.stderr).toBe("");
-      expect(result.stdout).toContain("pull");
+      expect(result.stdout).toContain("init");
     });
 
     concurrentTest("top-level --help includes pipelines command", () => {
@@ -76,16 +76,16 @@ describe("boboddy pipelines", () => {
     });
   });
 
-  describe("pipelines pull", () => {
+  describe("pipelines init", () => {
     concurrentTest(
       "creates .boboddy/pipeline-builder directory with all scaffold files",
       () => {
         const fakeProjectDir = mkdtempSync(
-          join(tmpdir(), "boboddy-pipelines-pull-test-"),
+          join(tmpdir(), "boboddy-pipelines-init-test-"),
         );
         try {
           createFakeGitRoot(fakeProjectDir);
-          const result = run(["pipelines", "pull"], { cwd: fakeProjectDir });
+          const result = run(["pipelines", "init"], { cwd: fakeProjectDir });
 
           expect(result.exitCode).toBe(0);
           expect(result.stderr).toBe("");
@@ -99,10 +99,8 @@ describe("boboddy pipelines", () => {
           expect(existsSync(join(builderDir, "package.json"))).toBe(true);
           expect(existsSync(join(builderDir, "tsconfig.json"))).toBe(true);
           expect(existsSync(join(builderDir, ".gitignore"))).toBe(true);
-          expect(existsSync(join(builderDir, "steps"))).toBe(true);
-          expect(existsSync(join(builderDir, "pipelines"))).toBe(true);
           expect(
-            existsSync(join(builderDir, "pipelines", "example-pipeline.ts")),
+            existsSync(join(builderDir, "example-pipeline.ts")),
           ).toBe(true);
         } finally {
           rmSync(fakeProjectDir, { recursive: true, force: true });
@@ -111,22 +109,22 @@ describe("boboddy pipelines", () => {
     );
 
     concurrentTest(
-      "creates example step file from dummy data when no project config exists",
+      "example-pipeline.ts contains step and pipeline definitions",
       () => {
         const fakeProjectDir = mkdtempSync(
-          join(tmpdir(), "boboddy-pipelines-pull-test-"),
+          join(tmpdir(), "boboddy-pipelines-init-test-"),
         );
         try {
           createFakeGitRoot(fakeProjectDir);
-          run(["pipelines", "pull"], { cwd: fakeProjectDir });
+          run(["pipelines", "init"], { cwd: fakeProjectDir });
 
-          const stepsDir = join(
+          const exampleFile = join(
             fakeProjectDir,
             ".boboddy",
             "pipeline-builder",
-            "steps",
+            "example-pipeline.ts",
           );
-          expect(existsSync(join(stepsDir, "evaluate-clarity.ts"))).toBe(true);
+          expect(existsSync(exampleFile)).toBe(true);
         } finally {
           rmSync(fakeProjectDir, { recursive: true, force: true });
         }
@@ -135,11 +133,11 @@ describe("boboddy pipelines", () => {
 
     concurrentTest("logs a created message for each file", () => {
       const fakeProjectDir = mkdtempSync(
-        join(tmpdir(), "boboddy-pipelines-pull-test-"),
+        join(tmpdir(), "boboddy-pipelines-init-test-"),
       );
       try {
         createFakeGitRoot(fakeProjectDir);
-        const result = run(["pipelines", "pull"], { cwd: fakeProjectDir });
+        const result = run(["pipelines", "init"], { cwd: fakeProjectDir });
         const logs = parseLogLines(result.stdout);
 
         const createdFiles = logs
@@ -159,12 +157,12 @@ describe("boboddy pipelines", () => {
 
     concurrentTest("is idempotent — skips existing files on second run", () => {
       const fakeProjectDir = mkdtempSync(
-        join(tmpdir(), "boboddy-pipelines-pull-test-"),
+        join(tmpdir(), "boboddy-pipelines-init-test-"),
       );
       try {
         createFakeGitRoot(fakeProjectDir);
-        run(["pipelines", "pull"], { cwd: fakeProjectDir });
-        const second = run(["pipelines", "pull"], { cwd: fakeProjectDir });
+        run(["pipelines", "init"], { cwd: fakeProjectDir });
+        const second = run(["pipelines", "init"], { cwd: fakeProjectDir });
 
         expect(second.exitCode).toBe(0);
         const logs = parseLogLines(second.stdout);
@@ -180,10 +178,10 @@ describe("boboddy pipelines", () => {
 
     concurrentTest("fails outside the root of a git repository", () => {
       const fakeProjectDir = mkdtempSync(
-        join(tmpdir(), "boboddy-pipelines-pull-test-"),
+        join(tmpdir(), "boboddy-pipelines-init-test-"),
       );
       try {
-        const result = run(["pipelines", "pull"], { cwd: fakeProjectDir });
+        const result = run(["pipelines", "init"], { cwd: fakeProjectDir });
 
         expect(result.exitCode).toBe(1);
         expect(result.stderr).toBe("");

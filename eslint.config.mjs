@@ -5,6 +5,6 @@ export default tseslint.config([
   eslint.configs.recommended,
   tseslint.configs.recommended,
   {
-    ignores: ["**/dist/**", "**/node_modules/**", "**/generated/**"],
+    ignores: ["**/dist/**", "**/node_modules/**", "**/generated/**", "docs/**"],
   },
 ]);

@@ -60,12 +60,13 @@ function createFakeGitRoot(dir: string): void {
 
 describe("boboddy pipelines", () => {
   describe("help output", () => {
-    concurrentTest("pipelines --help lists init subcommand", () => {
+    concurrentTest("pipelines --help lists init and push subcommands", () => {
       const result = run(["pipelines", "--help"]);
 
       expect(result.exitCode).toBe(0);
       expect(result.stderr).toBe("");
       expect(result.stdout).toContain("init");
+      expect(result.stdout).toContain("push");
     });
 
     concurrentTest("top-level --help includes pipelines command", () => {
@@ -195,6 +196,61 @@ describe("boboddy pipelines", () => {
         );
       } finally {
         rmSync(fakeProjectDir, { recursive: true, force: true });
+      }
+    });
+  });
+
+  describe("pipelines push", () => {
+    concurrentTest("push --help shows projectId positional argument", () => {
+      const result = run(["pipelines", "push", "--help"]);
+
+      expect(result.exitCode).toBe(0);
+      expect(result.stderr).toBe("");
+      expect(result.stdout).toContain("projectId");
+    });
+
+    concurrentTest("exits with error and helpful message when not signed in", () => {
+      const fakeHome = mkdtempSync(
+        join(tmpdir(), "boboddy-pipelines-push-test-"),
+      );
+      try {
+        const result = run(
+          ["pipelines", "push", "01966a2c-9494-7db5-aa46-0f8f5cbbe001"],
+          { env: { HOME: fakeHome } },
+        );
+
+        expect(result.exitCode).toBe(1);
+        expect(result.stderr).toBe("");
+
+        const logs = parseLogLines(result.stdout);
+        const errorLog = logs.find((l) => l["level"] === 50);
+        expect(errorLog).toBeDefined();
+        expect(typeof errorLog?.["msg"]).toBe("string");
+        expect((errorLog?.["msg"] as string).toLowerCase()).toContain(
+          "not signed in",
+        );
+      } finally {
+        rmSync(fakeHome, { recursive: true, force: true });
+      }
+    });
+
+    concurrentTest("fails without a projectId argument or config file", () => {
+      const fakeProjectDir = mkdtempSync(
+        join(tmpdir(), "boboddy-pipelines-push-noproject-"),
+      );
+      const fakeHome = mkdtempSync(
+        join(tmpdir(), "boboddy-pipelines-push-home-"),
+      );
+      try {
+        const result = run(["pipelines", "push"], {
+          cwd: fakeProjectDir,
+          env: { HOME: fakeHome },
+        });
+
+        expect(result.exitCode).toBe(1);
+      } finally {
+        rmSync(fakeProjectDir, { recursive: true, force: true });
+        rmSync(fakeHome, { recursive: true, force: true });
       }
     });
   });

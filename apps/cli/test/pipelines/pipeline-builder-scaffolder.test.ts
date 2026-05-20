@@ -92,8 +92,8 @@ describe("scaffoldPipelineBuilderDirectory", () => {
 
     test("package.json uses a local file dependency for @boboddy/sdk in dev mode", () => {
       const dir = makeTempDir();
-      const previous = process.env.BOBODDY_DEV_SDK_PATH;
-      process.env.BOBODDY_DEV_SDK_PATH = "/tmp/boboddy sdk";
+      const previous = process.env["BOBODDY_DEV_SDK_PATH"];
+      process.env["BOBODDY_DEV_SDK_PATH"] = "/tmp/boboddy sdk";
       try {
         scaffoldPipelineBuilderDirectory(dir, []);
         const content = readFileSync(join(dir, "package.json"), "utf-8");
@@ -102,9 +102,9 @@ describe("scaffoldPipelineBuilderDirectory", () => {
         expect(deps["@boboddy/sdk"]).toBe("file:/tmp/boboddy sdk");
       } finally {
         if (previous === undefined) {
-          delete process.env.BOBODDY_DEV_SDK_PATH;
+          delete process.env["BOBODDY_DEV_SDK_PATH"];
         } else {
-          process.env.BOBODDY_DEV_SDK_PATH = previous;
+          process.env["BOBODDY_DEV_SDK_PATH"] = previous;
         }
         rmSync(dir, { recursive: true, force: true });
       }

@@ -70,9 +70,9 @@ export function createPipelineDefinitionsClient(
       ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
     });
     if (!response.ok) {
-      const err = (await response.json().catch(() => null)) as
-        | { title?: string }
-        | null;
+      const err = (await response.json().catch(() => null)) as {
+        title?: string;
+      } | null;
       throw new Error(
         err?.title ?? `HTTP ${String(response.status)} ${method} ${path}`,
       );

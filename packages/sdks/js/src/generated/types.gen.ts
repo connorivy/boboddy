@@ -3114,8 +3114,202 @@ export type GetApiLinearPipelineDefinitionsErrors = {
 
 export type GetApiLinearPipelineDefinitionsError = GetApiLinearPipelineDefinitionsErrors[keyof GetApiLinearPipelineDefinitionsErrors];
 
+export type GetApiLinearPipelineDefinitionsResponses = {
+    /**
+     * Response for status 200
+     */
+    200: Array<{
+        id: string;
+        projectId: string;
+        key: string;
+        name: string;
+        description: string | unknown;
+        version: number;
+        status: 'draft' | 'active' | 'archived';
+        stepDefinitions: Array<{
+            id: string;
+            linearPipelineDefinitionId: string;
+            stepDefinitionId: string;
+            stepDefinitionVersion: number;
+            key: string;
+            name: string;
+            description: string | unknown;
+            position: number;
+            inputBindingsJson: {
+                [key: string]: {
+                    source: string;
+                    path: string | unknown;
+                } | {
+                    source: string;
+                    stepKey: string;
+                    path: string | unknown;
+                } | {
+                    source: string;
+                    stepKey: string;
+                    signalKey: string;
+                } | {
+                    source: string;
+                    value: unknown;
+                };
+            } | unknown;
+            timeoutSeconds: number | unknown;
+            retryPolicyJson: {
+                [key: string]: unknown;
+            } | unknown;
+            advancementPolicyDefinition: {
+                id: string;
+                linearPipelineStepDefinitionId: string;
+                rulesJson: {
+                    rules: Array<{
+                        conditions: {
+                            [key: string]: unknown;
+                        };
+                        event: {
+                            type: string;
+                            params?: {
+                                [key: string]: unknown;
+                            };
+                        };
+                        name?: string;
+                        priority?: number;
+                        [key: string]: unknown | {
+                            [key: string]: unknown;
+                        } | {
+                            type: string;
+                            params?: {
+                                [key: string]: unknown;
+                            };
+                        } | string | number | undefined;
+                    }>;
+                    [key: string]: unknown | Array<{
+                        conditions: {
+                            [key: string]: unknown;
+                        };
+                        event: {
+                            type: string;
+                            params?: {
+                                [key: string]: unknown;
+                            };
+                        };
+                        name?: string;
+                        priority?: number;
+                        [key: string]: unknown | {
+                            [key: string]: unknown;
+                        } | {
+                            type: string;
+                            params?: {
+                                [key: string]: unknown;
+                            };
+                        } | string | number | undefined;
+                    }>;
+                };
+                defaultEventType: 'continue' | 'block' | 'needs_review' | 'complete';
+                defaultEventParamsJson: {
+                    [key: string]: unknown;
+                } | unknown;
+                allowedEventTypes: Array<'continue' | 'block' | 'needs_review' | 'complete'>;
+                createdAt: string;
+                updatedAt: string;
+            };
+            createdAt: string;
+            updatedAt: string;
+        }>;
+        createdAt: string;
+        updatedAt: string;
+    }>;
+};
+
+export type GetApiLinearPipelineDefinitionsResponse = GetApiLinearPipelineDefinitionsResponses[keyof GetApiLinearPipelineDefinitionsResponses];
+
 export type PostApiLinearPipelineDefinitionsData = {
-    body?: never;
+    body: {
+        projectId: string;
+        key: string;
+        name: string;
+        description: string | unknown;
+        version: number;
+        status: 'draft' | 'active' | 'archived';
+        stepDefinitions: Array<{
+            stepDefinitionId: string;
+            stepDefinitionVersion: number;
+            key: string;
+            name: string;
+            description: string | unknown;
+            position: number;
+            inputBindingsJson: {
+                [key: string]: {
+                    source: string;
+                    path: string | unknown;
+                } | {
+                    source: string;
+                    stepKey: string;
+                    path: string | unknown;
+                } | {
+                    source: string;
+                    stepKey: string;
+                    signalKey: string;
+                } | {
+                    source: string;
+                    value: unknown;
+                };
+            } | unknown;
+            timeoutSeconds: number | unknown;
+            retryPolicyJson: {
+                [key: string]: unknown;
+            } | unknown;
+            advancementPolicyDefinition: {
+                rulesJson: {
+                    rules: Array<{
+                        conditions: {
+                            [key: string]: unknown;
+                        };
+                        event: {
+                            type: string;
+                            params?: {
+                                [key: string]: unknown;
+                            };
+                        };
+                        name?: string;
+                        priority?: number;
+                        [key: string]: unknown | {
+                            [key: string]: unknown;
+                        } | {
+                            type: string;
+                            params?: {
+                                [key: string]: unknown;
+                            };
+                        } | string | number | undefined;
+                    }>;
+                    [key: string]: unknown | Array<{
+                        conditions: {
+                            [key: string]: unknown;
+                        };
+                        event: {
+                            type: string;
+                            params?: {
+                                [key: string]: unknown;
+                            };
+                        };
+                        name?: string;
+                        priority?: number;
+                        [key: string]: unknown | {
+                            [key: string]: unknown;
+                        } | {
+                            type: string;
+                            params?: {
+                                [key: string]: unknown;
+                            };
+                        } | string | number | undefined;
+                    }>;
+                };
+                defaultEventType: 'continue' | 'block' | 'needs_review' | 'complete';
+                defaultEventParamsJson: {
+                    [key: string]: unknown;
+                } | unknown;
+                allowedEventTypes: Array<'continue' | 'block' | 'needs_review' | 'complete'>;
+            };
+        }>;
+    };
     path?: never;
     query?: never;
     url: '/api/linear-pipeline-definitions';
@@ -3238,6 +3432,383 @@ export type PostApiLinearPipelineDefinitionsErrors = {
 
 export type PostApiLinearPipelineDefinitionsError = PostApiLinearPipelineDefinitionsErrors[keyof PostApiLinearPipelineDefinitionsErrors];
 
+export type PostApiLinearPipelineDefinitionsResponses = {
+    /**
+     * Response for status 200
+     */
+    200: {
+        id: string;
+        projectId: string;
+        key: string;
+        name: string;
+        description: string | unknown;
+        version: number;
+        status: 'draft' | 'active' | 'archived';
+        stepDefinitions: Array<{
+            id: string;
+            linearPipelineDefinitionId: string;
+            stepDefinitionId: string;
+            stepDefinitionVersion: number;
+            key: string;
+            name: string;
+            description: string | unknown;
+            position: number;
+            inputBindingsJson: {
+                [key: string]: {
+                    source: string;
+                    path: string | unknown;
+                } | {
+                    source: string;
+                    stepKey: string;
+                    path: string | unknown;
+                } | {
+                    source: string;
+                    stepKey: string;
+                    signalKey: string;
+                } | {
+                    source: string;
+                    value: unknown;
+                };
+            } | unknown;
+            timeoutSeconds: number | unknown;
+            retryPolicyJson: {
+                [key: string]: unknown;
+            } | unknown;
+            advancementPolicyDefinition: {
+                id: string;
+                linearPipelineStepDefinitionId: string;
+                rulesJson: {
+                    rules: Array<{
+                        conditions: {
+                            [key: string]: unknown;
+                        };
+                        event: {
+                            type: string;
+                            params?: {
+                                [key: string]: unknown;
+                            };
+                        };
+                        name?: string;
+                        priority?: number;
+                        [key: string]: unknown | {
+                            [key: string]: unknown;
+                        } | {
+                            type: string;
+                            params?: {
+                                [key: string]: unknown;
+                            };
+                        } | string | number | undefined;
+                    }>;
+                    [key: string]: unknown | Array<{
+                        conditions: {
+                            [key: string]: unknown;
+                        };
+                        event: {
+                            type: string;
+                            params?: {
+                                [key: string]: unknown;
+                            };
+                        };
+                        name?: string;
+                        priority?: number;
+                        [key: string]: unknown | {
+                            [key: string]: unknown;
+                        } | {
+                            type: string;
+                            params?: {
+                                [key: string]: unknown;
+                            };
+                        } | string | number | undefined;
+                    }>;
+                };
+                defaultEventType: 'continue' | 'block' | 'needs_review' | 'complete';
+                defaultEventParamsJson: {
+                    [key: string]: unknown;
+                } | unknown;
+                allowedEventTypes: Array<'continue' | 'block' | 'needs_review' | 'complete'>;
+                createdAt: string;
+                updatedAt: string;
+            };
+            createdAt: string;
+            updatedAt: string;
+        }>;
+        createdAt: string;
+        updatedAt: string;
+    };
+};
+
+export type PostApiLinearPipelineDefinitionsResponse = PostApiLinearPipelineDefinitionsResponses[keyof PostApiLinearPipelineDefinitionsResponses];
+
+export type PutApiLinearPipelineDefinitionsData = {
+    body: {
+        projectId: string;
+        key: string;
+        name: string;
+        description: string | unknown;
+        version: number;
+        status: 'draft' | 'active' | 'archived';
+        stepDefinitions: Array<{
+            stepDefinitionId: string;
+            stepDefinitionVersion: number;
+            key: string;
+            name: string;
+            description: string | unknown;
+            position: number;
+            inputBindingsJson: {
+                [key: string]: {
+                    source: string;
+                    path: string | unknown;
+                } | {
+                    source: string;
+                    stepKey: string;
+                    path: string | unknown;
+                } | {
+                    source: string;
+                    stepKey: string;
+                    signalKey: string;
+                } | {
+                    source: string;
+                    value: unknown;
+                };
+            } | unknown;
+            timeoutSeconds: number | unknown;
+            retryPolicyJson: {
+                [key: string]: unknown;
+            } | unknown;
+            advancementPolicyDefinition: {
+                rulesJson: {
+                    rules: Array<{
+                        conditions: {
+                            [key: string]: unknown;
+                        };
+                        event: {
+                            type: string;
+                            params?: {
+                                [key: string]: unknown;
+                            };
+                        };
+                        name?: string;
+                        priority?: number;
+                        [key: string]: unknown | {
+                            [key: string]: unknown;
+                        } | {
+                            type: string;
+                            params?: {
+                                [key: string]: unknown;
+                            };
+                        } | string | number | undefined;
+                    }>;
+                    [key: string]: unknown | Array<{
+                        conditions: {
+                            [key: string]: unknown;
+                        };
+                        event: {
+                            type: string;
+                            params?: {
+                                [key: string]: unknown;
+                            };
+                        };
+                        name?: string;
+                        priority?: number;
+                        [key: string]: unknown | {
+                            [key: string]: unknown;
+                        } | {
+                            type: string;
+                            params?: {
+                                [key: string]: unknown;
+                            };
+                        } | string | number | undefined;
+                    }>;
+                };
+                defaultEventType: 'continue' | 'block' | 'needs_review' | 'complete';
+                defaultEventParamsJson: {
+                    [key: string]: unknown;
+                } | unknown;
+                allowedEventTypes: Array<'continue' | 'block' | 'needs_review' | 'complete'>;
+            };
+        }>;
+    };
+    path?: never;
+    query?: never;
+    url: '/api/linear-pipeline-definitions';
+};
+
+export type PutApiLinearPipelineDefinitionsErrors = {
+    /**
+     * Response for status 401
+     */
+    401: {
+        type: string;
+        title: string;
+        status: number;
+        detail?: string;
+        instance?: string;
+        code?: string;
+        errors?: Array<{
+            path: string;
+            message: string;
+            summary?: string;
+        }>;
+    };
+    /**
+     * Response for status 403
+     */
+    403: {
+        type: string;
+        title: string;
+        status: number;
+        detail?: string;
+        instance?: string;
+        code?: string;
+        errors?: Array<{
+            path: string;
+            message: string;
+            summary?: string;
+        }>;
+    };
+    /**
+     * Response for status 422
+     */
+    422: {
+        type: string;
+        title: string;
+        status: number;
+        detail?: string;
+        instance?: string;
+        code?: string;
+        errors?: Array<{
+            path: string;
+            message: string;
+            summary?: string;
+        }>;
+    };
+    /**
+     * Response for status 500
+     */
+    500: {
+        type: string;
+        title: string;
+        status: number;
+        detail?: string;
+        instance?: string;
+        code?: string;
+        errors?: Array<{
+            path: string;
+            message: string;
+            summary?: string;
+        }>;
+    };
+};
+
+export type PutApiLinearPipelineDefinitionsError = PutApiLinearPipelineDefinitionsErrors[keyof PutApiLinearPipelineDefinitionsErrors];
+
+export type PutApiLinearPipelineDefinitionsResponses = {
+    /**
+     * Response for status 200
+     */
+    200: {
+        id: string;
+        projectId: string;
+        key: string;
+        name: string;
+        description: string | unknown;
+        version: number;
+        status: 'draft' | 'active' | 'archived';
+        stepDefinitions: Array<{
+            id: string;
+            linearPipelineDefinitionId: string;
+            stepDefinitionId: string;
+            stepDefinitionVersion: number;
+            key: string;
+            name: string;
+            description: string | unknown;
+            position: number;
+            inputBindingsJson: {
+                [key: string]: {
+                    source: string;
+                    path: string | unknown;
+                } | {
+                    source: string;
+                    stepKey: string;
+                    path: string | unknown;
+                } | {
+                    source: string;
+                    stepKey: string;
+                    signalKey: string;
+                } | {
+                    source: string;
+                    value: unknown;
+                };
+            } | unknown;
+            timeoutSeconds: number | unknown;
+            retryPolicyJson: {
+                [key: string]: unknown;
+            } | unknown;
+            advancementPolicyDefinition: {
+                id: string;
+                linearPipelineStepDefinitionId: string;
+                rulesJson: {
+                    rules: Array<{
+                        conditions: {
+                            [key: string]: unknown;
+                        };
+                        event: {
+                            type: string;
+                            params?: {
+                                [key: string]: unknown;
+                            };
+                        };
+                        name?: string;
+                        priority?: number;
+                        [key: string]: unknown | {
+                            [key: string]: unknown;
+                        } | {
+                            type: string;
+                            params?: {
+                                [key: string]: unknown;
+                            };
+                        } | string | number | undefined;
+                    }>;
+                    [key: string]: unknown | Array<{
+                        conditions: {
+                            [key: string]: unknown;
+                        };
+                        event: {
+                            type: string;
+                            params?: {
+                                [key: string]: unknown;
+                            };
+                        };
+                        name?: string;
+                        priority?: number;
+                        [key: string]: unknown | {
+                            [key: string]: unknown;
+                        } | {
+                            type: string;
+                            params?: {
+                                [key: string]: unknown;
+                            };
+                        } | string | number | undefined;
+                    }>;
+                };
+                defaultEventType: 'continue' | 'block' | 'needs_review' | 'complete';
+                defaultEventParamsJson: {
+                    [key: string]: unknown;
+                } | unknown;
+                allowedEventTypes: Array<'continue' | 'block' | 'needs_review' | 'complete'>;
+                createdAt: string;
+                updatedAt: string;
+            };
+            createdAt: string;
+            updatedAt: string;
+        }>;
+        createdAt: string;
+        updatedAt: string;
+    };
+};
+
+export type PutApiLinearPipelineDefinitionsResponse = PutApiLinearPipelineDefinitionsResponses[keyof PutApiLinearPipelineDefinitionsResponses];
+
 export type GetApiLinearPipelineDefinitionsByLinearPipelineDefinitionIdData = {
     body?: never;
     path: {
@@ -3348,106 +3919,112 @@ export type GetApiLinearPipelineDefinitionsByLinearPipelineDefinitionIdErrors = 
 
 export type GetApiLinearPipelineDefinitionsByLinearPipelineDefinitionIdError = GetApiLinearPipelineDefinitionsByLinearPipelineDefinitionIdErrors[keyof GetApiLinearPipelineDefinitionsByLinearPipelineDefinitionIdErrors];
 
-export type PutApiLinearPipelineDefinitionsByLinearPipelineDefinitionIdData = {
-    body: {
+export type GetApiLinearPipelineDefinitionsByLinearPipelineDefinitionIdResponses = {
+    /**
+     * Response for status 200
+     */
+    200: {
+        id: string;
         projectId: string;
         key: string;
         name: string;
         description: string | unknown;
         version: number;
         status: 'draft' | 'active' | 'archived';
+        stepDefinitions: Array<{
+            id: string;
+            linearPipelineDefinitionId: string;
+            stepDefinitionId: string;
+            stepDefinitionVersion: number;
+            key: string;
+            name: string;
+            description: string | unknown;
+            position: number;
+            inputBindingsJson: {
+                [key: string]: {
+                    source: string;
+                    path: string | unknown;
+                } | {
+                    source: string;
+                    stepKey: string;
+                    path: string | unknown;
+                } | {
+                    source: string;
+                    stepKey: string;
+                    signalKey: string;
+                } | {
+                    source: string;
+                    value: unknown;
+                };
+            } | unknown;
+            timeoutSeconds: number | unknown;
+            retryPolicyJson: {
+                [key: string]: unknown;
+            } | unknown;
+            advancementPolicyDefinition: {
+                id: string;
+                linearPipelineStepDefinitionId: string;
+                rulesJson: {
+                    rules: Array<{
+                        conditions: {
+                            [key: string]: unknown;
+                        };
+                        event: {
+                            type: string;
+                            params?: {
+                                [key: string]: unknown;
+                            };
+                        };
+                        name?: string;
+                        priority?: number;
+                        [key: string]: unknown | {
+                            [key: string]: unknown;
+                        } | {
+                            type: string;
+                            params?: {
+                                [key: string]: unknown;
+                            };
+                        } | string | number | undefined;
+                    }>;
+                    [key: string]: unknown | Array<{
+                        conditions: {
+                            [key: string]: unknown;
+                        };
+                        event: {
+                            type: string;
+                            params?: {
+                                [key: string]: unknown;
+                            };
+                        };
+                        name?: string;
+                        priority?: number;
+                        [key: string]: unknown | {
+                            [key: string]: unknown;
+                        } | {
+                            type: string;
+                            params?: {
+                                [key: string]: unknown;
+                            };
+                        } | string | number | undefined;
+                    }>;
+                };
+                defaultEventType: 'continue' | 'block' | 'needs_review' | 'complete';
+                defaultEventParamsJson: {
+                    [key: string]: unknown;
+                } | unknown;
+                allowedEventTypes: Array<'continue' | 'block' | 'needs_review' | 'complete'>;
+                createdAt: string;
+                updatedAt: string;
+            };
+            createdAt: string;
+            updatedAt: string;
+        }>;
+        createdAt: string;
+        updatedAt: string;
     };
-    path: {
-        linearPipelineDefinitionId: string;
-    };
-    query?: never;
-    url: '/api/linear-pipeline-definitions/{linearPipelineDefinitionId}';
 };
 
-export type PutApiLinearPipelineDefinitionsByLinearPipelineDefinitionIdErrors = {
-    /**
-     * Response for status 401
-     */
-    401: {
-        type: string;
-        title: string;
-        status: number;
-        detail?: string;
-        instance?: string;
-        code?: string;
-        errors?: Array<{
-            path: string;
-            message: string;
-            summary?: string;
-        }>;
-    };
-    /**
-     * Response for status 403
-     */
-    403: {
-        type: string;
-        title: string;
-        status: number;
-        detail?: string;
-        instance?: string;
-        code?: string;
-        errors?: Array<{
-            path: string;
-            message: string;
-            summary?: string;
-        }>;
-    };
-    /**
-     * Response for status 404
-     */
-    404: {
-        type: string;
-        title: string;
-        status: number;
-        detail?: string;
-        instance?: string;
-        code?: string;
-        errors?: Array<{
-            path: string;
-            message: string;
-            summary?: string;
-        }>;
-    };
-    /**
-     * Response for status 422
-     */
-    422: {
-        type: string;
-        title: string;
-        status: number;
-        detail?: string;
-        instance?: string;
-        code?: string;
-        errors?: Array<{
-            path: string;
-            message: string;
-            summary?: string;
-        }>;
-    };
-    /**
-     * Response for status 500
-     */
-    500: {
-        type: string;
-        title: string;
-        status: number;
-        detail?: string;
-        instance?: string;
-        code?: string;
-        errors?: Array<{
-            path: string;
-            message: string;
-            summary?: string;
-        }>;
-    };
-};
-
-export type PutApiLinearPipelineDefinitionsByLinearPipelineDefinitionIdError = PutApiLinearPipelineDefinitionsByLinearPipelineDefinitionIdErrors[keyof PutApiLinearPipelineDefinitionsByLinearPipelineDefinitionIdErrors];
+export type GetApiLinearPipelineDefinitionsByLinearPipelineDefinitionIdResponse = GetApiLinearPipelineDefinitionsByLinearPipelineDefinitionIdResponses[keyof GetApiLinearPipelineDefinitionsByLinearPipelineDefinitionIdResponses];
 
 export type PutApiLinearPipelineDefinitionsByLinearPipelineDefinitionIdArchiveData = {
     body?: never;
@@ -3543,8 +4120,194 @@ export type PutApiLinearPipelineDefinitionsByLinearPipelineDefinitionIdArchiveEr
 
 export type PutApiLinearPipelineDefinitionsByLinearPipelineDefinitionIdArchiveError = PutApiLinearPipelineDefinitionsByLinearPipelineDefinitionIdArchiveErrors[keyof PutApiLinearPipelineDefinitionsByLinearPipelineDefinitionIdArchiveErrors];
 
+export type PutApiLinearPipelineDefinitionsByLinearPipelineDefinitionIdArchiveResponses = {
+    /**
+     * Response for status 200
+     */
+    200: {
+        id: string;
+        projectId: string;
+        key: string;
+        name: string;
+        description: string | unknown;
+        version: number;
+        status: 'draft' | 'active' | 'archived';
+        stepDefinitions: Array<{
+            id: string;
+            linearPipelineDefinitionId: string;
+            stepDefinitionId: string;
+            stepDefinitionVersion: number;
+            key: string;
+            name: string;
+            description: string | unknown;
+            position: number;
+            inputBindingsJson: {
+                [key: string]: {
+                    source: string;
+                    path: string | unknown;
+                } | {
+                    source: string;
+                    stepKey: string;
+                    path: string | unknown;
+                } | {
+                    source: string;
+                    stepKey: string;
+                    signalKey: string;
+                } | {
+                    source: string;
+                    value: unknown;
+                };
+            } | unknown;
+            timeoutSeconds: number | unknown;
+            retryPolicyJson: {
+                [key: string]: unknown;
+            } | unknown;
+            advancementPolicyDefinition: {
+                id: string;
+                linearPipelineStepDefinitionId: string;
+                rulesJson: {
+                    rules: Array<{
+                        conditions: {
+                            [key: string]: unknown;
+                        };
+                        event: {
+                            type: string;
+                            params?: {
+                                [key: string]: unknown;
+                            };
+                        };
+                        name?: string;
+                        priority?: number;
+                        [key: string]: unknown | {
+                            [key: string]: unknown;
+                        } | {
+                            type: string;
+                            params?: {
+                                [key: string]: unknown;
+                            };
+                        } | string | number | undefined;
+                    }>;
+                    [key: string]: unknown | Array<{
+                        conditions: {
+                            [key: string]: unknown;
+                        };
+                        event: {
+                            type: string;
+                            params?: {
+                                [key: string]: unknown;
+                            };
+                        };
+                        name?: string;
+                        priority?: number;
+                        [key: string]: unknown | {
+                            [key: string]: unknown;
+                        } | {
+                            type: string;
+                            params?: {
+                                [key: string]: unknown;
+                            };
+                        } | string | number | undefined;
+                    }>;
+                };
+                defaultEventType: 'continue' | 'block' | 'needs_review' | 'complete';
+                defaultEventParamsJson: {
+                    [key: string]: unknown;
+                } | unknown;
+                allowedEventTypes: Array<'continue' | 'block' | 'needs_review' | 'complete'>;
+                createdAt: string;
+                updatedAt: string;
+            };
+            createdAt: string;
+            updatedAt: string;
+        }>;
+        createdAt: string;
+        updatedAt: string;
+    };
+};
+
+export type PutApiLinearPipelineDefinitionsByLinearPipelineDefinitionIdArchiveResponse = PutApiLinearPipelineDefinitionsByLinearPipelineDefinitionIdArchiveResponses[keyof PutApiLinearPipelineDefinitionsByLinearPipelineDefinitionIdArchiveResponses];
+
 export type PostApiLinearPipelineDefinitionsByLinearPipelineDefinitionIdStepsData = {
-    body?: never;
+    body: {
+        stepDefinitionId: string;
+        stepDefinitionVersion: number;
+        key: string;
+        name: string;
+        description: string | unknown;
+        position: number;
+        inputBindingsJson: {
+            [key: string]: {
+                source: string;
+                path: string | unknown;
+            } | {
+                source: string;
+                stepKey: string;
+                path: string | unknown;
+            } | {
+                source: string;
+                stepKey: string;
+                signalKey: string;
+            } | {
+                source: string;
+                value: unknown;
+            };
+        } | unknown;
+        timeoutSeconds: number | unknown;
+        retryPolicyJson: {
+            [key: string]: unknown;
+        } | unknown;
+        advancementPolicyDefinition: {
+            rulesJson: {
+                rules: Array<{
+                    conditions: {
+                        [key: string]: unknown;
+                    };
+                    event: {
+                        type: string;
+                        params?: {
+                            [key: string]: unknown;
+                        };
+                    };
+                    name?: string;
+                    priority?: number;
+                    [key: string]: unknown | {
+                        [key: string]: unknown;
+                    } | {
+                        type: string;
+                        params?: {
+                            [key: string]: unknown;
+                        };
+                    } | string | number | undefined;
+                }>;
+                [key: string]: unknown | Array<{
+                    conditions: {
+                        [key: string]: unknown;
+                    };
+                    event: {
+                        type: string;
+                        params?: {
+                            [key: string]: unknown;
+                        };
+                    };
+                    name?: string;
+                    priority?: number;
+                    [key: string]: unknown | {
+                        [key: string]: unknown;
+                    } | {
+                        type: string;
+                        params?: {
+                            [key: string]: unknown;
+                        };
+                    } | string | number | undefined;
+                }>;
+            };
+            defaultEventType: 'continue' | 'block' | 'needs_review' | 'complete';
+            defaultEventParamsJson: {
+                [key: string]: unknown;
+            } | unknown;
+            allowedEventTypes: Array<'continue' | 'block' | 'needs_review' | 'complete'>;
+        };
+    };
     path: {
         linearPipelineDefinitionId: string;
     };
@@ -3636,6 +4399,113 @@ export type PostApiLinearPipelineDefinitionsByLinearPipelineDefinitionIdStepsErr
 };
 
 export type PostApiLinearPipelineDefinitionsByLinearPipelineDefinitionIdStepsError = PostApiLinearPipelineDefinitionsByLinearPipelineDefinitionIdStepsErrors[keyof PostApiLinearPipelineDefinitionsByLinearPipelineDefinitionIdStepsErrors];
+
+export type PostApiLinearPipelineDefinitionsByLinearPipelineDefinitionIdStepsResponses = {
+    /**
+     * Response for status 200
+     */
+    200: {
+        id: string;
+        projectId: string;
+        key: string;
+        name: string;
+        description: string | unknown;
+        version: number;
+        status: 'draft' | 'active' | 'archived';
+        stepDefinitions: Array<{
+            id: string;
+            linearPipelineDefinitionId: string;
+            stepDefinitionId: string;
+            stepDefinitionVersion: number;
+            key: string;
+            name: string;
+            description: string | unknown;
+            position: number;
+            inputBindingsJson: {
+                [key: string]: {
+                    source: string;
+                    path: string | unknown;
+                } | {
+                    source: string;
+                    stepKey: string;
+                    path: string | unknown;
+                } | {
+                    source: string;
+                    stepKey: string;
+                    signalKey: string;
+                } | {
+                    source: string;
+                    value: unknown;
+                };
+            } | unknown;
+            timeoutSeconds: number | unknown;
+            retryPolicyJson: {
+                [key: string]: unknown;
+            } | unknown;
+            advancementPolicyDefinition: {
+                id: string;
+                linearPipelineStepDefinitionId: string;
+                rulesJson: {
+                    rules: Array<{
+                        conditions: {
+                            [key: string]: unknown;
+                        };
+                        event: {
+                            type: string;
+                            params?: {
+                                [key: string]: unknown;
+                            };
+                        };
+                        name?: string;
+                        priority?: number;
+                        [key: string]: unknown | {
+                            [key: string]: unknown;
+                        } | {
+                            type: string;
+                            params?: {
+                                [key: string]: unknown;
+                            };
+                        } | string | number | undefined;
+                    }>;
+                    [key: string]: unknown | Array<{
+                        conditions: {
+                            [key: string]: unknown;
+                        };
+                        event: {
+                            type: string;
+                            params?: {
+                                [key: string]: unknown;
+                            };
+                        };
+                        name?: string;
+                        priority?: number;
+                        [key: string]: unknown | {
+                            [key: string]: unknown;
+                        } | {
+                            type: string;
+                            params?: {
+                                [key: string]: unknown;
+                            };
+                        } | string | number | undefined;
+                    }>;
+                };
+                defaultEventType: 'continue' | 'block' | 'needs_review' | 'complete';
+                defaultEventParamsJson: {
+                    [key: string]: unknown;
+                } | unknown;
+                allowedEventTypes: Array<'continue' | 'block' | 'needs_review' | 'complete'>;
+                createdAt: string;
+                updatedAt: string;
+            };
+            createdAt: string;
+            updatedAt: string;
+        }>;
+        createdAt: string;
+        updatedAt: string;
+    };
+};
+
+export type PostApiLinearPipelineDefinitionsByLinearPipelineDefinitionIdStepsResponse = PostApiLinearPipelineDefinitionsByLinearPipelineDefinitionIdStepsResponses[keyof PostApiLinearPipelineDefinitionsByLinearPipelineDefinitionIdStepsResponses];
 
 export type DeleteApiLinearPipelineDefinitionsByLinearPipelineDefinitionIdStepsByLinearPipelineStepDefinitionIdData = {
     body?: never;
@@ -3732,8 +4602,194 @@ export type DeleteApiLinearPipelineDefinitionsByLinearPipelineDefinitionIdStepsB
 
 export type DeleteApiLinearPipelineDefinitionsByLinearPipelineDefinitionIdStepsByLinearPipelineStepDefinitionIdError = DeleteApiLinearPipelineDefinitionsByLinearPipelineDefinitionIdStepsByLinearPipelineStepDefinitionIdErrors[keyof DeleteApiLinearPipelineDefinitionsByLinearPipelineDefinitionIdStepsByLinearPipelineStepDefinitionIdErrors];
 
+export type DeleteApiLinearPipelineDefinitionsByLinearPipelineDefinitionIdStepsByLinearPipelineStepDefinitionIdResponses = {
+    /**
+     * Response for status 200
+     */
+    200: {
+        id: string;
+        projectId: string;
+        key: string;
+        name: string;
+        description: string | unknown;
+        version: number;
+        status: 'draft' | 'active' | 'archived';
+        stepDefinitions: Array<{
+            id: string;
+            linearPipelineDefinitionId: string;
+            stepDefinitionId: string;
+            stepDefinitionVersion: number;
+            key: string;
+            name: string;
+            description: string | unknown;
+            position: number;
+            inputBindingsJson: {
+                [key: string]: {
+                    source: string;
+                    path: string | unknown;
+                } | {
+                    source: string;
+                    stepKey: string;
+                    path: string | unknown;
+                } | {
+                    source: string;
+                    stepKey: string;
+                    signalKey: string;
+                } | {
+                    source: string;
+                    value: unknown;
+                };
+            } | unknown;
+            timeoutSeconds: number | unknown;
+            retryPolicyJson: {
+                [key: string]: unknown;
+            } | unknown;
+            advancementPolicyDefinition: {
+                id: string;
+                linearPipelineStepDefinitionId: string;
+                rulesJson: {
+                    rules: Array<{
+                        conditions: {
+                            [key: string]: unknown;
+                        };
+                        event: {
+                            type: string;
+                            params?: {
+                                [key: string]: unknown;
+                            };
+                        };
+                        name?: string;
+                        priority?: number;
+                        [key: string]: unknown | {
+                            [key: string]: unknown;
+                        } | {
+                            type: string;
+                            params?: {
+                                [key: string]: unknown;
+                            };
+                        } | string | number | undefined;
+                    }>;
+                    [key: string]: unknown | Array<{
+                        conditions: {
+                            [key: string]: unknown;
+                        };
+                        event: {
+                            type: string;
+                            params?: {
+                                [key: string]: unknown;
+                            };
+                        };
+                        name?: string;
+                        priority?: number;
+                        [key: string]: unknown | {
+                            [key: string]: unknown;
+                        } | {
+                            type: string;
+                            params?: {
+                                [key: string]: unknown;
+                            };
+                        } | string | number | undefined;
+                    }>;
+                };
+                defaultEventType: 'continue' | 'block' | 'needs_review' | 'complete';
+                defaultEventParamsJson: {
+                    [key: string]: unknown;
+                } | unknown;
+                allowedEventTypes: Array<'continue' | 'block' | 'needs_review' | 'complete'>;
+                createdAt: string;
+                updatedAt: string;
+            };
+            createdAt: string;
+            updatedAt: string;
+        }>;
+        createdAt: string;
+        updatedAt: string;
+    };
+};
+
+export type DeleteApiLinearPipelineDefinitionsByLinearPipelineDefinitionIdStepsByLinearPipelineStepDefinitionIdResponse = DeleteApiLinearPipelineDefinitionsByLinearPipelineDefinitionIdStepsByLinearPipelineStepDefinitionIdResponses[keyof DeleteApiLinearPipelineDefinitionsByLinearPipelineDefinitionIdStepsByLinearPipelineStepDefinitionIdResponses];
+
 export type PutApiLinearPipelineDefinitionsByLinearPipelineDefinitionIdStepsByLinearPipelineStepDefinitionIdData = {
-    body?: never;
+    body: {
+        stepDefinitionId: string;
+        stepDefinitionVersion: number;
+        key: string;
+        name: string;
+        description: string | unknown;
+        position: number;
+        inputBindingsJson: {
+            [key: string]: {
+                source: string;
+                path: string | unknown;
+            } | {
+                source: string;
+                stepKey: string;
+                path: string | unknown;
+            } | {
+                source: string;
+                stepKey: string;
+                signalKey: string;
+            } | {
+                source: string;
+                value: unknown;
+            };
+        } | unknown;
+        timeoutSeconds: number | unknown;
+        retryPolicyJson: {
+            [key: string]: unknown;
+        } | unknown;
+        advancementPolicyDefinition: {
+            rulesJson: {
+                rules: Array<{
+                    conditions: {
+                        [key: string]: unknown;
+                    };
+                    event: {
+                        type: string;
+                        params?: {
+                            [key: string]: unknown;
+                        };
+                    };
+                    name?: string;
+                    priority?: number;
+                    [key: string]: unknown | {
+                        [key: string]: unknown;
+                    } | {
+                        type: string;
+                        params?: {
+                            [key: string]: unknown;
+                        };
+                    } | string | number | undefined;
+                }>;
+                [key: string]: unknown | Array<{
+                    conditions: {
+                        [key: string]: unknown;
+                    };
+                    event: {
+                        type: string;
+                        params?: {
+                            [key: string]: unknown;
+                        };
+                    };
+                    name?: string;
+                    priority?: number;
+                    [key: string]: unknown | {
+                        [key: string]: unknown;
+                    } | {
+                        type: string;
+                        params?: {
+                            [key: string]: unknown;
+                        };
+                    } | string | number | undefined;
+                }>;
+            };
+            defaultEventType: 'continue' | 'block' | 'needs_review' | 'complete';
+            defaultEventParamsJson: {
+                [key: string]: unknown;
+            } | unknown;
+            allowedEventTypes: Array<'continue' | 'block' | 'needs_review' | 'complete'>;
+        };
+    };
     path: {
         linearPipelineDefinitionId: string;
         linearPipelineStepDefinitionId: string;
@@ -3827,8 +4883,163 @@ export type PutApiLinearPipelineDefinitionsByLinearPipelineDefinitionIdStepsByLi
 
 export type PutApiLinearPipelineDefinitionsByLinearPipelineDefinitionIdStepsByLinearPipelineStepDefinitionIdError = PutApiLinearPipelineDefinitionsByLinearPipelineDefinitionIdStepsByLinearPipelineStepDefinitionIdErrors[keyof PutApiLinearPipelineDefinitionsByLinearPipelineDefinitionIdStepsByLinearPipelineStepDefinitionIdErrors];
 
+export type PutApiLinearPipelineDefinitionsByLinearPipelineDefinitionIdStepsByLinearPipelineStepDefinitionIdResponses = {
+    /**
+     * Response for status 200
+     */
+    200: {
+        id: string;
+        projectId: string;
+        key: string;
+        name: string;
+        description: string | unknown;
+        version: number;
+        status: 'draft' | 'active' | 'archived';
+        stepDefinitions: Array<{
+            id: string;
+            linearPipelineDefinitionId: string;
+            stepDefinitionId: string;
+            stepDefinitionVersion: number;
+            key: string;
+            name: string;
+            description: string | unknown;
+            position: number;
+            inputBindingsJson: {
+                [key: string]: {
+                    source: string;
+                    path: string | unknown;
+                } | {
+                    source: string;
+                    stepKey: string;
+                    path: string | unknown;
+                } | {
+                    source: string;
+                    stepKey: string;
+                    signalKey: string;
+                } | {
+                    source: string;
+                    value: unknown;
+                };
+            } | unknown;
+            timeoutSeconds: number | unknown;
+            retryPolicyJson: {
+                [key: string]: unknown;
+            } | unknown;
+            advancementPolicyDefinition: {
+                id: string;
+                linearPipelineStepDefinitionId: string;
+                rulesJson: {
+                    rules: Array<{
+                        conditions: {
+                            [key: string]: unknown;
+                        };
+                        event: {
+                            type: string;
+                            params?: {
+                                [key: string]: unknown;
+                            };
+                        };
+                        name?: string;
+                        priority?: number;
+                        [key: string]: unknown | {
+                            [key: string]: unknown;
+                        } | {
+                            type: string;
+                            params?: {
+                                [key: string]: unknown;
+                            };
+                        } | string | number | undefined;
+                    }>;
+                    [key: string]: unknown | Array<{
+                        conditions: {
+                            [key: string]: unknown;
+                        };
+                        event: {
+                            type: string;
+                            params?: {
+                                [key: string]: unknown;
+                            };
+                        };
+                        name?: string;
+                        priority?: number;
+                        [key: string]: unknown | {
+                            [key: string]: unknown;
+                        } | {
+                            type: string;
+                            params?: {
+                                [key: string]: unknown;
+                            };
+                        } | string | number | undefined;
+                    }>;
+                };
+                defaultEventType: 'continue' | 'block' | 'needs_review' | 'complete';
+                defaultEventParamsJson: {
+                    [key: string]: unknown;
+                } | unknown;
+                allowedEventTypes: Array<'continue' | 'block' | 'needs_review' | 'complete'>;
+                createdAt: string;
+                updatedAt: string;
+            };
+            createdAt: string;
+            updatedAt: string;
+        }>;
+        createdAt: string;
+        updatedAt: string;
+    };
+};
+
+export type PutApiLinearPipelineDefinitionsByLinearPipelineDefinitionIdStepsByLinearPipelineStepDefinitionIdResponse = PutApiLinearPipelineDefinitionsByLinearPipelineDefinitionIdStepsByLinearPipelineStepDefinitionIdResponses[keyof PutApiLinearPipelineDefinitionsByLinearPipelineDefinitionIdStepsByLinearPipelineStepDefinitionIdResponses];
+
 export type PutApiLinearPipelineDefinitionsByLinearPipelineDefinitionIdStepsByLinearPipelineStepDefinitionIdAdvancementPolicyData = {
-    body?: never;
+    body: {
+        rulesJson: {
+            rules: Array<{
+                conditions: {
+                    [key: string]: unknown;
+                };
+                event: {
+                    type: string;
+                    params?: {
+                        [key: string]: unknown;
+                    };
+                };
+                name?: string;
+                priority?: number;
+                [key: string]: unknown | {
+                    [key: string]: unknown;
+                } | {
+                    type: string;
+                    params?: {
+                        [key: string]: unknown;
+                    };
+                } | string | number | undefined;
+            }>;
+            [key: string]: unknown | Array<{
+                conditions: {
+                    [key: string]: unknown;
+                };
+                event: {
+                    type: string;
+                    params?: {
+                        [key: string]: unknown;
+                    };
+                };
+                name?: string;
+                priority?: number;
+                [key: string]: unknown | {
+                    [key: string]: unknown;
+                } | {
+                    type: string;
+                    params?: {
+                        [key: string]: unknown;
+                    };
+                } | string | number | undefined;
+            }>;
+        };
+        defaultEventType: 'continue' | 'block' | 'needs_review' | 'complete';
+        defaultEventParamsJson: unknown;
+        allowedEventTypes: Array<'continue' | 'block' | 'needs_review' | 'complete'>;
+    };
     path: {
         linearPipelineDefinitionId: string;
         linearPipelineStepDefinitionId: string;
@@ -3921,6 +5132,113 @@ export type PutApiLinearPipelineDefinitionsByLinearPipelineDefinitionIdStepsByLi
 };
 
 export type PutApiLinearPipelineDefinitionsByLinearPipelineDefinitionIdStepsByLinearPipelineStepDefinitionIdAdvancementPolicyError = PutApiLinearPipelineDefinitionsByLinearPipelineDefinitionIdStepsByLinearPipelineStepDefinitionIdAdvancementPolicyErrors[keyof PutApiLinearPipelineDefinitionsByLinearPipelineDefinitionIdStepsByLinearPipelineStepDefinitionIdAdvancementPolicyErrors];
+
+export type PutApiLinearPipelineDefinitionsByLinearPipelineDefinitionIdStepsByLinearPipelineStepDefinitionIdAdvancementPolicyResponses = {
+    /**
+     * Response for status 200
+     */
+    200: {
+        id: string;
+        projectId: string;
+        key: string;
+        name: string;
+        description: string | unknown;
+        version: number;
+        status: 'draft' | 'active' | 'archived';
+        stepDefinitions: Array<{
+            id: string;
+            linearPipelineDefinitionId: string;
+            stepDefinitionId: string;
+            stepDefinitionVersion: number;
+            key: string;
+            name: string;
+            description: string | unknown;
+            position: number;
+            inputBindingsJson: {
+                [key: string]: {
+                    source: string;
+                    path: string | unknown;
+                } | {
+                    source: string;
+                    stepKey: string;
+                    path: string | unknown;
+                } | {
+                    source: string;
+                    stepKey: string;
+                    signalKey: string;
+                } | {
+                    source: string;
+                    value: unknown;
+                };
+            } | unknown;
+            timeoutSeconds: number | unknown;
+            retryPolicyJson: {
+                [key: string]: unknown;
+            } | unknown;
+            advancementPolicyDefinition: {
+                id: string;
+                linearPipelineStepDefinitionId: string;
+                rulesJson: {
+                    rules: Array<{
+                        conditions: {
+                            [key: string]: unknown;
+                        };
+                        event: {
+                            type: string;
+                            params?: {
+                                [key: string]: unknown;
+                            };
+                        };
+                        name?: string;
+                        priority?: number;
+                        [key: string]: unknown | {
+                            [key: string]: unknown;
+                        } | {
+                            type: string;
+                            params?: {
+                                [key: string]: unknown;
+                            };
+                        } | string | number | undefined;
+                    }>;
+                    [key: string]: unknown | Array<{
+                        conditions: {
+                            [key: string]: unknown;
+                        };
+                        event: {
+                            type: string;
+                            params?: {
+                                [key: string]: unknown;
+                            };
+                        };
+                        name?: string;
+                        priority?: number;
+                        [key: string]: unknown | {
+                            [key: string]: unknown;
+                        } | {
+                            type: string;
+                            params?: {
+                                [key: string]: unknown;
+                            };
+                        } | string | number | undefined;
+                    }>;
+                };
+                defaultEventType: 'continue' | 'block' | 'needs_review' | 'complete';
+                defaultEventParamsJson: {
+                    [key: string]: unknown;
+                } | unknown;
+                allowedEventTypes: Array<'continue' | 'block' | 'needs_review' | 'complete'>;
+                createdAt: string;
+                updatedAt: string;
+            };
+            createdAt: string;
+            updatedAt: string;
+        }>;
+        createdAt: string;
+        updatedAt: string;
+    };
+};
+
+export type PutApiLinearPipelineDefinitionsByLinearPipelineDefinitionIdStepsByLinearPipelineStepDefinitionIdAdvancementPolicyResponse = PutApiLinearPipelineDefinitionsByLinearPipelineDefinitionIdStepsByLinearPipelineStepDefinitionIdAdvancementPolicyResponses[keyof PutApiLinearPipelineDefinitionsByLinearPipelineDefinitionIdStepsByLinearPipelineStepDefinitionIdAdvancementPolicyResponses];
 
 export type GetApiLinearPipelineExecutionsData = {
     body?: never;

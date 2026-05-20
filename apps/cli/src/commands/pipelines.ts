@@ -1,7 +1,6 @@
 import type { ArgumentsCamelCase, Argv, CommandModule } from "yargs";
 import { join } from "node:path";
 import { existsSync } from "node:fs";
-import { createPipelineDefinitionsClient } from "@boboddy/sdk/definitions/pipelines";
 import { createStepDefinitionsClient } from "@boboddy/sdk/definitions/steps";
 import { resolveBoboddyBaseUrl } from "../auth/config";
 import { loadAuthenticatedSession } from "../auth/session";
@@ -12,6 +11,7 @@ import {
 } from "../pipelines/pipeline-builder-scaffolder";
 import { loadPipelinesFromDirectory } from "../pipelines/pipeline-file-loader";
 import { loadPipelineStepsFromDirectory } from "../pipelines/pipeline-step-file-loader";
+import { pushPipelineDefinitions } from "../pipelines/push-pipeline-definitions";
 import { readProjectConfig } from "../init/project-config";
 import {
   PIPELINE_BUILDER_DIR,
@@ -116,114 +116,17 @@ const runPush = async (
     loadSteps: loadPipelineStepsFromDirectory,
   });
 
-  // Build a map of step key → server step def (needed to resolve IDs)
   const stepDefsClient = createStepDefinitionsClient(baseUrl);
   const stepDefs = await stepDefsClient.listByProjectId(projectId, { headers });
 
-  type StepDefEntry = { id: string; key: string; version: number; name: string; description: string | null };
-  const stepDefMap = new Map<string, StepDefEntry>();
-  for (const s of stepDefs as StepDefEntry[]) {
-    const existing = stepDefMap.get(s.key);
-    if (!existing || s.version > existing.version) {
-      stepDefMap.set(s.key, s);
-    }
-  }
-
-  const pipelineClient = createPipelineDefinitionsClient(baseUrl);
-  const existingPipelines = await pipelineClient.listByProjectId(projectId, { headers });
-
-  const existingByKey = new Map<
-    string,
-    { id: string; steps: { id: string; key: string }[] }
-  >();
-  for (const p of existingPipelines) {
-    existingByKey.set(`${p.key}@v${String(p.version)}`, {
-      id: p.id,
-      steps: p.steps ?? [],
-    });
-  }
-
-  let created = 0;
-  let updated = 0;
-
-  for (const spec of specs) {
-    const lookup = `${spec.key}@v${String(spec.version)}`;
-    const existingPipeline = existingByKey.get(lookup);
-
-    const stepDefinitions = spec.steps.map((step) => {
-      const stepDef = stepDefMap.get(step.stepKey);
-      if (!stepDef) {
-        throw new Error(
-          `Step "${step.stepKey}" referenced in pipeline "${spec.key}" was not found on the server. ` +
-            `Run \`boboddy steps push\` first to push your step definitions.`,
-        );
-      }
-      return {
-        stepDefinitionId: stepDef.id,
-        stepDefinitionVersion: stepDef.version,
-        key: step.stepKey,
-        name: step.stepName,
-        description: step.stepDescription,
-        position: step.position,
-        inputBindingsJson: step.inputBindingsJson as Record<string, unknown>,
-        timeoutSeconds: step.timeoutSeconds,
-        retryPolicyJson: null as null,
-        advancementPolicyDefinition: step.advancementPolicyDefinition,
-      };
-    });
-
-    if (!existingPipeline) {
-      await pipelineClient.create(
-        {
-          projectId,
-          key: spec.key,
-          name: spec.name,
-          description: spec.description,
-          version: spec.version,
-          status: spec.status,
-          stepDefinitions,
-        },
-        { headers },
-      );
-      created++;
-      logger.info(
-        { key: spec.key, version: spec.version },
-        `✓ ${spec.key} v${String(spec.version)} → created`,
-      );
-    } else {
-      await pipelineClient.update(
-        existingPipeline.id,
-        {
-          projectId,
-          key: spec.key,
-          name: spec.name,
-          description: spec.description,
-          version: spec.version,
-          status: spec.status,
-        },
-        { headers },
-      );
-
-      for (const existingStep of existingPipeline.steps) {
-        await pipelineClient.removeStep(existingPipeline.id, existingStep.id, { headers });
-      }
-
-      for (const stepInput of stepDefinitions) {
-        await pipelineClient.addStep(existingPipeline.id, stepInput, { headers });
-      }
-
-      updated++;
-      logger.info(
-        { key: spec.key, version: spec.version },
-        `✓ ${spec.key} v${String(spec.version)} → updated`,
-      );
-    }
-  }
-
-  logger.info(
-    { created, updated },
-    `Pushed ${String(created + updated)} pipeline definition(s) (${String(created)} created, ${String(updated)} updated)`,
-  );
+  await pushPipelineDefinitions({
+    projectId,
+    baseUrl,
+    headers,
+    logger,
+    specs,
+    stepDefs: stepDefs as { id: string; key: string; version: number }[],
+  });
 };
 
 const pushCommand: CommandModule<object, PushArguments> = {

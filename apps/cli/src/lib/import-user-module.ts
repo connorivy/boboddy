@@ -73,11 +73,27 @@ function resolveSpecifier(specifier: string, importerPath: string): string {
     return specifier;
   }
 
+  // Normalize "node_modules/foo/..." → "foo/..." (IDE auto-import artifact)
+  if (specifier.startsWith("node_modules/")) {
+    specifier = specifier.slice("node_modules/".length);
+  }
+
   const { packageDir, subpath } = resolvePackageDirectory(specifier, importerPath);
   const packageJson = JSON.parse(
     readFileSync(join(packageDir, "package.json"), "utf8"),
   ) as PackageJson;
-  const exportTarget = resolveExportTarget(packageJson.exports, subpath);
+  let exportTarget = resolveExportTarget(packageJson.exports, subpath);
+
+  // When the user imports via a dist/ path (e.g. from IDE auto-import), strip "dist/" and
+  // walk up the subpath to find the containing package export.
+  if (exportTarget === null && subpath.startsWith("dist/")) {
+    let candidate = subpath.slice(5); // strip "dist/"
+    while (candidate.length > 0 && exportTarget === null) {
+      exportTarget = resolveExportTarget(packageJson.exports, candidate);
+      const lastSlash = candidate.lastIndexOf("/");
+      candidate = lastSlash > 0 ? candidate.slice(0, lastSlash) : "";
+    }
+  }
 
   const resolvedPath = exportTarget
     ? join(packageDir, exportTarget)

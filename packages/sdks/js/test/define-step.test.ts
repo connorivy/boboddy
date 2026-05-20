@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { z } from "zod";
 import { defineStep } from "../src/definitions/steps/define-step";
+import { Features, type AnyStepFeature } from "../src/definitions/steps/step-features";
 
 describe("defineStep", () => {
   test("applies sensible defaults", () => {
@@ -85,6 +86,141 @@ describe("defineStep", () => {
           },
         },
       },
+    });
+  });
+
+  describe("features", () => {
+    const mockFeatureA: AnyStepFeature = {
+      _resultExtension: z.object({ flagA: z.boolean() }),
+      _promptAddition: "Feature A instructions",
+      _signals: [{ key: "sig_a", sourcePath: "flagA", type: "boolean", required: true }],
+    };
+    const mockFeatureB: AnyStepFeature = {
+      _resultExtension: z.object({ labelB: z.string() }),
+      _promptAddition: "Feature B instructions",
+      _signals: [{ key: "sig_b", sourcePath: "labelB", type: "string", required: false }],
+    };
+
+    test("merges feature result extension into resultSchemaJson", () => {
+      const spec = defineStep({
+        key: "my-step",
+        name: "My Step",
+        result: z.object({ score: z.number() }),
+        features: [mockFeatureA],
+      });
+
+      expect(spec.resultSchemaJson).toMatchObject({
+        properties: {
+          score: { type: "number" },
+          flagA: { type: "boolean" },
+        },
+      });
+    });
+
+    test("builds resultSchemaJson from feature alone when no base result schema", () => {
+      const spec = defineStep({
+        key: "my-step",
+        name: "My Step",
+        features: [mockFeatureA],
+      });
+
+      expect(spec.resultSchemaJson).toMatchObject({
+        properties: { flagA: { type: "boolean" } },
+      });
+    });
+
+    test("appends feature prompt addition when base prompt is null", () => {
+      const spec = defineStep({
+        key: "my-step",
+        name: "My Step",
+        features: [mockFeatureA],
+      });
+
+      expect(spec.prompt).toBe("Feature A instructions");
+    });
+
+    test("appends feature prompt addition to existing prompt with double newline separator", () => {
+      const spec = defineStep({
+        key: "my-step",
+        name: "My Step",
+        prompt: "Base prompt.",
+        features: [mockFeatureA],
+      });
+
+      expect(spec.prompt).toBe("Base prompt.\n\nFeature A instructions");
+    });
+
+    test("injects feature signals into signalExtractorDefinitions", () => {
+      const spec = defineStep({
+        key: "my-step",
+        name: "My Step",
+        features: [mockFeatureA],
+      });
+
+      expect(spec.signalExtractorDefinitions).toEqual([
+        { key: "sig_a", sourcePath: "flagA", type: "boolean", required: true, availableWhenResultStatusIn: null },
+      ]);
+    });
+
+    test("feature signals are appended after user-defined signals", () => {
+      const spec = defineStep({
+        key: "my-step",
+        name: "My Step",
+        result: z.object({ score: z.number(), flagA: z.boolean() }),
+        signals: [{ sourcePath: "score" }],
+        features: [mockFeatureA],
+      });
+
+      const defs = spec.signalExtractorDefinitions;
+      expect(defs).toHaveLength(2);
+      expect(defs[0]!.key).toBe("score");
+      expect(defs[1]!.key).toBe("sig_a");
+    });
+
+    test("multiple features merge all result extensions, prompts, and signals", () => {
+      const spec = defineStep({
+        key: "my-step",
+        name: "My Step",
+        features: [mockFeatureA, mockFeatureB],
+      });
+
+      expect(spec.resultSchemaJson).toMatchObject({
+        properties: {
+          flagA: { type: "boolean" },
+          labelB: { type: "string" },
+        },
+      });
+      expect(spec.prompt).toBe("Feature A instructions\n\nFeature B instructions");
+      const defs = spec.signalExtractorDefinitions;
+      expect(defs).toHaveLength(2);
+      expect(defs[0]!.key).toBe("sig_a");
+      expect(defs[1]!.key).toBe("sig_b");
+    });
+
+    test("Features.feedbackRequests() injects feedbackRequests field, prompt section, and signal", () => {
+      const spec = defineStep({
+        key: "my-step",
+        name: "My Step",
+        result: z.object({ outcome: z.string() }),
+        prompt: "Do the thing.",
+        features: [Features.feedbackRequests()],
+      });
+
+      expect(spec.resultSchemaJson).toMatchObject({
+        properties: {
+          outcome: { type: "string" },
+          feedbackRequests: { type: "array" },
+        },
+      });
+      expect(spec.prompt).toContain("## Feedback Requests");
+      expect(spec.prompt).toMatch(/^Do the thing\.\n\n/);
+      expect(spec.signalExtractorDefinitions).toContainEqual({
+        key: "$boboddy_feedback_request_v1",
+        sourcePath: "feedbackRequests",
+        type: "array",
+        required: false,
+        availableWhenResultStatusIn: null,
+      });
     });
   });
 

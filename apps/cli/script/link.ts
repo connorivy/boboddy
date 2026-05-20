@@ -16,7 +16,7 @@ const binLink = join(binDir, "boboddy");
 
 await mkdir(scopeDir, { recursive: true });
 
-await rm(pkgLink, { force: true });
+await rm(pkgLink, { force: true, recursive: true });
 await symlink(projectRoot, pkgLink);
 
 await rm(binLink, { force: true });

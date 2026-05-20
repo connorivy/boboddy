@@ -167,6 +167,10 @@ jobs:
           npm pkg delete dependencies."@boboddy/runtime-proxy" --prefix apps/cli
           npm pkg delete dependencies."@boboddy/sdk" --prefix apps/cli
 
+      # Ensure npm 11.5.1 or later for trusted publishing
+      - name: upgrade npm
+        run: npm install -g npm@latest
+      
       - name: Publish SDK
         working-directory: packages/sdks/js
         run: |

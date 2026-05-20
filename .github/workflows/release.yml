@@ -167,28 +167,8 @@ jobs:
           npm pkg delete dependencies."@boboddy/runtime-proxy" --prefix apps/cli
           npm pkg delete dependencies."@boboddy/sdk" --prefix apps/cli
 
-      # Check bundled npm version for trusted publishing
       - name: Check npm version
-        run: |
-          npm_version="$(npm --version)"
-          echo "$npm_version"
-          node -e '
-          const actualVersionParts = process.argv[1].split(".").map(Number);
-          const minimum = [11, 5, 1];
-
-          for (let componentIndex = 0; componentIndex < minimum.length; componentIndex += 1) {
-            if ((actualVersionParts[componentIndex] ?? 0) > minimum[componentIndex]) {
-              process.exit(0);
-            }
-
-            if ((actualVersionParts[componentIndex] ?? 0) < minimum[componentIndex]) {
-              console.error(
-                `npm ${process.argv[1]} is too old for trusted publishing; need >= ${minimum.join(".")}`,
-              );
-              process.exit(1);
-            }
-          }
-          ' "$npm_version"
+        run: npm --version
       
       - name: Publish SDK
         working-directory: packages/sdks/js

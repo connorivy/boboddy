@@ -38,11 +38,12 @@ const pkg = JSON.parse(originalText) as {
 if (await published(pkg.name, pkg.version)) {
   console.log(`already published ${pkg.name}@${pkg.version}`);
 } else {
+  await $`bun run build`;
+
   pkg.exports = transformExports(pkg.exports);
   await Bun.write("package.json", `${JSON.stringify(pkg, null, 2)}\n`);
 
   try {
-    await $`bun run build`;
     await $`bun pm pack`;
     await $`npm publish *.tgz --tag ${tag} --access public`;
   } finally {

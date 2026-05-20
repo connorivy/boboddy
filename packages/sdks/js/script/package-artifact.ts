@@ -6,6 +6,10 @@ type SdkPackageJson = {
   version: string;
   type?: string;
   exports?: Record<string, unknown>;
+  repository?: {
+    type?: string;
+    url?: string;
+  };
   publishConfig?: {
     exports?: Record<string, unknown>;
   };
@@ -46,6 +50,7 @@ const installPackageJson = {
   version: sourcePackage.version,
   type: sourcePackage.type ?? "module",
   exports: sourcePackage.publishConfig?.exports ?? sourcePackage.exports,
+  repository: sourcePackage.repository,
   peerDependencies: sourcePackage.peerDependencies ?? {},
 };
 

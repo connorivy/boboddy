@@ -9,6 +9,10 @@
     "bin",
     "dist"
   ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/connorivy/boboddy"
+  },
   "publishConfig": {
     "access": "public"
   },

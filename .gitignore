@@ -6,3 +6,4 @@ dist
 
 # build artifacts
 *.tsbuildinfo
+packages/sdks/js/.artifacts/

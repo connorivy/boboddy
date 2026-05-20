@@ -28,7 +28,7 @@
     "validate": "bash scripts/validate.sh",
     "release": "bash scripts/release.sh",
     "cli:link": "bun run --filter @boboddy/cli build && bun run --filter @boboddy/cli link",
-    "cli:link:dev": "bun run --filter @boboddy/sdk link:local && bun run --filter @boboddy/opencode-plugin build && bun run --filter @boboddy/cli build:dev && bun run --filter @boboddy/cli link",
+    "cli:link:dev": "bun run --filter @boboddy/sdk pack:local && bun run --filter @boboddy/opencode-plugin build && bun run --filter @boboddy/cli build:dev && bun run --filter @boboddy/cli link",
     "cli:unlink": "cd apps/cli && npm unlink"
   }
 }

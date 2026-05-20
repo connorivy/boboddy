@@ -25,6 +25,7 @@
     "generate": "openapi-ts",
     "build": "bun run script/build.ts",
     "link:local": "bun link",
+    "pack:local": "bun run script/pack-local.ts",
     "test": "bun test test",
     "typecheck": "tsgo -p tsconfig.json --noEmit"
   },

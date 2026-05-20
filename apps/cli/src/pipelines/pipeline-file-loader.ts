@@ -42,6 +42,7 @@ export async function loadPipelinesFromDirectory(
       ) {
         throw new Error(
           `Failed to import ${file}: ${message}\n\nRun \`npm install\` or \`bun install\` inside .boboddy/pipeline-builder/ to install dependencies first.`,
+          { cause: err },
         );
       }
       throw err;

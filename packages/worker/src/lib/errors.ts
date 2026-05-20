@@ -6,12 +6,30 @@ type CoreErrorInput = {
   meta?: Record<string, unknown> | undefined;
 };
 
-const toResourceCodePrefix = (resource: string) =>
-  resource
-    .trim()
-    .replace(/[^A-Za-z0-9]+/g, "_")
-    .replace(/^_+|_+$/g, "")
-    .toUpperCase();
+const toResourceCodePrefix = (resource: string) => {
+  let result = "";
+  let previousWasUnderscore = false;
+
+  for (const character of resource.trim()) {
+    const isAlphaNumeric =
+      (character >= "a" && character <= "z") ||
+      (character >= "A" && character <= "Z") ||
+      (character >= "0" && character <= "9");
+
+    if (isAlphaNumeric) {
+      result += character.toUpperCase();
+      previousWasUnderscore = false;
+      continue;
+    }
+
+    if (!previousWasUnderscore && result.length > 0) {
+      result += "_";
+      previousWasUnderscore = true;
+    }
+  }
+
+  return previousWasUnderscore ? result.slice(0, -1) : result;
+};
 
 export class CoreError extends Error {
   readonly code: string;

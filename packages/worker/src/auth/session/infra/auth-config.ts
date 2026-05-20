@@ -2,7 +2,13 @@ const DEFAULT_BASE_URL = "https://boboddy.vercel.app";
 
 export const CLI_AUTH_CLIENT_ID = "boboddy-cli";
 
-const trimTrailingSlashes = (value: string) => value.replace(/\/+$/u, "");
+const trimTrailingSlashes = (value: string) => {
+  let endIndex = value.length;
+  while (endIndex > 0 && value.charAt(endIndex - 1) === "/") {
+    endIndex -= 1;
+  }
+  return value.slice(0, endIndex);
+};
 
 export const resolveBoboddyBaseUrl = (value?: string | null) => {
   const trimmedValue = value?.trim();

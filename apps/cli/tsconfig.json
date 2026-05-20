@@ -3,7 +3,10 @@
   "compilerOptions": {
     "types": ["bun-types", "node"],
     "noEmit": true,
-    "exactOptionalPropertyTypes": false
+    "exactOptionalPropertyTypes": false,
+    "paths": {
+      "@boboddy/worker": ["../../packages/worker/src/index.ts"]
+    }
   },
   "include": ["src/**/*.ts", "script/**/*.ts", "test/**/*.ts"],
   "exclude": ["node_modules", "dist"]

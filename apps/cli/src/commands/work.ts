@@ -1,9 +1,10 @@
 import type { ArgumentsCamelCase, Argv, CommandModule } from "yargs";
-import { processProjectWork } from "../work/process-project-work";
-import { logWork } from "../work/work-logger";
-import { resolveBoboddyBaseUrl } from "../auth/config";
+import {
+  readProjectConfig,
+  resolveBoboddyBaseUrl,
+  runProjectWork,
+} from "@boboddy/worker";
 import { createCliLogger } from "../lib/logger";
-import { readProjectConfig } from "../init/project-config";
 
 export interface WorkArguments {
   projectId: string | undefined;
@@ -23,7 +24,6 @@ async function handler(
 ): Promise<void> {
   const logger = createCliLogger("work-command");
   const baseUrl = resolveBoboddyBaseUrl(arguments_.baseUrl);
-
   const projectId =
     arguments_.projectId ?? (await readProjectConfig())?.projectId;
 
@@ -34,7 +34,7 @@ async function handler(
     process.exit(1);
   }
 
-  logWork("cli", "Starting worker command", {
+  logger.info({
     projectId,
     baseUrl,
     batchSize: arguments_.batchSize,
@@ -45,9 +45,9 @@ async function handler(
     pollIntervalMs: arguments_.pollIntervalMs,
     workerId: arguments_.workerId,
     workItemId: arguments_.workItemId,
-  });
+  }, "Starting worker command");
 
-  const result = await processProjectWork({
+  const result = await runProjectWork({
     projectId,
     baseUrl,
     batchSize: arguments_.batchSize,
@@ -61,10 +61,6 @@ async function handler(
   });
 
   if (arguments_.once) {
-    logWork("cli", "Worker command completed single-pass run", {
-      projectId,
-      ...result,
-    });
     logger.info(
       {
         projectId,

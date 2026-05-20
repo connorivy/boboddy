@@ -1,12 +1,16 @@
 import type { ArgumentsCamelCase, Argv, CommandModule } from "yargs";
 import { join } from "node:path";
 import { existsSync } from "node:fs";
-import { resolveBoboddyBaseUrl } from "../auth/config";
-import { loadAuthenticatedSession } from "../auth/session";
+import {
+  loadAuthenticatedSession,
+  pushStepDefinitions,
+  readProjectConfig,
+  resolveBoboddyBaseUrl,
+  scaffoldStepsDirectory,
+  STEPS_DIR,
+} from "@boboddy/worker";
+import { version as CLI_VERSION } from "../../package.json";
 import { createCliLogger } from "../lib/logger";
-import { pushStepDefinitions, STEPS_DIR } from "../steps/push-step-definitions";
-import { scaffoldStepsDirectory } from "../steps/step-scaffolder";
-import { readProjectConfig } from "../init/project-config";
 
 // init
 
@@ -22,7 +26,7 @@ const runInit = (): void => {
 
   const dir = join(process.cwd(), STEPS_DIR);
 
-  const result = scaffoldStepsDirectory(dir);
+  const result = scaffoldStepsDirectory(dir, CLI_VERSION);
 
   for (const file of result.created) {
     logger.info({ file }, `Created ${file}`);

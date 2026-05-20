@@ -1,16 +1,8 @@
-import pino, { type DestinationStream, type Logger } from "pino";
+import type { DestinationStream } from "pino";
 import PinoPretty from "pino-pretty";
+import { createLogger, type Logger } from "@boboddy/worker";
 
 export type { Logger };
-
-export const noopLogger: Logger = pino({ level: "silent" });
-
-export function createLogger(
-  options: { name: string; level?: string },
-  dest?: DestinationStream,
-): Logger {
-  return pino({ name: options.name, level: options.level ?? "info" }, dest);
-}
 
 function createTransport(): DestinationStream | undefined {
   if (!process.stdout.isTTY) {

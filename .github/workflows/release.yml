@@ -174,9 +174,9 @@ jobs:
         working-directory: packages/sdks/js
         run: |
           if [ "${{ needs.resolve-version.outputs.prerelease }}" = "true" ]; then
-            npm publish --access public --tag next
+            bun run script/publish.ts next
           else
-            npm publish --access public --tag latest
+            bun run script/publish.ts latest
           fi
 
       # - name: Publish opencode plugin

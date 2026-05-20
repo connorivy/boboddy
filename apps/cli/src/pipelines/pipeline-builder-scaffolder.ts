@@ -26,9 +26,8 @@ function kebabToCamel(str: string): string {
 }
 
 function resolveSdkDependency(): string {
-  const devSdkPath = process.env["BOBODDY_DEV_SDK_PATH"];
-  if (devSdkPath) {
-    return `file:${devSdkPath.replaceAll("\\", "/")}`;
+  if (process.env["BOBODDY_LINK_SDK"] === "1") {
+    return "link:@boboddy/sdk";
   }
 
   return `^${version}`;

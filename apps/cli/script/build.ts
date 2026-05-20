@@ -12,22 +12,6 @@ const projectRoot = resolve(import.meta.dir, "..");
 const distDirectory = resolve(projectRoot, "dist");
 const entrypoint = resolve(projectRoot, "src/index.ts");
 
-const platformTargetMap: Record<string, string> = {
-  "darwin:arm64": "bun-darwin-arm64",
-  "darwin:x64": "bun-darwin-x64",
-  "linux:arm64": "bun-linux-arm64",
-  "linux:x64": "bun-linux-x64",
-  "win32:x64": "bun-windows-x64",
-};
-
-const binaryNameMap: Record<string, string> = {
-  "darwin:arm64": `${CLI_NAME}-darwin-arm64`,
-  "darwin:x64": `${CLI_NAME}-darwin-x64`,
-  "linux:arm64": `${CLI_NAME}-linux-arm64`,
-  "linux:x64": `${CLI_NAME}-linux-x64`,
-  "win32:x64": `${CLI_NAME}-windows-x64.exe`,
-};
-
 const allTargets: readonly BuildTarget[] = [
   { bunTarget: "bun-darwin-arm64", outputName: `${CLI_NAME}-darwin-arm64`, codesign: true },
   { bunTarget: "bun-darwin-x64", outputName: `${CLI_NAME}-darwin-x64`, codesign: true },
@@ -92,62 +76,13 @@ async function main(): Promise<void> {
   await rm(distDirectory, { recursive: true, force: true });
   await mkdir(distDirectory, { recursive: true });
 
+  for (const target of allTargets) {
+    process.stdout.write(`Building ${target.outputName}...\n`);
+    await buildTarget(target);
+  }
+
   if (isDev) {
-    const hostKey = `${process.platform}:${process.arch}`;
-    const hostBunTarget = platformTargetMap[hostKey];
-    const hostOutputName = binaryNameMap[hostKey];
-    const sdkProjectRoot = resolve(projectRoot, "../../packages/sdks/js");
-
-    if (!hostBunTarget || !hostOutputName) {
-      throw new Error(`Unsupported platform/arch: ${hostKey}`);
-    }
-
-    const sdkPackageBuild = Bun.spawnSync(
-      [process.execPath, "run", "script/package-artifact.ts"],
-      {
-        cwd: sdkProjectRoot,
-        stdout: "pipe",
-        stderr: "inherit",
-      },
-    );
-    if (sdkPackageBuild.exitCode !== 0) {
-      throw new Error("Failed to create dev SDK package artifact.");
-    }
-    const devSdkPackagePath = sdkPackageBuild.stdout.toString().trim();
-    if (!devSdkPackagePath) {
-      throw new Error("Dev SDK package artifact path was empty.");
-    }
-
-    const defines = [
-      "--define",
-      `process.env.BOBODDY_BASE_URL=${JSON.stringify("http://localhost:3000")}`,
-      "--define",
-      `process.env.BOBODDY_DEV_SDK_PATH=${JSON.stringify(devSdkPackagePath)}`,
-    ];
-    const targets: BuildTarget[] = [{ bunTarget: hostBunTarget, outputName: hostOutputName, codesign: true }];
-
-    // Always include Linux binaries — they're injected into the devcontainer at runtime.
-    if (process.platform !== "linux") {
-      targets.push(
-        { bunTarget: "bun-linux-arm64", outputName: `${CLI_NAME}-linux-arm64` },
-        { bunTarget: "bun-linux-x64", outputName: `${CLI_NAME}-linux-x64` },
-      );
-    }
-
-    for (const target of targets) {
-      process.stdout.write(`Building dev binary ${target.outputName}...\n`);
-      await buildTarget(target, defines);
-    }
-
-    // Marker so bin/boboddy knows to inject plugin dev env vars at runtime.
     await writeFile(resolve(distDirectory, ".dev"), "", "utf8");
-
-    process.stdout.write(`Dev build complete: ${resolve(distDirectory, hostOutputName)}\n`);
-  } else {
-    for (const target of allTargets) {
-      process.stdout.write(`Building ${target.outputName}...\n`);
-      await buildTarget(target);
-    }
   }
 }
 

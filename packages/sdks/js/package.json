@@ -4,54 +4,14 @@
   "version": "0.0.0",
   "type": "module",
   "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "bun": "./src/index.ts",
-      "import": "./src/index.ts",
-      "default": "./src/index.ts"
-    },
-    "./client": {
-      "types": "./dist/client.d.ts",
-      "bun": "./src/client.ts",
-      "import": "./src/client.ts",
-      "default": "./src/client.ts"
-    },
-    "./definitions/steps": {
-      "types": "./dist/definitions/steps/index.d.ts",
-      "bun": "./src/definitions/steps/index.ts",
-      "import": "./src/definitions/steps/index.ts",
-      "default": "./src/definitions/steps/index.ts"
-    },
-    "./definitions/pipelines": {
-      "types": "./dist/definitions/pipelines/index.d.ts",
-      "bun": "./src/definitions/pipelines/index.ts",
-      "import": "./src/definitions/pipelines/index.ts",
-      "default": "./src/definitions/pipelines/index.ts"
-    },
-    "./definitions/advancement-policies": {
-      "types": "./dist/definitions/advancement-policies/index.d.ts",
-      "bun": "./src/definitions/advancement-policies/index.ts",
-      "import": "./src/definitions/advancement-policies/index.ts",
-      "default": "./src/definitions/advancement-policies/index.ts"
-    },
-    "./opencode-mcp": {
-      "types": "./dist/opencode-mcp.d.ts",
-      "bun": "./src/opencode-mcp.ts",
-      "import": "./src/opencode-mcp.ts",
-      "default": "./src/opencode-mcp.ts"
-    },
-    "./jsonc": {
-      "types": "./dist/jsonc.d.ts",
-      "bun": "./src/jsonc.ts",
-      "import": "./src/jsonc.ts",
-      "default": "./src/jsonc.ts"
-    },
-    "./boboddy-config-parser": {
-      "types": "./dist/boboddy-config-parser.d.ts",
-      "bun": "./src/boboddy-config-parser.ts",
-      "import": "./src/boboddy-config-parser.ts",
-      "default": "./src/boboddy-config-parser.ts"
-    }
+    ".": "./src/index.ts",
+    "./client": "./src/client.ts",
+    "./definitions/steps": "./src/definitions/steps/index.ts",
+    "./definitions/pipelines": "./src/definitions/pipelines/index.ts",
+    "./definitions/advancement-policies": "./src/definitions/advancement-policies/index.ts",
+    "./opencode-mcp": "./src/opencode-mcp.ts",
+    "./jsonc": "./src/jsonc.ts",
+    "./boboddy-config-parser": "./src/boboddy-config-parser.ts"
   },
   "files": [
     "dist",
@@ -61,55 +21,10 @@
     "type": "git",
     "url": "https://github.com/connorivy/boboddy"
   },
-  "publishConfig": {
-    "access": "public",
-    "exports": {
-      ".": {
-        "types": "./dist/index.d.ts",
-        "import": "./dist/index.js",
-        "default": "./dist/index.js"
-      },
-      "./client": {
-        "types": "./dist/client.d.ts",
-        "import": "./dist/client.js",
-        "default": "./dist/client.js"
-      },
-      "./definitions/steps": {
-        "types": "./dist/definitions/steps/index.d.ts",
-        "import": "./dist/definitions/steps/index.js",
-        "default": "./dist/definitions/steps/index.js"
-      },
-      "./definitions/pipelines": {
-        "types": "./dist/definitions/pipelines/index.d.ts",
-        "import": "./dist/definitions/pipelines/index.js",
-        "default": "./dist/definitions/pipelines/index.js"
-      },
-      "./definitions/advancement-policies": {
-        "types": "./dist/definitions/advancement-policies/index.d.ts",
-        "import": "./dist/definitions/advancement-policies/index.js",
-        "default": "./dist/definitions/advancement-policies/index.js"
-      },
-      "./opencode-mcp": {
-        "types": "./dist/opencode-mcp.d.ts",
-        "import": "./dist/opencode-mcp.js",
-        "default": "./dist/opencode-mcp.js"
-      },
-      "./jsonc": {
-        "types": "./dist/jsonc.d.ts",
-        "import": "./dist/jsonc.js",
-        "default": "./dist/jsonc.js"
-      },
-      "./boboddy-config-parser": {
-        "types": "./dist/boboddy-config-parser.d.ts",
-        "import": "./dist/boboddy-config-parser.js",
-        "default": "./dist/boboddy-config-parser.js"
-      }
-    }
-  },
   "scripts": {
     "generate": "openapi-ts",
     "build": "bun run script/build.ts",
-    "declarations": "bun run script/declarations.ts",
+    "link:local": "bun link",
     "test": "bun test test",
     "typecheck": "tsgo -p tsconfig.json --noEmit"
   },

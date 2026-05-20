@@ -49,6 +49,7 @@ if (binaryName === undefined) {
 }
 
 const binaryPath = resolve(distDirectory, binaryName);
+const isDevBuild = existsSync(resolve(distDirectory, ".dev"));
 
 if (!existsSync(binaryPath)) {
   fail(`Missing compiled binary: ${binaryPath}`);
@@ -56,7 +57,7 @@ if (!existsSync(binaryPath)) {
 
 const result = spawnSync(binaryPath, process.argv.slice(2), {
   stdio: "inherit",
-  env: process.env,
+  env: isDevBuild ? { ...process.env, BOBODDY_LINK_SDK: "1" } : process.env,
 });
 
 if (result.error instanceof Error) {

@@ -2,6 +2,14 @@ import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { version } from "../../package.json";
 
+function resolveSdkDependency(): string {
+  if (process.env["BOBODDY_LINK_SDK"] === "1") {
+    return "link:@boboddy/sdk";
+  }
+
+  return `^${version}`;
+}
+
 function buildPackageJson(): string {
   return JSON.stringify(
     {
@@ -9,7 +17,7 @@ function buildPackageJson(): string {
       private: true,
       type: "module",
       dependencies: {
-        "@boboddy/sdk": `^${version}`,
+        "@boboddy/sdk": resolveSdkDependency(),
         zod: "^4.4.2",
       },
     },

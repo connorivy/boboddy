@@ -1,6 +1,7 @@
 import { toJSONSchema } from "zod/v4/core";
 import type { $ZodType } from "zod/v4/core";
-import type { ZodType } from "zod";
+import type { ZodObject, ZodRawShape, ZodType } from "zod";
+import type { AnyStepFeature, FeatureResultExtensions, FeatureSignalKeys } from "./step-features";
 
 type OpenCodeMcpServers = Record<
   string,
@@ -116,6 +117,7 @@ export type DefineStepInput<
   result?: TResult;
   signals?: SignalSpecInput<TResult["_output"]>[];
   computedSignals?: StepComputedSignalSpec[];
+  features?: AnyStepFeature[];
   mcpServers?: OpenCodeMcpServers | null;
   status?: "draft" | "active";
 };
@@ -224,9 +226,40 @@ export function defineStep<
   TInput extends ZodType = ZodType,
   TResult extends ZodType = ZodType,
   const TSignals extends ReadonlyArray<SignalSpecInput<TResult["_output"]>> = never[],
+  const TFeatures extends ReadonlyArray<AnyStepFeature> = never[],
 >(
-  config: Omit<DefineStepInput<TInput, TResult>, "signals"> & { signals?: TSignals },
-): TypedStepDefinitionSpec<TInput["_output"], TResult["_output"], SignalKeysOf<TSignals>> {
+  config: Omit<DefineStepInput<TInput, TResult>, "signals" | "features"> & {
+    signals?: TSignals;
+    features?: TFeatures;
+  },
+): TypedStepDefinitionSpec<
+  TInput["_output"],
+  TResult["_output"] & FeatureResultExtensions<TFeatures>,
+  SignalKeysOf<TSignals> | FeatureSignalKeys<TFeatures>
+> {
+  const features = (config.features ?? []) as AnyStepFeature[];
+
+  // Merge each feature's result extension into the base schema.
+  let effectiveResult: ZodType | undefined = config.result;
+  for (const feature of features) {
+    effectiveResult = effectiveResult
+      ? (effectiveResult as ZodObject<ZodRawShape>).extend(feature._resultExtension.shape)
+      : feature._resultExtension;
+  }
+
+  // Append each feature's prompt addition.
+  let effectivePrompt: string | null = config.prompt ?? null;
+  for (const feature of features) {
+    if (feature._promptAddition) {
+      effectivePrompt = effectivePrompt
+        ? `${effectivePrompt}\n\n${feature._promptAddition}`
+        : feature._promptAddition;
+    }
+  }
+
+  // Collect user-defined signals, then append feature signals.
+  const featureSignals = features.flatMap((f) => f._signals);
+
   const spec: StepDefinitionSpec = {
     key: config.key,
     name: config.name,
@@ -234,20 +267,29 @@ export function defineStep<
     version: config.version ?? 1,
     kind: "user_defined",
     status: config.status ?? "active",
-    prompt: config.prompt ?? null,
+    prompt: effectivePrompt,
     inputSchemaJson: config.input
       ? toJSONSchema(config.input as unknown as $ZodType)
       : null,
-    resultSchemaJson: config.result
-      ? toJSONSchema(config.result as unknown as $ZodType)
+    resultSchemaJson: effectiveResult
+      ? toJSONSchema(effectiveResult as unknown as $ZodType)
       : null,
-    signalExtractorDefinitions: ((config.signals ?? []) as StepSignalSpec[]).map((s) => ({
-      key: s.key ?? s.sourcePath,
-      sourcePath: s.sourcePath,
-      type: s.type ?? deriveSignalType(config.result, s.sourcePath),
-      required: s.required ?? true,
-      availableWhenResultStatusIn: s.availableWhenResultStatusIn ?? null,
-    })),
+    signalExtractorDefinitions: [
+      ...((config.signals ?? []) as StepSignalSpec[]).map((s) => ({
+        key: s.key ?? s.sourcePath,
+        sourcePath: s.sourcePath,
+        type: s.type ?? deriveSignalType(config.result, s.sourcePath),
+        required: s.required ?? true,
+        availableWhenResultStatusIn: s.availableWhenResultStatusIn ?? null,
+      })),
+      ...featureSignals.map((s) => ({
+        key: s.key,
+        sourcePath: s.sourcePath,
+        type: s.type,
+        required: s.required ?? true,
+        availableWhenResultStatusIn: s.availableWhenResultStatusIn ?? null,
+      })),
+    ],
     computedSignalDefinitions: (config.computedSignals ?? []).map((cs) => ({
       key: cs.key,
       type: cs.type,
@@ -259,7 +301,7 @@ export function defineStep<
   };
   return spec as TypedStepDefinitionSpec<
     TInput["_output"],
-    TResult["_output"],
-    SignalKeysOf<TSignals>
+    TResult["_output"] & FeatureResultExtensions<TFeatures>,
+    SignalKeysOf<TSignals> | FeatureSignalKeys<TFeatures>
   >;
 }

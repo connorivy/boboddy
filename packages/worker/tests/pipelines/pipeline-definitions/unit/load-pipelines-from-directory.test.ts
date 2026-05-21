@@ -60,7 +60,6 @@ export default {
   inputSchemaJson: null,
   resultSchemaJson: null,
   signalExtractorDefinitions: [],
-  computedSignalDefinitions: [],
   opencodeMcpJson: null,
 };
 `;
@@ -79,7 +78,6 @@ export const investigateStep = {
   inputSchemaJson: null,
   resultSchemaJson: null,
   signalExtractorDefinitions: [],
-  computedSignalDefinitions: [],
   opencodeMcpJson: null,
 };
 

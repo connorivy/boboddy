@@ -24,7 +24,6 @@ export default {
   inputSchemaJson: null,
   resultSchemaJson: null,
   signalExtractorDefinitions: [],
-  computedSignalDefinitions: [],
   opencodeMcpJson: null,
 };
 `;
@@ -80,7 +79,7 @@ describe("loadStepsFromDirectory", () => {
           key: "step-a", name: "Step A", version: 1, kind: "user_defined",
           status: "active", description: null, prompt: null,
           inputSchemaJson: null, resultSchemaJson: null,
-          signalExtractorDefinitions: [], computedSignalDefinitions: [], opencodeMcpJson: null,
+          signalExtractorDefinitions: [], opencodeMcpJson: null,
         };
       `);
       writeFileSync(join(dir, "step-b.js"), `
@@ -88,7 +87,7 @@ describe("loadStepsFromDirectory", () => {
           key: "step-b", name: "Step B", version: 2, kind: "user_defined",
           status: "active", description: null, prompt: null,
           inputSchemaJson: null, resultSchemaJson: null,
-          signalExtractorDefinitions: [], computedSignalDefinitions: [], opencodeMcpJson: null,
+          signalExtractorDefinitions: [], opencodeMcpJson: null,
         };
       `);
 

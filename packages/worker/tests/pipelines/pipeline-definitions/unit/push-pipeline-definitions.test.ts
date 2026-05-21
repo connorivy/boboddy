@@ -37,6 +37,7 @@ function makeSpec(overrides?: Partial<PipelineDefinitionSpec>): PipelineDefiniti
         inputBindingsJson: {},
         timeoutSeconds: null,
         advancementPolicyDefinition: ADVANCEMENT_POLICY,
+        computedSignalDefinitions: [],
       },
     ],
     ...overrides,

@@ -20,7 +20,6 @@ export const investigate = {
   inputSchemaJson: null,
   resultSchemaJson: null,
   signalExtractorDefinitions: [],
-  computedSignalDefinitions: [],
   opencodeMcpJson: null,
 };
 

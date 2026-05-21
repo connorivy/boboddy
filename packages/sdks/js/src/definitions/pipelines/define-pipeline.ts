@@ -68,6 +68,28 @@ export function stepOutput(step: AnyTypedStep): StepOutputBinding {
   return { source: "step_output", step };
 }
 
+// ─── Pipeline step computed signals ───────────────────────────────────────────
+
+export type PipelineStepComputedSignalType =
+  | "average"
+  | "weighted_average"
+  | "sum"
+  | "min"
+  | "max"
+  | "count"
+  | "boolean_any"
+  | "boolean_all";
+// | "custom";
+
+export type PipelineStepComputedSignalSpec<TSignalKey extends string = string> =
+  {
+    key: string;
+    type: PipelineStepComputedSignalType;
+    inputSignalKeys: ReadonlyArray<TSignalKey>;
+    configJson?: Record<string, unknown> | null;
+    availableWhenResultStatusIn?: string[] | null;
+  };
+
 // ─── Pipeline step config ─────────────────────────────────────────────────────
 
 export type PipelineStepConfig<TStep extends AnyTypedStep = AnyTypedStep> = {
@@ -83,6 +105,14 @@ export type PipelineStepConfig<TStep extends AnyTypedStep = AnyTypedStep> = {
    * Defaults to `{ defaultOutcome: "continue" }` when omitted.
    */
   advancement?: AdvancementPolicy<TStep["__signalKeys"]>;
+  /**
+   * Aggregations derived from this step's emitted signals (extractor keys plus any
+   * earlier computed-signal keys in this list). Each entry's `inputSignalKeys` is
+   * type-checked against the step's declared signal keys.
+   */
+  computedSignals?: ReadonlyArray<
+    PipelineStepComputedSignalSpec<TStep["__signalKeys"]>
+  >;
 };
 
 // ─── Output spec ──────────────────────────────────────────────────────────────
@@ -91,6 +121,14 @@ type SerializedBinding =
   | { source: "pipeline_input"; path: string }
   | { source: "step_signal"; stepKey: string; signalKey: string }
   | { source: "step_output"; stepKey: string };
+
+type SerializedComputedSignalDefinition = {
+  key: string;
+  type: PipelineStepComputedSignalType;
+  inputSignalKeys: string[];
+  configJson: Record<string, unknown> | null;
+  availableWhenResultStatusIn: string[] | null;
+};
 
 export type PipelineDefinitionSpec = {
   key: string;
@@ -106,6 +144,7 @@ export type PipelineDefinitionSpec = {
     inputBindingsJson: Record<string, SerializedBinding>;
     timeoutSeconds: number | null;
     advancementPolicyDefinition: SerializedAdvancementPolicy;
+    computedSignalDefinitions: SerializedComputedSignalDefinition[];
   }>;
 };
 
@@ -184,6 +223,15 @@ export function definePipeline<
       timeoutSeconds: stepConfig.timeout ?? null,
       advancementPolicyDefinition: serializeAdvancementPolicy(
         stepConfig.advancement,
+      ),
+      computedSignalDefinitions: (stepConfig.computedSignals ?? []).map(
+        (cs) => ({
+          key: cs.key,
+          type: cs.type,
+          inputSignalKeys: [...cs.inputSignalKeys],
+          configJson: cs.configJson ?? null,
+          availableWhenResultStatusIn: cs.availableWhenResultStatusIn ?? null,
+        }),
       ),
     })),
   };

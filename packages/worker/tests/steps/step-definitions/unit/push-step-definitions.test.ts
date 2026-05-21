@@ -75,7 +75,6 @@ describe("pushStepDefinitions", () => {
               inputSchemaJson: null,
               resultSchemaJson: null,
               signalExtractorDefinitions: [],
-              computedSignalDefinitions: [],
               opencodeMcpJson: null,
             },
             {
@@ -89,7 +88,6 @@ describe("pushStepDefinitions", () => {
               inputSchemaJson: null,
               resultSchemaJson: null,
               signalExtractorDefinitions: [],
-              computedSignalDefinitions: [],
               opencodeMcpJson: null,
             },
           ]),

@@ -27,6 +27,13 @@ type PipelineClient = {
         timeoutSeconds: unknown;
         retryPolicyJson: null;
         advancementPolicyDefinition: unknown;
+        computedSignalDefinitions: Array<{
+          key: string;
+          type: string;
+          inputSignalKeys: string[];
+          configJson: Record<string, unknown> | null;
+          availableWhenResultStatusIn: string[] | null;
+        }>;
       }>;
     };
     headers: Record<string, unknown>;
@@ -87,6 +94,7 @@ export async function pushPipelineDefinitions(
         timeoutSeconds: step.timeoutSeconds,
         retryPolicyJson: null as null,
         advancementPolicyDefinition: step.advancementPolicyDefinition,
+        computedSignalDefinitions: step.computedSignalDefinitions,
       };
     });
 

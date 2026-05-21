@@ -96,14 +96,6 @@ export type StepSignalSpec = {
   availableWhenResultStatusIn?: string[] | null;
 };
 
-export type StepComputedSignalSpec = {
-  key: string;
-  type: "average" | "weighted_average" | "sum" | "min" | "max" | "custom";
-  inputSignalKeys: string[];
-  configJson?: Record<string, unknown> | null;
-  availableWhenResultStatusIn?: string[] | null;
-};
-
 export type DefineStepInput<
   TInput extends ZodType = ZodType,
   TResult extends ZodType = ZodType,
@@ -116,7 +108,6 @@ export type DefineStepInput<
   input?: TInput;
   result?: TResult;
   signals?: SignalSpecInput<TResult["_output"]>[];
-  computedSignals?: StepComputedSignalSpec[];
   features?: AnyStepFeature[];
   mcpServers?: OpenCodeMcpServers | null;
   status?: "draft" | "active";
@@ -137,13 +128,6 @@ export type StepDefinitionSpec = {
     sourcePath: string;
     type: SignalTypeStr;
     required: boolean;
-    availableWhenResultStatusIn: string[] | null;
-  }>;
-  computedSignalDefinitions: Array<{
-    key: string;
-    type: "average" | "weighted_average" | "sum" | "min" | "max" | "custom";
-    inputSignalKeys: string[];
-    configJson: Record<string, unknown> | null;
     availableWhenResultStatusIn: string[] | null;
   }>;
   opencodeMcpJson: OpenCodeMcpServers | null;
@@ -290,13 +274,6 @@ export function defineStep<
         availableWhenResultStatusIn: s.availableWhenResultStatusIn ?? null,
       })),
     ],
-    computedSignalDefinitions: (config.computedSignals ?? []).map((cs) => ({
-      key: cs.key,
-      type: cs.type,
-      inputSignalKeys: cs.inputSignalKeys,
-      configJson: cs.configJson ?? null,
-      availableWhenResultStatusIn: cs.availableWhenResultStatusIn ?? null,
-    })),
     opencodeMcpJson: config.mcpServers ?? null,
   };
   return spec as TypedStepDefinitionSpec<

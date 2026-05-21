@@ -15,7 +15,6 @@ describe("defineStep", () => {
       inputSchemaJson: null,
       resultSchemaJson: null,
       signalExtractorDefinitions: [],
-      computedSignalDefinitions: [],
       opencodeMcpJson: null,
     });
   });

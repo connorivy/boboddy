@@ -729,16 +729,6 @@ export type GetApiStepDefinitionsResponses = {
             createdAt: string;
             updatedAt: string;
         }>;
-        computedSignalDefinitions: Array<{
-            id: string;
-            key: string;
-            type: 'average' | 'weighted_average' | 'sum' | 'min' | 'max' | 'custom';
-            inputSignalKeys: Array<string>;
-            configJson: unknown;
-            availableWhenResultStatusIn: Array<string> | unknown;
-            createdAt: string;
-            updatedAt: string;
-        }>;
         createdAt: string;
         updatedAt: string;
     }>;
@@ -790,13 +780,6 @@ export type PostApiStepDefinitionsData = {
             sourcePath: string;
             type: 'string' | 'number' | 'boolean' | 'object' | 'array';
             required: boolean;
-            availableWhenResultStatusIn: Array<string> | unknown;
-        }>;
-        computedSignalDefinitions: Array<{
-            key: string;
-            type: 'average' | 'weighted_average' | 'sum' | 'min' | 'max' | 'custom';
-            inputSignalKeys: Array<string>;
-            configJson: unknown;
             availableWhenResultStatusIn: Array<string> | unknown;
         }>;
     };
@@ -975,16 +958,6 @@ export type PostApiStepDefinitionsResponses = {
             createdAt: string;
             updatedAt: string;
         }>;
-        computedSignalDefinitions: Array<{
-            id: string;
-            key: string;
-            type: 'average' | 'weighted_average' | 'sum' | 'min' | 'max' | 'custom';
-            inputSignalKeys: Array<string>;
-            configJson: unknown;
-            availableWhenResultStatusIn: Array<string> | unknown;
-            createdAt: string;
-            updatedAt: string;
-        }>;
         createdAt: string;
         updatedAt: string;
     };
@@ -1139,16 +1112,6 @@ export type GetApiStepDefinitionsByStepDefinitionIdResponses = {
             createdAt: string;
             updatedAt: string;
         }>;
-        computedSignalDefinitions: Array<{
-            id: string;
-            key: string;
-            type: 'average' | 'weighted_average' | 'sum' | 'min' | 'max' | 'custom';
-            inputSignalKeys: Array<string>;
-            configJson: unknown;
-            availableWhenResultStatusIn: Array<string> | unknown;
-            createdAt: string;
-            updatedAt: string;
-        }>;
         createdAt: string;
         updatedAt: string;
     };
@@ -1200,13 +1163,6 @@ export type PutApiStepDefinitionsByStepDefinitionIdData = {
             sourcePath: string;
             type: 'string' | 'number' | 'boolean' | 'object' | 'array';
             required: boolean;
-            availableWhenResultStatusIn: Array<string> | unknown;
-        }>;
-        computedSignalDefinitions: Array<{
-            key: string;
-            type: 'average' | 'weighted_average' | 'sum' | 'min' | 'max' | 'custom';
-            inputSignalKeys: Array<string>;
-            configJson: unknown;
             availableWhenResultStatusIn: Array<string> | unknown;
         }>;
     };
@@ -1351,16 +1307,6 @@ export type PutApiStepDefinitionsByStepDefinitionIdResponses = {
             sourcePath: string;
             type: 'string' | 'number' | 'boolean' | 'object' | 'array';
             required: boolean;
-            availableWhenResultStatusIn: Array<string> | unknown;
-            createdAt: string;
-            updatedAt: string;
-        }>;
-        computedSignalDefinitions: Array<{
-            id: string;
-            key: string;
-            type: 'average' | 'weighted_average' | 'sum' | 'min' | 'max' | 'custom';
-            inputSignalKeys: Array<string>;
-            configJson: unknown;
             availableWhenResultStatusIn: Array<string> | unknown;
             createdAt: string;
             updatedAt: string;
@@ -1515,16 +1461,6 @@ export type PutApiStepDefinitionsByStepDefinitionIdArchiveResponses = {
             sourcePath: string;
             type: 'string' | 'number' | 'boolean' | 'object' | 'array';
             required: boolean;
-            availableWhenResultStatusIn: Array<string> | unknown;
-            createdAt: string;
-            updatedAt: string;
-        }>;
-        computedSignalDefinitions: Array<{
-            id: string;
-            key: string;
-            type: 'average' | 'weighted_average' | 'sum' | 'min' | 'max' | 'custom';
-            inputSignalKeys: Array<string>;
-            configJson: unknown;
             availableWhenResultStatusIn: Array<string> | unknown;
             createdAt: string;
             updatedAt: string;
@@ -3211,6 +3147,18 @@ export type GetApiLinearPipelineDefinitionsResponses = {
                 createdAt: string;
                 updatedAt: string;
             };
+            computedSignalDefinitions: Array<{
+                id: string;
+                key: string;
+                type: 'average' | 'weighted_average' | 'sum' | 'min' | 'max' | 'count' | 'boolean_any' | 'boolean_all';
+                inputSignalKeys: Array<string>;
+                configJson: {
+                    [key: string]: unknown;
+                } | unknown;
+                availableWhenResultStatusIn: Array<string> | unknown;
+                createdAt: string;
+                updatedAt: string;
+            }>;
             createdAt: string;
             updatedAt: string;
         }>;
@@ -3308,6 +3256,15 @@ export type PostApiLinearPipelineDefinitionsData = {
                 } | unknown;
                 allowedEventTypes: Array<'continue' | 'block' | 'needs_review' | 'complete'>;
             };
+            computedSignalDefinitions: Array<{
+                key: string;
+                type: 'average' | 'weighted_average' | 'sum' | 'min' | 'max' | 'count' | 'boolean_any' | 'boolean_all';
+                inputSignalKeys: Array<string>;
+                configJson: {
+                    [key: string]: unknown;
+                } | unknown;
+                availableWhenResultStatusIn: Array<string> | unknown;
+            }>;
         }>;
     };
     path?: never;
@@ -3529,6 +3486,18 @@ export type PostApiLinearPipelineDefinitionsResponses = {
                 createdAt: string;
                 updatedAt: string;
             };
+            computedSignalDefinitions: Array<{
+                id: string;
+                key: string;
+                type: 'average' | 'weighted_average' | 'sum' | 'min' | 'max' | 'count' | 'boolean_any' | 'boolean_all';
+                inputSignalKeys: Array<string>;
+                configJson: {
+                    [key: string]: unknown;
+                } | unknown;
+                availableWhenResultStatusIn: Array<string> | unknown;
+                createdAt: string;
+                updatedAt: string;
+            }>;
             createdAt: string;
             updatedAt: string;
         }>;
@@ -3626,6 +3595,15 @@ export type PutApiLinearPipelineDefinitionsData = {
                 } | unknown;
                 allowedEventTypes: Array<'continue' | 'block' | 'needs_review' | 'complete'>;
             };
+            computedSignalDefinitions: Array<{
+                key: string;
+                type: 'average' | 'weighted_average' | 'sum' | 'min' | 'max' | 'count' | 'boolean_any' | 'boolean_all';
+                inputSignalKeys: Array<string>;
+                configJson: {
+                    [key: string]: unknown;
+                } | unknown;
+                availableWhenResultStatusIn: Array<string> | unknown;
+            }>;
         }>;
     };
     path?: never;
@@ -3799,6 +3777,18 @@ export type PutApiLinearPipelineDefinitionsResponses = {
                 createdAt: string;
                 updatedAt: string;
             };
+            computedSignalDefinitions: Array<{
+                id: string;
+                key: string;
+                type: 'average' | 'weighted_average' | 'sum' | 'min' | 'max' | 'count' | 'boolean_any' | 'boolean_all';
+                inputSignalKeys: Array<string>;
+                configJson: {
+                    [key: string]: unknown;
+                } | unknown;
+                availableWhenResultStatusIn: Array<string> | unknown;
+                createdAt: string;
+                updatedAt: string;
+            }>;
             createdAt: string;
             updatedAt: string;
         }>;
@@ -4016,6 +4006,18 @@ export type GetApiLinearPipelineDefinitionsByLinearPipelineDefinitionIdResponses
                 createdAt: string;
                 updatedAt: string;
             };
+            computedSignalDefinitions: Array<{
+                id: string;
+                key: string;
+                type: 'average' | 'weighted_average' | 'sum' | 'min' | 'max' | 'count' | 'boolean_any' | 'boolean_all';
+                inputSignalKeys: Array<string>;
+                configJson: {
+                    [key: string]: unknown;
+                } | unknown;
+                availableWhenResultStatusIn: Array<string> | unknown;
+                createdAt: string;
+                updatedAt: string;
+            }>;
             createdAt: string;
             updatedAt: string;
         }>;
@@ -4217,6 +4219,18 @@ export type PutApiLinearPipelineDefinitionsByLinearPipelineDefinitionIdArchiveRe
                 createdAt: string;
                 updatedAt: string;
             };
+            computedSignalDefinitions: Array<{
+                id: string;
+                key: string;
+                type: 'average' | 'weighted_average' | 'sum' | 'min' | 'max' | 'count' | 'boolean_any' | 'boolean_all';
+                inputSignalKeys: Array<string>;
+                configJson: {
+                    [key: string]: unknown;
+                } | unknown;
+                availableWhenResultStatusIn: Array<string> | unknown;
+                createdAt: string;
+                updatedAt: string;
+            }>;
             createdAt: string;
             updatedAt: string;
         }>;
@@ -4307,6 +4321,15 @@ export type PostApiLinearPipelineDefinitionsByLinearPipelineDefinitionIdStepsDat
             } | unknown;
             allowedEventTypes: Array<'continue' | 'block' | 'needs_review' | 'complete'>;
         };
+        computedSignalDefinitions: Array<{
+            key: string;
+            type: 'average' | 'weighted_average' | 'sum' | 'min' | 'max' | 'count' | 'boolean_any' | 'boolean_all';
+            inputSignalKeys: Array<string>;
+            configJson: {
+                [key: string]: unknown;
+            } | unknown;
+            availableWhenResultStatusIn: Array<string> | unknown;
+        }>;
     };
     path: {
         linearPipelineDefinitionId: string;
@@ -4497,6 +4520,18 @@ export type PostApiLinearPipelineDefinitionsByLinearPipelineDefinitionIdStepsRes
                 createdAt: string;
                 updatedAt: string;
             };
+            computedSignalDefinitions: Array<{
+                id: string;
+                key: string;
+                type: 'average' | 'weighted_average' | 'sum' | 'min' | 'max' | 'count' | 'boolean_any' | 'boolean_all';
+                inputSignalKeys: Array<string>;
+                configJson: {
+                    [key: string]: unknown;
+                } | unknown;
+                availableWhenResultStatusIn: Array<string> | unknown;
+                createdAt: string;
+                updatedAt: string;
+            }>;
             createdAt: string;
             updatedAt: string;
         }>;
@@ -4699,6 +4734,18 @@ export type DeleteApiLinearPipelineDefinitionsByLinearPipelineDefinitionIdStepsB
                 createdAt: string;
                 updatedAt: string;
             };
+            computedSignalDefinitions: Array<{
+                id: string;
+                key: string;
+                type: 'average' | 'weighted_average' | 'sum' | 'min' | 'max' | 'count' | 'boolean_any' | 'boolean_all';
+                inputSignalKeys: Array<string>;
+                configJson: {
+                    [key: string]: unknown;
+                } | unknown;
+                availableWhenResultStatusIn: Array<string> | unknown;
+                createdAt: string;
+                updatedAt: string;
+            }>;
             createdAt: string;
             updatedAt: string;
         }>;
@@ -4789,6 +4836,15 @@ export type PutApiLinearPipelineDefinitionsByLinearPipelineDefinitionIdStepsByLi
             } | unknown;
             allowedEventTypes: Array<'continue' | 'block' | 'needs_review' | 'complete'>;
         };
+        computedSignalDefinitions: Array<{
+            key: string;
+            type: 'average' | 'weighted_average' | 'sum' | 'min' | 'max' | 'count' | 'boolean_any' | 'boolean_all';
+            inputSignalKeys: Array<string>;
+            configJson: {
+                [key: string]: unknown;
+            } | unknown;
+            availableWhenResultStatusIn: Array<string> | unknown;
+        }>;
     };
     path: {
         linearPipelineDefinitionId: string;
@@ -4980,6 +5036,18 @@ export type PutApiLinearPipelineDefinitionsByLinearPipelineDefinitionIdStepsByLi
                 createdAt: string;
                 updatedAt: string;
             };
+            computedSignalDefinitions: Array<{
+                id: string;
+                key: string;
+                type: 'average' | 'weighted_average' | 'sum' | 'min' | 'max' | 'count' | 'boolean_any' | 'boolean_all';
+                inputSignalKeys: Array<string>;
+                configJson: {
+                    [key: string]: unknown;
+                } | unknown;
+                availableWhenResultStatusIn: Array<string> | unknown;
+                createdAt: string;
+                updatedAt: string;
+            }>;
             createdAt: string;
             updatedAt: string;
         }>;
@@ -5230,6 +5298,18 @@ export type PutApiLinearPipelineDefinitionsByLinearPipelineDefinitionIdStepsByLi
                 createdAt: string;
                 updatedAt: string;
             };
+            computedSignalDefinitions: Array<{
+                id: string;
+                key: string;
+                type: 'average' | 'weighted_average' | 'sum' | 'min' | 'max' | 'count' | 'boolean_any' | 'boolean_all';
+                inputSignalKeys: Array<string>;
+                configJson: {
+                    [key: string]: unknown;
+                } | unknown;
+                availableWhenResultStatusIn: Array<string> | unknown;
+                createdAt: string;
+                updatedAt: string;
+            }>;
             createdAt: string;
             updatedAt: string;
         }>;
@@ -9413,16 +9493,6 @@ export type PostApiStepDefinitionTemplatesByStepDefinitionTemplateIdInstantiateR
             sourcePath: string;
             type: 'string' | 'number' | 'boolean' | 'object' | 'array';
             required: boolean;
-            availableWhenResultStatusIn: Array<string> | unknown;
-            createdAt: string;
-            updatedAt: string;
-        }>;
-        computedSignalDefinitions: Array<{
-            id: string;
-            key: string;
-            type: 'average' | 'weighted_average' | 'sum' | 'min' | 'max' | 'custom';
-            inputSignalKeys: Array<string>;
-            configJson: unknown;
             availableWhenResultStatusIn: Array<string> | unknown;
             createdAt: string;
             updatedAt: string;

@@ -105,14 +105,7 @@ export async function pushStepDefinitions(
   for (const spec of specs) {
     const lookup = `${spec.key}@v${String(spec.version)}`;
     const existingId = existingById.get(lookup);
-    // `computedSignalDefinitions` is required by the current server contract but is
-    // being moved to pipeline-step configs in a coordinated change. Send an empty
-    // array until the server contract drops it; the generated types will follow.
-    const payload = {
-      ...spec,
-      projectId: options.projectId,
-      computedSignalDefinitions: [],
-    };
+    const payload = { ...spec, projectId: options.projectId };
 
     if (existingId) {
       await client.update(existingId, payload, { headers: options.headers });

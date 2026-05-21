@@ -2316,68 +2316,6 @@
                       ],
                       "additionalProperties": false
                     }
-                  },
-                  "computedSignalDefinitions": {
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "properties": {
-                        "key": {
-                          "type": "string",
-                          "minLength": 1
-                        },
-                        "type": {
-                          "type": "string",
-                          "enum": [
-                            "average",
-                            "weighted_average",
-                            "sum",
-                            "min",
-                            "max",
-                            "custom"
-                          ]
-                        },
-                        "inputSignalKeys": {
-                          "minItems": 1,
-                          "type": "array",
-                          "items": {
-                            "type": "string",
-                            "minLength": 1
-                          }
-                        },
-                        "configJson": {
-                          "anyOf": [
-                            {},
-                            {
-                              "type": "null"
-                            }
-                          ]
-                        },
-                        "availableWhenResultStatusIn": {
-                          "default": null,
-                          "anyOf": [
-                            {
-                              "type": "array",
-                              "items": {
-                                "type": "string",
-                                "minLength": 1
-                              }
-                            },
-                            {
-                              "type": "null"
-                            }
-                          ]
-                        }
-                      },
-                      "required": [
-                        "key",
-                        "type",
-                        "inputSignalKeys",
-                        "configJson",
-                        "availableWhenResultStatusIn"
-                      ],
-                      "additionalProperties": false
-                    }
                   }
                 },
                 "required": [
@@ -2391,8 +2329,7 @@
                   "inputSchemaJson",
                   "resultSchemaJson",
                   "status",
-                  "signalExtractorDefinitions",
-                  "computedSignalDefinitions"
+                  "signalExtractorDefinitions"
                 ],
                 "additionalProperties": false
               }
@@ -2650,68 +2587,6 @@
                       ],
                       "additionalProperties": false
                     }
-                  },
-                  "computedSignalDefinitions": {
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "properties": {
-                        "key": {
-                          "type": "string",
-                          "minLength": 1
-                        },
-                        "type": {
-                          "type": "string",
-                          "enum": [
-                            "average",
-                            "weighted_average",
-                            "sum",
-                            "min",
-                            "max",
-                            "custom"
-                          ]
-                        },
-                        "inputSignalKeys": {
-                          "minItems": 1,
-                          "type": "array",
-                          "items": {
-                            "type": "string",
-                            "minLength": 1
-                          }
-                        },
-                        "configJson": {
-                          "anyOf": [
-                            {},
-                            {
-                              "type": "null"
-                            }
-                          ]
-                        },
-                        "availableWhenResultStatusIn": {
-                          "default": null,
-                          "anyOf": [
-                            {
-                              "type": "array",
-                              "items": {
-                                "type": "string",
-                                "minLength": 1
-                              }
-                            },
-                            {
-                              "type": "null"
-                            }
-                          ]
-                        }
-                      },
-                      "required": [
-                        "key",
-                        "type",
-                        "inputSignalKeys",
-                        "configJson",
-                        "availableWhenResultStatusIn"
-                      ],
-                      "additionalProperties": false
-                    }
                   }
                 },
                 "required": [
@@ -2725,8 +2600,7 @@
                   "inputSchemaJson",
                   "resultSchemaJson",
                   "status",
-                  "signalExtractorDefinitions",
-                  "computedSignalDefinitions"
+                  "signalExtractorDefinitions"
                 ],
                 "additionalProperties": false
               }
@@ -2984,68 +2858,6 @@
                       ],
                       "additionalProperties": false
                     }
-                  },
-                  "computedSignalDefinitions": {
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "properties": {
-                        "key": {
-                          "type": "string",
-                          "minLength": 1
-                        },
-                        "type": {
-                          "type": "string",
-                          "enum": [
-                            "average",
-                            "weighted_average",
-                            "sum",
-                            "min",
-                            "max",
-                            "custom"
-                          ]
-                        },
-                        "inputSignalKeys": {
-                          "minItems": 1,
-                          "type": "array",
-                          "items": {
-                            "type": "string",
-                            "minLength": 1
-                          }
-                        },
-                        "configJson": {
-                          "anyOf": [
-                            {},
-                            {
-                              "type": "null"
-                            }
-                          ]
-                        },
-                        "availableWhenResultStatusIn": {
-                          "default": null,
-                          "anyOf": [
-                            {
-                              "type": "array",
-                              "items": {
-                                "type": "string",
-                                "minLength": 1
-                              }
-                            },
-                            {
-                              "type": "null"
-                            }
-                          ]
-                        }
-                      },
-                      "required": [
-                        "key",
-                        "type",
-                        "inputSignalKeys",
-                        "configJson",
-                        "availableWhenResultStatusIn"
-                      ],
-                      "additionalProperties": false
-                    }
                   }
                 },
                 "required": [
@@ -3059,8 +2871,7 @@
                   "inputSchemaJson",
                   "resultSchemaJson",
                   "status",
-                  "signalExtractorDefinitions",
-                  "computedSignalDefinitions"
+                  "signalExtractorDefinitions"
                 ],
                 "additionalProperties": false
               }
@@ -3344,84 +3155,6 @@
                         "additionalProperties": false
                       }
                     },
-                    "computedSignalDefinitions": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "id": {
-                            "type": "string"
-                          },
-                          "key": {
-                            "type": "string",
-                            "minLength": 1
-                          },
-                          "type": {
-                            "type": "string",
-                            "enum": [
-                              "average",
-                              "weighted_average",
-                              "sum",
-                              "min",
-                              "max",
-                              "custom"
-                            ]
-                          },
-                          "inputSignalKeys": {
-                            "minItems": 1,
-                            "type": "array",
-                            "items": {
-                              "type": "string",
-                              "minLength": 1
-                            }
-                          },
-                          "configJson": {
-                            "anyOf": [
-                              {},
-                              {
-                                "type": "null"
-                              }
-                            ]
-                          },
-                          "availableWhenResultStatusIn": {
-                            "default": null,
-                            "anyOf": [
-                              {
-                                "type": "array",
-                                "items": {
-                                  "type": "string",
-                                  "minLength": 1
-                                }
-                              },
-                              {
-                                "type": "null"
-                              }
-                            ]
-                          },
-                          "createdAt": {
-                            "type": "string",
-                            "format": "date-time",
-                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
-                          },
-                          "updatedAt": {
-                            "type": "string",
-                            "format": "date-time",
-                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
-                          }
-                        },
-                        "required": [
-                          "id",
-                          "key",
-                          "type",
-                          "inputSignalKeys",
-                          "configJson",
-                          "availableWhenResultStatusIn",
-                          "createdAt",
-                          "updatedAt"
-                        ],
-                        "additionalProperties": false
-                      }
-                    },
                     "createdAt": {
                       "type": "string",
                       "format": "date-time",
@@ -3447,7 +3180,6 @@
                     "opencodeMcpJson",
                     "status",
                     "signalExtractorDefinitions",
-                    "computedSignalDefinitions",
                     "createdAt",
                     "updatedAt"
                   ],
@@ -4179,84 +3911,6 @@
                           "additionalProperties": false
                         }
                       },
-                      "computedSignalDefinitions": {
-                        "type": "array",
-                        "items": {
-                          "type": "object",
-                          "properties": {
-                            "id": {
-                              "type": "string"
-                            },
-                            "key": {
-                              "type": "string",
-                              "minLength": 1
-                            },
-                            "type": {
-                              "type": "string",
-                              "enum": [
-                                "average",
-                                "weighted_average",
-                                "sum",
-                                "min",
-                                "max",
-                                "custom"
-                              ]
-                            },
-                            "inputSignalKeys": {
-                              "minItems": 1,
-                              "type": "array",
-                              "items": {
-                                "type": "string",
-                                "minLength": 1
-                              }
-                            },
-                            "configJson": {
-                              "anyOf": [
-                                {},
-                                {
-                                  "type": "null"
-                                }
-                              ]
-                            },
-                            "availableWhenResultStatusIn": {
-                              "default": null,
-                              "anyOf": [
-                                {
-                                  "type": "array",
-                                  "items": {
-                                    "type": "string",
-                                    "minLength": 1
-                                  }
-                                },
-                                {
-                                  "type": "null"
-                                }
-                              ]
-                            },
-                            "createdAt": {
-                              "type": "string",
-                              "format": "date-time",
-                              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
-                            },
-                            "updatedAt": {
-                              "type": "string",
-                              "format": "date-time",
-                              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
-                            }
-                          },
-                          "required": [
-                            "id",
-                            "key",
-                            "type",
-                            "inputSignalKeys",
-                            "configJson",
-                            "availableWhenResultStatusIn",
-                            "createdAt",
-                            "updatedAt"
-                          ],
-                          "additionalProperties": false
-                        }
-                      },
                       "createdAt": {
                         "type": "string",
                         "format": "date-time",
@@ -4282,7 +3936,6 @@
                       "opencodeMcpJson",
                       "status",
                       "signalExtractorDefinitions",
-                      "computedSignalDefinitions",
                       "createdAt",
                       "updatedAt"
                     ],
@@ -4832,84 +4485,6 @@
                         "additionalProperties": false
                       }
                     },
-                    "computedSignalDefinitions": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "id": {
-                            "type": "string"
-                          },
-                          "key": {
-                            "type": "string",
-                            "minLength": 1
-                          },
-                          "type": {
-                            "type": "string",
-                            "enum": [
-                              "average",
-                              "weighted_average",
-                              "sum",
-                              "min",
-                              "max",
-                              "custom"
-                            ]
-                          },
-                          "inputSignalKeys": {
-                            "minItems": 1,
-                            "type": "array",
-                            "items": {
-                              "type": "string",
-                              "minLength": 1
-                            }
-                          },
-                          "configJson": {
-                            "anyOf": [
-                              {},
-                              {
-                                "type": "null"
-                              }
-                            ]
-                          },
-                          "availableWhenResultStatusIn": {
-                            "default": null,
-                            "anyOf": [
-                              {
-                                "type": "array",
-                                "items": {
-                                  "type": "string",
-                                  "minLength": 1
-                                }
-                              },
-                              {
-                                "type": "null"
-                              }
-                            ]
-                          },
-                          "createdAt": {
-                            "type": "string",
-                            "format": "date-time",
-                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
-                          },
-                          "updatedAt": {
-                            "type": "string",
-                            "format": "date-time",
-                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
-                          }
-                        },
-                        "required": [
-                          "id",
-                          "key",
-                          "type",
-                          "inputSignalKeys",
-                          "configJson",
-                          "availableWhenResultStatusIn",
-                          "createdAt",
-                          "updatedAt"
-                        ],
-                        "additionalProperties": false
-                      }
-                    },
                     "createdAt": {
                       "type": "string",
                       "format": "date-time",
@@ -4935,7 +4510,6 @@
                     "opencodeMcpJson",
                     "status",
                     "signalExtractorDefinitions",
-                    "computedSignalDefinitions",
                     "createdAt",
                     "updatedAt"
                   ],
@@ -5522,68 +5096,6 @@
                       ],
                       "additionalProperties": false
                     }
-                  },
-                  "computedSignalDefinitions": {
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "properties": {
-                        "key": {
-                          "type": "string",
-                          "minLength": 1
-                        },
-                        "type": {
-                          "type": "string",
-                          "enum": [
-                            "average",
-                            "weighted_average",
-                            "sum",
-                            "min",
-                            "max",
-                            "custom"
-                          ]
-                        },
-                        "inputSignalKeys": {
-                          "minItems": 1,
-                          "type": "array",
-                          "items": {
-                            "type": "string",
-                            "minLength": 1
-                          }
-                        },
-                        "configJson": {
-                          "anyOf": [
-                            {},
-                            {
-                              "type": "null"
-                            }
-                          ]
-                        },
-                        "availableWhenResultStatusIn": {
-                          "default": null,
-                          "anyOf": [
-                            {
-                              "type": "array",
-                              "items": {
-                                "type": "string",
-                                "minLength": 1
-                              }
-                            },
-                            {
-                              "type": "null"
-                            }
-                          ]
-                        }
-                      },
-                      "required": [
-                        "key",
-                        "type",
-                        "inputSignalKeys",
-                        "configJson",
-                        "availableWhenResultStatusIn"
-                      ],
-                      "additionalProperties": false
-                    }
                   }
                 },
                 "required": [
@@ -5597,8 +5109,7 @@
                   "inputSchemaJson",
                   "resultSchemaJson",
                   "status",
-                  "signalExtractorDefinitions",
-                  "computedSignalDefinitions"
+                  "signalExtractorDefinitions"
                 ],
                 "additionalProperties": false
               }
@@ -5856,68 +5367,6 @@
                       ],
                       "additionalProperties": false
                     }
-                  },
-                  "computedSignalDefinitions": {
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "properties": {
-                        "key": {
-                          "type": "string",
-                          "minLength": 1
-                        },
-                        "type": {
-                          "type": "string",
-                          "enum": [
-                            "average",
-                            "weighted_average",
-                            "sum",
-                            "min",
-                            "max",
-                            "custom"
-                          ]
-                        },
-                        "inputSignalKeys": {
-                          "minItems": 1,
-                          "type": "array",
-                          "items": {
-                            "type": "string",
-                            "minLength": 1
-                          }
-                        },
-                        "configJson": {
-                          "anyOf": [
-                            {},
-                            {
-                              "type": "null"
-                            }
-                          ]
-                        },
-                        "availableWhenResultStatusIn": {
-                          "default": null,
-                          "anyOf": [
-                            {
-                              "type": "array",
-                              "items": {
-                                "type": "string",
-                                "minLength": 1
-                              }
-                            },
-                            {
-                              "type": "null"
-                            }
-                          ]
-                        }
-                      },
-                      "required": [
-                        "key",
-                        "type",
-                        "inputSignalKeys",
-                        "configJson",
-                        "availableWhenResultStatusIn"
-                      ],
-                      "additionalProperties": false
-                    }
                   }
                 },
                 "required": [
@@ -5931,8 +5380,7 @@
                   "inputSchemaJson",
                   "resultSchemaJson",
                   "status",
-                  "signalExtractorDefinitions",
-                  "computedSignalDefinitions"
+                  "signalExtractorDefinitions"
                 ],
                 "additionalProperties": false
               }
@@ -6190,68 +5638,6 @@
                       ],
                       "additionalProperties": false
                     }
-                  },
-                  "computedSignalDefinitions": {
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "properties": {
-                        "key": {
-                          "type": "string",
-                          "minLength": 1
-                        },
-                        "type": {
-                          "type": "string",
-                          "enum": [
-                            "average",
-                            "weighted_average",
-                            "sum",
-                            "min",
-                            "max",
-                            "custom"
-                          ]
-                        },
-                        "inputSignalKeys": {
-                          "minItems": 1,
-                          "type": "array",
-                          "items": {
-                            "type": "string",
-                            "minLength": 1
-                          }
-                        },
-                        "configJson": {
-                          "anyOf": [
-                            {},
-                            {
-                              "type": "null"
-                            }
-                          ]
-                        },
-                        "availableWhenResultStatusIn": {
-                          "default": null,
-                          "anyOf": [
-                            {
-                              "type": "array",
-                              "items": {
-                                "type": "string",
-                                "minLength": 1
-                              }
-                            },
-                            {
-                              "type": "null"
-                            }
-                          ]
-                        }
-                      },
-                      "required": [
-                        "key",
-                        "type",
-                        "inputSignalKeys",
-                        "configJson",
-                        "availableWhenResultStatusIn"
-                      ],
-                      "additionalProperties": false
-                    }
                   }
                 },
                 "required": [
@@ -6265,8 +5651,7 @@
                   "inputSchemaJson",
                   "resultSchemaJson",
                   "status",
-                  "signalExtractorDefinitions",
-                  "computedSignalDefinitions"
+                  "signalExtractorDefinitions"
                 ],
                 "additionalProperties": false
               }
@@ -6550,84 +5935,6 @@
                         "additionalProperties": false
                       }
                     },
-                    "computedSignalDefinitions": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "id": {
-                            "type": "string"
-                          },
-                          "key": {
-                            "type": "string",
-                            "minLength": 1
-                          },
-                          "type": {
-                            "type": "string",
-                            "enum": [
-                              "average",
-                              "weighted_average",
-                              "sum",
-                              "min",
-                              "max",
-                              "custom"
-                            ]
-                          },
-                          "inputSignalKeys": {
-                            "minItems": 1,
-                            "type": "array",
-                            "items": {
-                              "type": "string",
-                              "minLength": 1
-                            }
-                          },
-                          "configJson": {
-                            "anyOf": [
-                              {},
-                              {
-                                "type": "null"
-                              }
-                            ]
-                          },
-                          "availableWhenResultStatusIn": {
-                            "default": null,
-                            "anyOf": [
-                              {
-                                "type": "array",
-                                "items": {
-                                  "type": "string",
-                                  "minLength": 1
-                                }
-                              },
-                              {
-                                "type": "null"
-                              }
-                            ]
-                          },
-                          "createdAt": {
-                            "type": "string",
-                            "format": "date-time",
-                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
-                          },
-                          "updatedAt": {
-                            "type": "string",
-                            "format": "date-time",
-                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
-                          }
-                        },
-                        "required": [
-                          "id",
-                          "key",
-                          "type",
-                          "inputSignalKeys",
-                          "configJson",
-                          "availableWhenResultStatusIn",
-                          "createdAt",
-                          "updatedAt"
-                        ],
-                        "additionalProperties": false
-                      }
-                    },
                     "createdAt": {
                       "type": "string",
                       "format": "date-time",
@@ -6653,7 +5960,6 @@
                     "opencodeMcpJson",
                     "status",
                     "signalExtractorDefinitions",
-                    "computedSignalDefinitions",
                     "createdAt",
                     "updatedAt"
                   ],
@@ -7263,84 +6569,6 @@
                         "additionalProperties": false
                       }
                     },
-                    "computedSignalDefinitions": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "id": {
-                            "type": "string"
-                          },
-                          "key": {
-                            "type": "string",
-                            "minLength": 1
-                          },
-                          "type": {
-                            "type": "string",
-                            "enum": [
-                              "average",
-                              "weighted_average",
-                              "sum",
-                              "min",
-                              "max",
-                              "custom"
-                            ]
-                          },
-                          "inputSignalKeys": {
-                            "minItems": 1,
-                            "type": "array",
-                            "items": {
-                              "type": "string",
-                              "minLength": 1
-                            }
-                          },
-                          "configJson": {
-                            "anyOf": [
-                              {},
-                              {
-                                "type": "null"
-                              }
-                            ]
-                          },
-                          "availableWhenResultStatusIn": {
-                            "default": null,
-                            "anyOf": [
-                              {
-                                "type": "array",
-                                "items": {
-                                  "type": "string",
-                                  "minLength": 1
-                                }
-                              },
-                              {
-                                "type": "null"
-                              }
-                            ]
-                          },
-                          "createdAt": {
-                            "type": "string",
-                            "format": "date-time",
-                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
-                          },
-                          "updatedAt": {
-                            "type": "string",
-                            "format": "date-time",
-                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
-                          }
-                        },
-                        "required": [
-                          "id",
-                          "key",
-                          "type",
-                          "inputSignalKeys",
-                          "configJson",
-                          "availableWhenResultStatusIn",
-                          "createdAt",
-                          "updatedAt"
-                        ],
-                        "additionalProperties": false
-                      }
-                    },
                     "createdAt": {
                       "type": "string",
                       "format": "date-time",
@@ -7366,7 +6594,6 @@
                     "opencodeMcpJson",
                     "status",
                     "signalExtractorDefinitions",
-                    "computedSignalDefinitions",
                     "createdAt",
                     "updatedAt"
                   ],
@@ -14996,6 +14223,77 @@
                             "allowedEventTypes"
                           ],
                           "additionalProperties": false
+                        },
+                        "computedSignalDefinitions": {
+                          "default": [],
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "key": {
+                                "type": "string",
+                                "minLength": 1
+                              },
+                              "type": {
+                                "type": "string",
+                                "enum": [
+                                  "average",
+                                  "weighted_average",
+                                  "sum",
+                                  "min",
+                                  "max",
+                                  "count",
+                                  "boolean_any",
+                                  "boolean_all"
+                                ]
+                              },
+                              "inputSignalKeys": {
+                                "minItems": 1,
+                                "type": "array",
+                                "items": {
+                                  "type": "string",
+                                  "minLength": 1
+                                }
+                              },
+                              "configJson": {
+                                "anyOf": [
+                                  {
+                                    "type": "object",
+                                    "propertyNames": {
+                                      "type": "string"
+                                    },
+                                    "additionalProperties": {}
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              },
+                              "availableWhenResultStatusIn": {
+                                "default": null,
+                                "anyOf": [
+                                  {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "string",
+                                      "minLength": 1
+                                    }
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              }
+                            },
+                            "required": [
+                              "key",
+                              "type",
+                              "inputSignalKeys",
+                              "configJson",
+                              "availableWhenResultStatusIn"
+                            ],
+                            "additionalProperties": false
+                          }
                         }
                       },
                       "required": [
@@ -15008,7 +14306,8 @@
                         "inputBindingsJson",
                         "timeoutSeconds",
                         "retryPolicyJson",
-                        "advancementPolicyDefinition"
+                        "advancementPolicyDefinition",
+                        "computedSignalDefinitions"
                       ],
                       "additionalProperties": false
                     }
@@ -15347,6 +14646,77 @@
                             "allowedEventTypes"
                           ],
                           "additionalProperties": false
+                        },
+                        "computedSignalDefinitions": {
+                          "default": [],
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "key": {
+                                "type": "string",
+                                "minLength": 1
+                              },
+                              "type": {
+                                "type": "string",
+                                "enum": [
+                                  "average",
+                                  "weighted_average",
+                                  "sum",
+                                  "min",
+                                  "max",
+                                  "count",
+                                  "boolean_any",
+                                  "boolean_all"
+                                ]
+                              },
+                              "inputSignalKeys": {
+                                "minItems": 1,
+                                "type": "array",
+                                "items": {
+                                  "type": "string",
+                                  "minLength": 1
+                                }
+                              },
+                              "configJson": {
+                                "anyOf": [
+                                  {
+                                    "type": "object",
+                                    "propertyNames": {
+                                      "type": "string"
+                                    },
+                                    "additionalProperties": {}
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              },
+                              "availableWhenResultStatusIn": {
+                                "default": null,
+                                "anyOf": [
+                                  {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "string",
+                                      "minLength": 1
+                                    }
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              }
+                            },
+                            "required": [
+                              "key",
+                              "type",
+                              "inputSignalKeys",
+                              "configJson",
+                              "availableWhenResultStatusIn"
+                            ],
+                            "additionalProperties": false
+                          }
                         }
                       },
                       "required": [
@@ -15359,7 +14729,8 @@
                         "inputBindingsJson",
                         "timeoutSeconds",
                         "retryPolicyJson",
-                        "advancementPolicyDefinition"
+                        "advancementPolicyDefinition",
+                        "computedSignalDefinitions"
                       ],
                       "additionalProperties": false
                     }
@@ -15698,6 +15069,77 @@
                             "allowedEventTypes"
                           ],
                           "additionalProperties": false
+                        },
+                        "computedSignalDefinitions": {
+                          "default": [],
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "key": {
+                                "type": "string",
+                                "minLength": 1
+                              },
+                              "type": {
+                                "type": "string",
+                                "enum": [
+                                  "average",
+                                  "weighted_average",
+                                  "sum",
+                                  "min",
+                                  "max",
+                                  "count",
+                                  "boolean_any",
+                                  "boolean_all"
+                                ]
+                              },
+                              "inputSignalKeys": {
+                                "minItems": 1,
+                                "type": "array",
+                                "items": {
+                                  "type": "string",
+                                  "minLength": 1
+                                }
+                              },
+                              "configJson": {
+                                "anyOf": [
+                                  {
+                                    "type": "object",
+                                    "propertyNames": {
+                                      "type": "string"
+                                    },
+                                    "additionalProperties": {}
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              },
+                              "availableWhenResultStatusIn": {
+                                "default": null,
+                                "anyOf": [
+                                  {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "string",
+                                      "minLength": 1
+                                    }
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              }
+                            },
+                            "required": [
+                              "key",
+                              "type",
+                              "inputSignalKeys",
+                              "configJson",
+                              "availableWhenResultStatusIn"
+                            ],
+                            "additionalProperties": false
+                          }
                         }
                       },
                       "required": [
@@ -15710,7 +15152,8 @@
                         "inputBindingsJson",
                         "timeoutSeconds",
                         "retryPolicyJson",
-                        "advancementPolicyDefinition"
+                        "advancementPolicyDefinition",
+                        "computedSignalDefinitions"
                       ],
                       "additionalProperties": false
                     }
@@ -16085,6 +15528,92 @@
                             ],
                             "additionalProperties": false
                           },
+                          "computedSignalDefinitions": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string"
+                                },
+                                "key": {
+                                  "type": "string",
+                                  "minLength": 1
+                                },
+                                "type": {
+                                  "type": "string",
+                                  "enum": [
+                                    "average",
+                                    "weighted_average",
+                                    "sum",
+                                    "min",
+                                    "max",
+                                    "count",
+                                    "boolean_any",
+                                    "boolean_all"
+                                  ]
+                                },
+                                "inputSignalKeys": {
+                                  "minItems": 1,
+                                  "type": "array",
+                                  "items": {
+                                    "type": "string",
+                                    "minLength": 1
+                                  }
+                                },
+                                "configJson": {
+                                  "anyOf": [
+                                    {
+                                      "type": "object",
+                                      "propertyNames": {
+                                        "type": "string"
+                                      },
+                                      "additionalProperties": {}
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ]
+                                },
+                                "availableWhenResultStatusIn": {
+                                  "default": null,
+                                  "anyOf": [
+                                    {
+                                      "type": "array",
+                                      "items": {
+                                        "type": "string",
+                                        "minLength": 1
+                                      }
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ]
+                                },
+                                "createdAt": {
+                                  "type": "string",
+                                  "format": "date-time",
+                                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+                                },
+                                "updatedAt": {
+                                  "type": "string",
+                                  "format": "date-time",
+                                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "key",
+                                "type",
+                                "inputSignalKeys",
+                                "configJson",
+                                "availableWhenResultStatusIn",
+                                "createdAt",
+                                "updatedAt"
+                              ],
+                              "additionalProperties": false
+                            }
+                          },
                           "createdAt": {
                             "type": "string",
                             "format": "date-time",
@@ -16109,6 +15638,7 @@
                           "timeoutSeconds",
                           "retryPolicyJson",
                           "advancementPolicyDefinition",
+                          "computedSignalDefinitions",
                           "createdAt",
                           "updatedAt"
                         ],
@@ -16944,6 +16474,92 @@
                               ],
                               "additionalProperties": false
                             },
+                            "computedSignalDefinitions": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "id": {
+                                    "type": "string"
+                                  },
+                                  "key": {
+                                    "type": "string",
+                                    "minLength": 1
+                                  },
+                                  "type": {
+                                    "type": "string",
+                                    "enum": [
+                                      "average",
+                                      "weighted_average",
+                                      "sum",
+                                      "min",
+                                      "max",
+                                      "count",
+                                      "boolean_any",
+                                      "boolean_all"
+                                    ]
+                                  },
+                                  "inputSignalKeys": {
+                                    "minItems": 1,
+                                    "type": "array",
+                                    "items": {
+                                      "type": "string",
+                                      "minLength": 1
+                                    }
+                                  },
+                                  "configJson": {
+                                    "anyOf": [
+                                      {
+                                        "type": "object",
+                                        "propertyNames": {
+                                          "type": "string"
+                                        },
+                                        "additionalProperties": {}
+                                      },
+                                      {
+                                        "type": "null"
+                                      }
+                                    ]
+                                  },
+                                  "availableWhenResultStatusIn": {
+                                    "default": null,
+                                    "anyOf": [
+                                      {
+                                        "type": "array",
+                                        "items": {
+                                          "type": "string",
+                                          "minLength": 1
+                                        }
+                                      },
+                                      {
+                                        "type": "null"
+                                      }
+                                    ]
+                                  },
+                                  "createdAt": {
+                                    "type": "string",
+                                    "format": "date-time",
+                                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+                                  },
+                                  "updatedAt": {
+                                    "type": "string",
+                                    "format": "date-time",
+                                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+                                  }
+                                },
+                                "required": [
+                                  "id",
+                                  "key",
+                                  "type",
+                                  "inputSignalKeys",
+                                  "configJson",
+                                  "availableWhenResultStatusIn",
+                                  "createdAt",
+                                  "updatedAt"
+                                ],
+                                "additionalProperties": false
+                              }
+                            },
                             "createdAt": {
                               "type": "string",
                               "format": "date-time",
@@ -16968,6 +16584,7 @@
                             "timeoutSeconds",
                             "retryPolicyJson",
                             "advancementPolicyDefinition",
+                            "computedSignalDefinitions",
                             "createdAt",
                             "updatedAt"
                           ],
@@ -17578,6 +17195,77 @@
                             "allowedEventTypes"
                           ],
                           "additionalProperties": false
+                        },
+                        "computedSignalDefinitions": {
+                          "default": [],
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "key": {
+                                "type": "string",
+                                "minLength": 1
+                              },
+                              "type": {
+                                "type": "string",
+                                "enum": [
+                                  "average",
+                                  "weighted_average",
+                                  "sum",
+                                  "min",
+                                  "max",
+                                  "count",
+                                  "boolean_any",
+                                  "boolean_all"
+                                ]
+                              },
+                              "inputSignalKeys": {
+                                "minItems": 1,
+                                "type": "array",
+                                "items": {
+                                  "type": "string",
+                                  "minLength": 1
+                                }
+                              },
+                              "configJson": {
+                                "anyOf": [
+                                  {
+                                    "type": "object",
+                                    "propertyNames": {
+                                      "type": "string"
+                                    },
+                                    "additionalProperties": {}
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              },
+                              "availableWhenResultStatusIn": {
+                                "default": null,
+                                "anyOf": [
+                                  {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "string",
+                                      "minLength": 1
+                                    }
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              }
+                            },
+                            "required": [
+                              "key",
+                              "type",
+                              "inputSignalKeys",
+                              "configJson",
+                              "availableWhenResultStatusIn"
+                            ],
+                            "additionalProperties": false
+                          }
                         }
                       },
                       "required": [
@@ -17590,7 +17278,8 @@
                         "inputBindingsJson",
                         "timeoutSeconds",
                         "retryPolicyJson",
-                        "advancementPolicyDefinition"
+                        "advancementPolicyDefinition",
+                        "computedSignalDefinitions"
                       ],
                       "additionalProperties": false
                     }
@@ -17929,6 +17618,77 @@
                             "allowedEventTypes"
                           ],
                           "additionalProperties": false
+                        },
+                        "computedSignalDefinitions": {
+                          "default": [],
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "key": {
+                                "type": "string",
+                                "minLength": 1
+                              },
+                              "type": {
+                                "type": "string",
+                                "enum": [
+                                  "average",
+                                  "weighted_average",
+                                  "sum",
+                                  "min",
+                                  "max",
+                                  "count",
+                                  "boolean_any",
+                                  "boolean_all"
+                                ]
+                              },
+                              "inputSignalKeys": {
+                                "minItems": 1,
+                                "type": "array",
+                                "items": {
+                                  "type": "string",
+                                  "minLength": 1
+                                }
+                              },
+                              "configJson": {
+                                "anyOf": [
+                                  {
+                                    "type": "object",
+                                    "propertyNames": {
+                                      "type": "string"
+                                    },
+                                    "additionalProperties": {}
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              },
+                              "availableWhenResultStatusIn": {
+                                "default": null,
+                                "anyOf": [
+                                  {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "string",
+                                      "minLength": 1
+                                    }
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              }
+                            },
+                            "required": [
+                              "key",
+                              "type",
+                              "inputSignalKeys",
+                              "configJson",
+                              "availableWhenResultStatusIn"
+                            ],
+                            "additionalProperties": false
+                          }
                         }
                       },
                       "required": [
@@ -17941,7 +17701,8 @@
                         "inputBindingsJson",
                         "timeoutSeconds",
                         "retryPolicyJson",
-                        "advancementPolicyDefinition"
+                        "advancementPolicyDefinition",
+                        "computedSignalDefinitions"
                       ],
                       "additionalProperties": false
                     }
@@ -18280,6 +18041,77 @@
                             "allowedEventTypes"
                           ],
                           "additionalProperties": false
+                        },
+                        "computedSignalDefinitions": {
+                          "default": [],
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "key": {
+                                "type": "string",
+                                "minLength": 1
+                              },
+                              "type": {
+                                "type": "string",
+                                "enum": [
+                                  "average",
+                                  "weighted_average",
+                                  "sum",
+                                  "min",
+                                  "max",
+                                  "count",
+                                  "boolean_any",
+                                  "boolean_all"
+                                ]
+                              },
+                              "inputSignalKeys": {
+                                "minItems": 1,
+                                "type": "array",
+                                "items": {
+                                  "type": "string",
+                                  "minLength": 1
+                                }
+                              },
+                              "configJson": {
+                                "anyOf": [
+                                  {
+                                    "type": "object",
+                                    "propertyNames": {
+                                      "type": "string"
+                                    },
+                                    "additionalProperties": {}
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              },
+                              "availableWhenResultStatusIn": {
+                                "default": null,
+                                "anyOf": [
+                                  {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "string",
+                                      "minLength": 1
+                                    }
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              }
+                            },
+                            "required": [
+                              "key",
+                              "type",
+                              "inputSignalKeys",
+                              "configJson",
+                              "availableWhenResultStatusIn"
+                            ],
+                            "additionalProperties": false
+                          }
                         }
                       },
                       "required": [
@@ -18292,7 +18124,8 @@
                         "inputBindingsJson",
                         "timeoutSeconds",
                         "retryPolicyJson",
-                        "advancementPolicyDefinition"
+                        "advancementPolicyDefinition",
+                        "computedSignalDefinitions"
                       ],
                       "additionalProperties": false
                     }
@@ -18667,6 +18500,92 @@
                             ],
                             "additionalProperties": false
                           },
+                          "computedSignalDefinitions": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string"
+                                },
+                                "key": {
+                                  "type": "string",
+                                  "minLength": 1
+                                },
+                                "type": {
+                                  "type": "string",
+                                  "enum": [
+                                    "average",
+                                    "weighted_average",
+                                    "sum",
+                                    "min",
+                                    "max",
+                                    "count",
+                                    "boolean_any",
+                                    "boolean_all"
+                                  ]
+                                },
+                                "inputSignalKeys": {
+                                  "minItems": 1,
+                                  "type": "array",
+                                  "items": {
+                                    "type": "string",
+                                    "minLength": 1
+                                  }
+                                },
+                                "configJson": {
+                                  "anyOf": [
+                                    {
+                                      "type": "object",
+                                      "propertyNames": {
+                                        "type": "string"
+                                      },
+                                      "additionalProperties": {}
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ]
+                                },
+                                "availableWhenResultStatusIn": {
+                                  "default": null,
+                                  "anyOf": [
+                                    {
+                                      "type": "array",
+                                      "items": {
+                                        "type": "string",
+                                        "minLength": 1
+                                      }
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ]
+                                },
+                                "createdAt": {
+                                  "type": "string",
+                                  "format": "date-time",
+                                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+                                },
+                                "updatedAt": {
+                                  "type": "string",
+                                  "format": "date-time",
+                                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "key",
+                                "type",
+                                "inputSignalKeys",
+                                "configJson",
+                                "availableWhenResultStatusIn",
+                                "createdAt",
+                                "updatedAt"
+                              ],
+                              "additionalProperties": false
+                            }
+                          },
                           "createdAt": {
                             "type": "string",
                             "format": "date-time",
@@ -18691,6 +18610,7 @@
                           "timeoutSeconds",
                           "retryPolicyJson",
                           "advancementPolicyDefinition",
+                          "computedSignalDefinitions",
                           "createdAt",
                           "updatedAt"
                         ],
@@ -19343,6 +19263,92 @@
                             ],
                             "additionalProperties": false
                           },
+                          "computedSignalDefinitions": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string"
+                                },
+                                "key": {
+                                  "type": "string",
+                                  "minLength": 1
+                                },
+                                "type": {
+                                  "type": "string",
+                                  "enum": [
+                                    "average",
+                                    "weighted_average",
+                                    "sum",
+                                    "min",
+                                    "max",
+                                    "count",
+                                    "boolean_any",
+                                    "boolean_all"
+                                  ]
+                                },
+                                "inputSignalKeys": {
+                                  "minItems": 1,
+                                  "type": "array",
+                                  "items": {
+                                    "type": "string",
+                                    "minLength": 1
+                                  }
+                                },
+                                "configJson": {
+                                  "anyOf": [
+                                    {
+                                      "type": "object",
+                                      "propertyNames": {
+                                        "type": "string"
+                                      },
+                                      "additionalProperties": {}
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ]
+                                },
+                                "availableWhenResultStatusIn": {
+                                  "default": null,
+                                  "anyOf": [
+                                    {
+                                      "type": "array",
+                                      "items": {
+                                        "type": "string",
+                                        "minLength": 1
+                                      }
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ]
+                                },
+                                "createdAt": {
+                                  "type": "string",
+                                  "format": "date-time",
+                                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+                                },
+                                "updatedAt": {
+                                  "type": "string",
+                                  "format": "date-time",
+                                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "key",
+                                "type",
+                                "inputSignalKeys",
+                                "configJson",
+                                "availableWhenResultStatusIn",
+                                "createdAt",
+                                "updatedAt"
+                              ],
+                              "additionalProperties": false
+                            }
+                          },
                           "createdAt": {
                             "type": "string",
                             "format": "date-time",
@@ -19367,6 +19373,7 @@
                           "timeoutSeconds",
                           "retryPolicyJson",
                           "advancementPolicyDefinition",
+                          "computedSignalDefinitions",
                           "createdAt",
                           "updatedAt"
                         ],
@@ -20141,6 +20148,92 @@
                             ],
                             "additionalProperties": false
                           },
+                          "computedSignalDefinitions": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string"
+                                },
+                                "key": {
+                                  "type": "string",
+                                  "minLength": 1
+                                },
+                                "type": {
+                                  "type": "string",
+                                  "enum": [
+                                    "average",
+                                    "weighted_average",
+                                    "sum",
+                                    "min",
+                                    "max",
+                                    "count",
+                                    "boolean_any",
+                                    "boolean_all"
+                                  ]
+                                },
+                                "inputSignalKeys": {
+                                  "minItems": 1,
+                                  "type": "array",
+                                  "items": {
+                                    "type": "string",
+                                    "minLength": 1
+                                  }
+                                },
+                                "configJson": {
+                                  "anyOf": [
+                                    {
+                                      "type": "object",
+                                      "propertyNames": {
+                                        "type": "string"
+                                      },
+                                      "additionalProperties": {}
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ]
+                                },
+                                "availableWhenResultStatusIn": {
+                                  "default": null,
+                                  "anyOf": [
+                                    {
+                                      "type": "array",
+                                      "items": {
+                                        "type": "string",
+                                        "minLength": 1
+                                      }
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ]
+                                },
+                                "createdAt": {
+                                  "type": "string",
+                                  "format": "date-time",
+                                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+                                },
+                                "updatedAt": {
+                                  "type": "string",
+                                  "format": "date-time",
+                                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "key",
+                                "type",
+                                "inputSignalKeys",
+                                "configJson",
+                                "availableWhenResultStatusIn",
+                                "createdAt",
+                                "updatedAt"
+                              ],
+                              "additionalProperties": false
+                            }
+                          },
                           "createdAt": {
                             "type": "string",
                             "format": "date-time",
@@ -20165,6 +20258,7 @@
                           "timeoutSeconds",
                           "retryPolicyJson",
                           "advancementPolicyDefinition",
+                          "computedSignalDefinitions",
                           "createdAt",
                           "updatedAt"
                         ],
@@ -20807,6 +20901,77 @@
                       "allowedEventTypes"
                     ],
                     "additionalProperties": false
+                  },
+                  "computedSignalDefinitions": {
+                    "default": [],
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "key": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "type": {
+                          "type": "string",
+                          "enum": [
+                            "average",
+                            "weighted_average",
+                            "sum",
+                            "min",
+                            "max",
+                            "count",
+                            "boolean_any",
+                            "boolean_all"
+                          ]
+                        },
+                        "inputSignalKeys": {
+                          "minItems": 1,
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "minLength": 1
+                          }
+                        },
+                        "configJson": {
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "propertyNames": {
+                                "type": "string"
+                              },
+                              "additionalProperties": {}
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "availableWhenResultStatusIn": {
+                          "default": null,
+                          "anyOf": [
+                            {
+                              "type": "array",
+                              "items": {
+                                "type": "string",
+                                "minLength": 1
+                              }
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        }
+                      },
+                      "required": [
+                        "key",
+                        "type",
+                        "inputSignalKeys",
+                        "configJson",
+                        "availableWhenResultStatusIn"
+                      ],
+                      "additionalProperties": false
+                    }
                   }
                 },
                 "required": [
@@ -20819,7 +20984,8 @@
                   "inputBindingsJson",
                   "timeoutSeconds",
                   "retryPolicyJson",
-                  "advancementPolicyDefinition"
+                  "advancementPolicyDefinition",
+                  "computedSignalDefinitions"
                 ],
                 "additionalProperties": false
               }
@@ -21105,6 +21271,77 @@
                       "allowedEventTypes"
                     ],
                     "additionalProperties": false
+                  },
+                  "computedSignalDefinitions": {
+                    "default": [],
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "key": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "type": {
+                          "type": "string",
+                          "enum": [
+                            "average",
+                            "weighted_average",
+                            "sum",
+                            "min",
+                            "max",
+                            "count",
+                            "boolean_any",
+                            "boolean_all"
+                          ]
+                        },
+                        "inputSignalKeys": {
+                          "minItems": 1,
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "minLength": 1
+                          }
+                        },
+                        "configJson": {
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "propertyNames": {
+                                "type": "string"
+                              },
+                              "additionalProperties": {}
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "availableWhenResultStatusIn": {
+                          "default": null,
+                          "anyOf": [
+                            {
+                              "type": "array",
+                              "items": {
+                                "type": "string",
+                                "minLength": 1
+                              }
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        }
+                      },
+                      "required": [
+                        "key",
+                        "type",
+                        "inputSignalKeys",
+                        "configJson",
+                        "availableWhenResultStatusIn"
+                      ],
+                      "additionalProperties": false
+                    }
                   }
                 },
                 "required": [
@@ -21117,7 +21354,8 @@
                   "inputBindingsJson",
                   "timeoutSeconds",
                   "retryPolicyJson",
-                  "advancementPolicyDefinition"
+                  "advancementPolicyDefinition",
+                  "computedSignalDefinitions"
                 ],
                 "additionalProperties": false
               }
@@ -21403,6 +21641,77 @@
                       "allowedEventTypes"
                     ],
                     "additionalProperties": false
+                  },
+                  "computedSignalDefinitions": {
+                    "default": [],
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "key": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "type": {
+                          "type": "string",
+                          "enum": [
+                            "average",
+                            "weighted_average",
+                            "sum",
+                            "min",
+                            "max",
+                            "count",
+                            "boolean_any",
+                            "boolean_all"
+                          ]
+                        },
+                        "inputSignalKeys": {
+                          "minItems": 1,
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "minLength": 1
+                          }
+                        },
+                        "configJson": {
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "propertyNames": {
+                                "type": "string"
+                              },
+                              "additionalProperties": {}
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "availableWhenResultStatusIn": {
+                          "default": null,
+                          "anyOf": [
+                            {
+                              "type": "array",
+                              "items": {
+                                "type": "string",
+                                "minLength": 1
+                              }
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        }
+                      },
+                      "required": [
+                        "key",
+                        "type",
+                        "inputSignalKeys",
+                        "configJson",
+                        "availableWhenResultStatusIn"
+                      ],
+                      "additionalProperties": false
+                    }
                   }
                 },
                 "required": [
@@ -21415,7 +21724,8 @@
                   "inputBindingsJson",
                   "timeoutSeconds",
                   "retryPolicyJson",
-                  "advancementPolicyDefinition"
+                  "advancementPolicyDefinition",
+                  "computedSignalDefinitions"
                 ],
                 "additionalProperties": false
               }
@@ -21777,6 +22087,92 @@
                             ],
                             "additionalProperties": false
                           },
+                          "computedSignalDefinitions": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string"
+                                },
+                                "key": {
+                                  "type": "string",
+                                  "minLength": 1
+                                },
+                                "type": {
+                                  "type": "string",
+                                  "enum": [
+                                    "average",
+                                    "weighted_average",
+                                    "sum",
+                                    "min",
+                                    "max",
+                                    "count",
+                                    "boolean_any",
+                                    "boolean_all"
+                                  ]
+                                },
+                                "inputSignalKeys": {
+                                  "minItems": 1,
+                                  "type": "array",
+                                  "items": {
+                                    "type": "string",
+                                    "minLength": 1
+                                  }
+                                },
+                                "configJson": {
+                                  "anyOf": [
+                                    {
+                                      "type": "object",
+                                      "propertyNames": {
+                                        "type": "string"
+                                      },
+                                      "additionalProperties": {}
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ]
+                                },
+                                "availableWhenResultStatusIn": {
+                                  "default": null,
+                                  "anyOf": [
+                                    {
+                                      "type": "array",
+                                      "items": {
+                                        "type": "string",
+                                        "minLength": 1
+                                      }
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ]
+                                },
+                                "createdAt": {
+                                  "type": "string",
+                                  "format": "date-time",
+                                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+                                },
+                                "updatedAt": {
+                                  "type": "string",
+                                  "format": "date-time",
+                                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "key",
+                                "type",
+                                "inputSignalKeys",
+                                "configJson",
+                                "availableWhenResultStatusIn",
+                                "createdAt",
+                                "updatedAt"
+                              ],
+                              "additionalProperties": false
+                            }
+                          },
                           "createdAt": {
                             "type": "string",
                             "format": "date-time",
@@ -21801,6 +22197,7 @@
                           "timeoutSeconds",
                           "retryPolicyJson",
                           "advancementPolicyDefinition",
+                          "computedSignalDefinitions",
                           "createdAt",
                           "updatedAt"
                         ],
@@ -22451,6 +22848,77 @@
                       "allowedEventTypes"
                     ],
                     "additionalProperties": false
+                  },
+                  "computedSignalDefinitions": {
+                    "default": [],
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "key": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "type": {
+                          "type": "string",
+                          "enum": [
+                            "average",
+                            "weighted_average",
+                            "sum",
+                            "min",
+                            "max",
+                            "count",
+                            "boolean_any",
+                            "boolean_all"
+                          ]
+                        },
+                        "inputSignalKeys": {
+                          "minItems": 1,
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "minLength": 1
+                          }
+                        },
+                        "configJson": {
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "propertyNames": {
+                                "type": "string"
+                              },
+                              "additionalProperties": {}
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "availableWhenResultStatusIn": {
+                          "default": null,
+                          "anyOf": [
+                            {
+                              "type": "array",
+                              "items": {
+                                "type": "string",
+                                "minLength": 1
+                              }
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        }
+                      },
+                      "required": [
+                        "key",
+                        "type",
+                        "inputSignalKeys",
+                        "configJson",
+                        "availableWhenResultStatusIn"
+                      ],
+                      "additionalProperties": false
+                    }
                   }
                 },
                 "required": [
@@ -22463,7 +22931,8 @@
                   "inputBindingsJson",
                   "timeoutSeconds",
                   "retryPolicyJson",
-                  "advancementPolicyDefinition"
+                  "advancementPolicyDefinition",
+                  "computedSignalDefinitions"
                 ],
                 "additionalProperties": false
               }
@@ -22749,6 +23218,77 @@
                       "allowedEventTypes"
                     ],
                     "additionalProperties": false
+                  },
+                  "computedSignalDefinitions": {
+                    "default": [],
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "key": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "type": {
+                          "type": "string",
+                          "enum": [
+                            "average",
+                            "weighted_average",
+                            "sum",
+                            "min",
+                            "max",
+                            "count",
+                            "boolean_any",
+                            "boolean_all"
+                          ]
+                        },
+                        "inputSignalKeys": {
+                          "minItems": 1,
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "minLength": 1
+                          }
+                        },
+                        "configJson": {
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "propertyNames": {
+                                "type": "string"
+                              },
+                              "additionalProperties": {}
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "availableWhenResultStatusIn": {
+                          "default": null,
+                          "anyOf": [
+                            {
+                              "type": "array",
+                              "items": {
+                                "type": "string",
+                                "minLength": 1
+                              }
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        }
+                      },
+                      "required": [
+                        "key",
+                        "type",
+                        "inputSignalKeys",
+                        "configJson",
+                        "availableWhenResultStatusIn"
+                      ],
+                      "additionalProperties": false
+                    }
                   }
                 },
                 "required": [
@@ -22761,7 +23301,8 @@
                   "inputBindingsJson",
                   "timeoutSeconds",
                   "retryPolicyJson",
-                  "advancementPolicyDefinition"
+                  "advancementPolicyDefinition",
+                  "computedSignalDefinitions"
                 ],
                 "additionalProperties": false
               }
@@ -23047,6 +23588,77 @@
                       "allowedEventTypes"
                     ],
                     "additionalProperties": false
+                  },
+                  "computedSignalDefinitions": {
+                    "default": [],
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "key": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "type": {
+                          "type": "string",
+                          "enum": [
+                            "average",
+                            "weighted_average",
+                            "sum",
+                            "min",
+                            "max",
+                            "count",
+                            "boolean_any",
+                            "boolean_all"
+                          ]
+                        },
+                        "inputSignalKeys": {
+                          "minItems": 1,
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "minLength": 1
+                          }
+                        },
+                        "configJson": {
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "propertyNames": {
+                                "type": "string"
+                              },
+                              "additionalProperties": {}
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "availableWhenResultStatusIn": {
+                          "default": null,
+                          "anyOf": [
+                            {
+                              "type": "array",
+                              "items": {
+                                "type": "string",
+                                "minLength": 1
+                              }
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        }
+                      },
+                      "required": [
+                        "key",
+                        "type",
+                        "inputSignalKeys",
+                        "configJson",
+                        "availableWhenResultStatusIn"
+                      ],
+                      "additionalProperties": false
+                    }
                   }
                 },
                 "required": [
@@ -23059,7 +23671,8 @@
                   "inputBindingsJson",
                   "timeoutSeconds",
                   "retryPolicyJson",
-                  "advancementPolicyDefinition"
+                  "advancementPolicyDefinition",
+                  "computedSignalDefinitions"
                 ],
                 "additionalProperties": false
               }
@@ -23421,6 +24034,92 @@
                             ],
                             "additionalProperties": false
                           },
+                          "computedSignalDefinitions": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string"
+                                },
+                                "key": {
+                                  "type": "string",
+                                  "minLength": 1
+                                },
+                                "type": {
+                                  "type": "string",
+                                  "enum": [
+                                    "average",
+                                    "weighted_average",
+                                    "sum",
+                                    "min",
+                                    "max",
+                                    "count",
+                                    "boolean_any",
+                                    "boolean_all"
+                                  ]
+                                },
+                                "inputSignalKeys": {
+                                  "minItems": 1,
+                                  "type": "array",
+                                  "items": {
+                                    "type": "string",
+                                    "minLength": 1
+                                  }
+                                },
+                                "configJson": {
+                                  "anyOf": [
+                                    {
+                                      "type": "object",
+                                      "propertyNames": {
+                                        "type": "string"
+                                      },
+                                      "additionalProperties": {}
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ]
+                                },
+                                "availableWhenResultStatusIn": {
+                                  "default": null,
+                                  "anyOf": [
+                                    {
+                                      "type": "array",
+                                      "items": {
+                                        "type": "string",
+                                        "minLength": 1
+                                      }
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ]
+                                },
+                                "createdAt": {
+                                  "type": "string",
+                                  "format": "date-time",
+                                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+                                },
+                                "updatedAt": {
+                                  "type": "string",
+                                  "format": "date-time",
+                                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "key",
+                                "type",
+                                "inputSignalKeys",
+                                "configJson",
+                                "availableWhenResultStatusIn",
+                                "createdAt",
+                                "updatedAt"
+                              ],
+                              "additionalProperties": false
+                            }
+                          },
                           "createdAt": {
                             "type": "string",
                             "format": "date-time",
@@ -23445,6 +24144,7 @@
                           "timeoutSeconds",
                           "retryPolicyJson",
                           "advancementPolicyDefinition",
+                          "computedSignalDefinitions",
                           "createdAt",
                           "updatedAt"
                         ],
@@ -24164,6 +24864,92 @@
                             ],
                             "additionalProperties": false
                           },
+                          "computedSignalDefinitions": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string"
+                                },
+                                "key": {
+                                  "type": "string",
+                                  "minLength": 1
+                                },
+                                "type": {
+                                  "type": "string",
+                                  "enum": [
+                                    "average",
+                                    "weighted_average",
+                                    "sum",
+                                    "min",
+                                    "max",
+                                    "count",
+                                    "boolean_any",
+                                    "boolean_all"
+                                  ]
+                                },
+                                "inputSignalKeys": {
+                                  "minItems": 1,
+                                  "type": "array",
+                                  "items": {
+                                    "type": "string",
+                                    "minLength": 1
+                                  }
+                                },
+                                "configJson": {
+                                  "anyOf": [
+                                    {
+                                      "type": "object",
+                                      "propertyNames": {
+                                        "type": "string"
+                                      },
+                                      "additionalProperties": {}
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ]
+                                },
+                                "availableWhenResultStatusIn": {
+                                  "default": null,
+                                  "anyOf": [
+                                    {
+                                      "type": "array",
+                                      "items": {
+                                        "type": "string",
+                                        "minLength": 1
+                                      }
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ]
+                                },
+                                "createdAt": {
+                                  "type": "string",
+                                  "format": "date-time",
+                                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+                                },
+                                "updatedAt": {
+                                  "type": "string",
+                                  "format": "date-time",
+                                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "key",
+                                "type",
+                                "inputSignalKeys",
+                                "configJson",
+                                "availableWhenResultStatusIn",
+                                "createdAt",
+                                "updatedAt"
+                              ],
+                              "additionalProperties": false
+                            }
+                          },
                           "createdAt": {
                             "type": "string",
                             "format": "date-time",
@@ -24188,6 +24974,7 @@
                           "timeoutSeconds",
                           "retryPolicyJson",
                           "advancementPolicyDefinition",
+                          "computedSignalDefinitions",
                           "createdAt",
                           "updatedAt"
                         ],
@@ -25223,6 +26010,92 @@
                             ],
                             "additionalProperties": false
                           },
+                          "computedSignalDefinitions": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string"
+                                },
+                                "key": {
+                                  "type": "string",
+                                  "minLength": 1
+                                },
+                                "type": {
+                                  "type": "string",
+                                  "enum": [
+                                    "average",
+                                    "weighted_average",
+                                    "sum",
+                                    "min",
+                                    "max",
+                                    "count",
+                                    "boolean_any",
+                                    "boolean_all"
+                                  ]
+                                },
+                                "inputSignalKeys": {
+                                  "minItems": 1,
+                                  "type": "array",
+                                  "items": {
+                                    "type": "string",
+                                    "minLength": 1
+                                  }
+                                },
+                                "configJson": {
+                                  "anyOf": [
+                                    {
+                                      "type": "object",
+                                      "propertyNames": {
+                                        "type": "string"
+                                      },
+                                      "additionalProperties": {}
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ]
+                                },
+                                "availableWhenResultStatusIn": {
+                                  "default": null,
+                                  "anyOf": [
+                                    {
+                                      "type": "array",
+                                      "items": {
+                                        "type": "string",
+                                        "minLength": 1
+                                      }
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ]
+                                },
+                                "createdAt": {
+                                  "type": "string",
+                                  "format": "date-time",
+                                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+                                },
+                                "updatedAt": {
+                                  "type": "string",
+                                  "format": "date-time",
+                                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "key",
+                                "type",
+                                "inputSignalKeys",
+                                "configJson",
+                                "availableWhenResultStatusIn",
+                                "createdAt",
+                                "updatedAt"
+                              ],
+                              "additionalProperties": false
+                            }
+                          },
                           "createdAt": {
                             "type": "string",
                             "format": "date-time",
@@ -25247,6 +26120,7 @@
                           "timeoutSeconds",
                           "retryPolicyJson",
                           "advancementPolicyDefinition",
+                          "computedSignalDefinitions",
                           "createdAt",
                           "updatedAt"
                         ],
@@ -44589,84 +45463,6 @@
                         "additionalProperties": false
                       }
                     },
-                    "computedSignalDefinitions": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "id": {
-                            "type": "string"
-                          },
-                          "key": {
-                            "type": "string",
-                            "minLength": 1
-                          },
-                          "type": {
-                            "type": "string",
-                            "enum": [
-                              "average",
-                              "weighted_average",
-                              "sum",
-                              "min",
-                              "max",
-                              "custom"
-                            ]
-                          },
-                          "inputSignalKeys": {
-                            "minItems": 1,
-                            "type": "array",
-                            "items": {
-                              "type": "string",
-                              "minLength": 1
-                            }
-                          },
-                          "configJson": {
-                            "anyOf": [
-                              {},
-                              {
-                                "type": "null"
-                              }
-                            ]
-                          },
-                          "availableWhenResultStatusIn": {
-                            "default": null,
-                            "anyOf": [
-                              {
-                                "type": "array",
-                                "items": {
-                                  "type": "string",
-                                  "minLength": 1
-                                }
-                              },
-                              {
-                                "type": "null"
-                              }
-                            ]
-                          },
-                          "createdAt": {
-                            "type": "string",
-                            "format": "date-time",
-                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
-                          },
-                          "updatedAt": {
-                            "type": "string",
-                            "format": "date-time",
-                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
-                          }
-                        },
-                        "required": [
-                          "id",
-                          "key",
-                          "type",
-                          "inputSignalKeys",
-                          "configJson",
-                          "availableWhenResultStatusIn",
-                          "createdAt",
-                          "updatedAt"
-                        ],
-                        "additionalProperties": false
-                      }
-                    },
                     "createdAt": {
                       "type": "string",
                       "format": "date-time",
@@ -44692,7 +45488,6 @@
                     "opencodeMcpJson",
                     "status",
                     "signalExtractorDefinitions",
-                    "computedSignalDefinitions",
                     "createdAt",
                     "updatedAt"
                   ],

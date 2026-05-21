@@ -304,10 +304,15 @@ describe("definePipeline", () => {
                 advancement: {
                   defaultOutcome: "block",
                   rules: [
-                    Rule.when(Computed.sum(["success", "repro_url"]), "equal", false, {
-                      outcome: "needs_review",
-                      outcomeJson: { reason: "failed check" },
-                    }),
+                    Rule.when(
+                      Computed.sum(["success", "repro_url"]),
+                      "equal",
+                      false,
+                      {
+                        outcome: "needs_review",
+                        outcomeJson: { reason: "failed check" },
+                      },
+                    ),
                   ],
                 },
               },
@@ -802,9 +807,17 @@ describe("definePipeline", () => {
                 rules: [
                   Rule.all(
                     [
-                      Rule.signal(Computed.max(["success", "repro_url"]), "equal", true),
+                      Rule.signal(
+                        Computed.max(["success", "repro_url"]),
+                        "equal",
+                        true,
+                      ),
                       Rule.any([
-                        Rule.signal(Computed.min(["success", "repro_url"]), "equal", false),
+                        Rule.signal(
+                          Computed.min(["success", "repro_url"]),
+                          "equal",
+                          false,
+                        ),
                         Rule.signal("repro_url", "contains", "https"),
                       ]),
                     ],

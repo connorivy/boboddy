@@ -1,5 +1,5 @@
 import type { ZodType } from "zod";
-import type { DotPaths, TypedStepDefinitionSpec } from "../steps/define-step";
+import type { DotPaths, StepDefinitionSpec, TypedStepDefinitionSpec } from "../steps/define-step";
 import {
   type AdvancementPolicy,
   extractInlineComputedSignals,
@@ -119,6 +119,8 @@ export type PipelineDefinitionSpec = {
     advancementPolicyDefinition: SerializedAdvancementPolicy;
     computedSignalDefinitions: SerializedComputedSignalDefinition[];
   }>;
+  /** Step specs referenced by this pipeline. Populated by definePipeline so the push command can auto-push steps that aren't explicitly exported. */
+  _stepDefinitions?: StepDefinitionSpec[];
 };
 
 // ─── definePipeline ───────────────────────────────────────────────────────────
@@ -177,12 +179,20 @@ export function definePipeline<
   steps: { [K in keyof TSteps]: PipelineStepConfig<TSteps[K]> };
 }): PipelineDefinitionSpec {
   const steps = config.steps as ReadonlyArray<PipelineStepConfig>;
+  const stepDefMap = new Map<string, StepDefinitionSpec>();
+  for (const stepConfig of steps) {
+    const mapKey = `${stepConfig.step.key}@v${String(stepConfig.step.version)}`;
+    if (!stepDefMap.has(mapKey)) {
+      stepDefMap.set(mapKey, stepConfig.step as StepDefinitionSpec);
+    }
+  }
   return {
     key: config.key,
     name: config.name,
     description: config.description ?? null,
     version: config.version ?? 1,
     status: config.status ?? "active",
+    _stepDefinitions: [...stepDefMap.values()],
     steps: steps.map((stepConfig, index) => ({
       stepKey: stepConfig.step.key,
       stepName: stepConfig.step.name,

@@ -211,7 +211,7 @@ const runPull = async (args: ArgumentsCamelCase<PullArguments>): Promise<void> =
     return;
   }
 
-  const result = await pullPipelineDefinitions({ projectId, baseUrl, headers, logger, dir });
+  const result = await pullPipelineDefinitions({ projectId, baseUrl, headers, logger, dir, sdkVersion: CLI_VERSION });
 
   if (result.stepFiles === 0 && result.pipelineFiles === 0) return;
 

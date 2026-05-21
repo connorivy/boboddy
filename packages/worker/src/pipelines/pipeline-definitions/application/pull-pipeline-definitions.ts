@@ -4,19 +4,23 @@ import { createStepDefinitionsClient } from "@boboddy/sdk/definitions/steps";
 import { generateStepsFileContent, type StepDefContract } from "../../../steps/step-definitions/infra/step-file-generator";
 import { generatePipelineFileContent, type PipelineContract } from "../infra/pipeline-file-generator";
 
-const PIPELINE_BUILDER_PACKAGE_JSON = JSON.stringify(
-  {
-    name: "pipeline-builder",
-    private: true,
-    type: "module",
-    dependencies: {
-      "@boboddy/sdk": "^0.0.1",
-      zod: "^4.4.2",
+function buildPipelineBuilderPackageJson(sdkVersion: string): string {
+  const artifactPath = process.env["BOBODDY_SDK_ARTIFACT_PATH"];
+  const sdkDep = artifactPath ? `file:${artifactPath}` : `^${sdkVersion}`;
+  return JSON.stringify(
+    {
+      name: "pipeline-builder",
+      private: true,
+      type: "module",
+      dependencies: {
+        "@boboddy/sdk": sdkDep,
+        zod: "^4.4.2",
+      },
     },
-  },
-  null,
-  2,
-);
+    null,
+    2,
+  );
+}
 
 const PIPELINE_BUILDER_TSCONFIG = JSON.stringify(
   {
@@ -52,6 +56,7 @@ export interface PullPipelineDefinitionsOptions {
   headers: { Authorization: string };
   logger: Logger;
   dir: string;
+  sdkVersion: string;
 }
 
 export interface PullPipelineDefinitionsResult {
@@ -73,7 +78,7 @@ async function fetchPipelines(
   return response.json() as Promise<PipelineContract[]>;
 }
 
-function ensureScaffold(dir: string): void {
+function ensureScaffold(dir: string, sdkVersion: string): void {
   if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
 
   const writeIfMissing = (relPath: string, content: string) => {
@@ -81,7 +86,7 @@ function ensureScaffold(dir: string): void {
     if (!existsSync(full)) writeFileSync(full, content, "utf-8");
   };
 
-  writeIfMissing("package.json", PIPELINE_BUILDER_PACKAGE_JSON);
+  writeIfMissing("package.json", buildPipelineBuilderPackageJson(sdkVersion));
   writeIfMissing("tsconfig.json", PIPELINE_BUILDER_TSCONFIG);
   writeIfMissing(".gitignore", PIPELINE_BUILDER_GITIGNORE);
 }
@@ -99,7 +104,7 @@ function resolveOutputFiles(dir: string, pipelineKeys: string[]): string[] {
 export async function pullPipelineDefinitions(
   options: PullPipelineDefinitionsOptions,
 ): Promise<PullPipelineDefinitionsResult> {
-  const { projectId, baseUrl, headers, logger, dir } = options;
+  const { projectId, baseUrl, headers, logger, dir, sdkVersion } = options;
 
   const stepDefsClient = createStepDefinitionsClient(baseUrl);
   const [rawSteps, pipelines] = await Promise.all([
@@ -128,7 +133,7 @@ export async function pullPipelineDefinitions(
     stepIdToKey.set((step as unknown as { id: string }).id, step.key);
   }
 
-  ensureScaffold(dir);
+  ensureScaffold(dir, sdkVersion);
 
   let pipelineFiles = 0;
   let stepFiles = 0;

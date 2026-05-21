@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 const { spawnSync } = require("node:child_process");
-const { existsSync } = require("node:fs");
+const { existsSync, readFileSync } = require("node:fs");
 const { resolve } = require("node:path");
 const pino = require("pino");
 const PinoPretty = require("pino-pretty");
@@ -49,7 +49,9 @@ if (binaryName === undefined) {
 }
 
 const binaryPath = resolve(distDirectory, binaryName);
-const isDevBuild = existsSync(resolve(distDirectory, ".dev"));
+const devFilePath = resolve(distDirectory, ".dev");
+const isDevBuild = existsSync(devFilePath);
+const devSdkArtifactPath = isDevBuild ? readFileSync(devFilePath, "utf8").trim() : "";
 
 if (!existsSync(binaryPath)) {
   fail(`Missing compiled binary: ${binaryPath}`);
@@ -57,7 +59,7 @@ if (!existsSync(binaryPath)) {
 
 const result = spawnSync(binaryPath, process.argv.slice(2), {
   stdio: "inherit",
-  env: isDevBuild ? { ...process.env, BOBODDY_LINK_SDK: "1" } : process.env,
+  env: devSdkArtifactPath ? { ...process.env, BOBODDY_SDK_ARTIFACT_PATH: devSdkArtifactPath } : process.env,
 });
 
 if (result.error instanceof Error) {

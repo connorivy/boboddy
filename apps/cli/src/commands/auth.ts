@@ -1,14 +1,16 @@
 import type { ArgumentsCamelCase, Argv, CommandModule } from "yargs";
-import { createCliLogger } from "../lib/logger";
-import { CLI_AUTH_CLIENT_ID, resolveBoboddyBaseUrl } from "../auth/config";
-import { openBrowser } from "../auth/browser";
 import {
+  CLI_AUTH_CLIENT_ID,
+  deleteAuthProfile,
   loadAuthenticatedSession,
+  loadAuthProfile,
   persistAuthenticatedSession,
   pollForAccessToken,
   requestDeviceAuthorization,
-} from "../auth/session";
-import { deleteAuthProfile, loadAuthProfile } from "../auth/storage";
+  resolveBoboddyBaseUrl,
+} from "@boboddy/worker";
+import { createCliLogger } from "../lib/logger";
+import { openBrowser } from "../auth/browser";
 
 const addBaseUrlOption = (argv: Argv<object>) =>
   argv.option("base-url", {

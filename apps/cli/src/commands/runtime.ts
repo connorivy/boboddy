@@ -1,6 +1,6 @@
 import type { ArgumentsCamelCase, Argv, CommandModule } from "yargs";
+import { RuntimeNetworkGarbageCollector } from "@boboddy/worker";
 import { createCliLogger } from "../lib/logger";
-import { RuntimeNetworkGarbageCollector } from "../runtime/runtime-network-garbage-collector";
 
 type CleanupNetworksArguments = {
   verbose: boolean;

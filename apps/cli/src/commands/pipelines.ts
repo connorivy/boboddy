@@ -2,21 +2,20 @@ import type { ArgumentsCamelCase, Argv, CommandModule } from "yargs";
 import { join } from "node:path";
 import { existsSync } from "node:fs";
 import { createStepDefinitionsClient } from "@boboddy/sdk/definitions/steps";
-import { resolveBoboddyBaseUrl } from "../auth/config";
-import { loadAuthenticatedSession } from "../auth/session";
-import { createCliLogger } from "../lib/logger";
 import {
+  loadAuthenticatedSession,
+  loadPipelinesFromDirectory,
+  loadPipelineStepsFromDirectory,
+  PIPELINE_BUILDER_DIR,
+  pushPipelineDefinitions,
+  pushStepDefinitions,
+  readProjectConfig,
+  resolveBoboddyBaseUrl,
   scaffoldPipelineBuilderDirectory,
   type StepInfo,
-} from "../pipelines/pipeline-builder-scaffolder";
-import { loadPipelinesFromDirectory } from "../pipelines/pipeline-file-loader";
-import { loadPipelineStepsFromDirectory } from "../pipelines/pipeline-step-file-loader";
-import { pushPipelineDefinitions } from "../pipelines/push-pipeline-definitions";
-import { readProjectConfig } from "../init/project-config";
-import {
-  PIPELINE_BUILDER_DIR,
-  pushStepDefinitions,
-} from "../steps/push-step-definitions";
+} from "@boboddy/worker";
+import { version as CLI_VERSION } from "../../package.json";
+import { createCliLogger } from "../lib/logger";
 
 const DUMMY_STEPS: StepInfo[] = [
   {
@@ -42,7 +41,7 @@ const runInit = async (): Promise<void> => {
   }
 
   const dir = join(process.cwd(), PIPELINE_BUILDER_DIR);
-  const result = scaffoldPipelineBuilderDirectory(dir, DUMMY_STEPS);
+  const result = scaffoldPipelineBuilderDirectory(dir, DUMMY_STEPS, CLI_VERSION);
 
   for (const file of result.created) {
     logger.info({ file }, `Created ${file}`);

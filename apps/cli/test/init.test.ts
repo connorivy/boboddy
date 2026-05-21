@@ -1,19 +1,9 @@
 import { describe, expect } from "bun:test";
-import {
-  mkdirSync,
-  mkdtempSync,
-  rmSync,
-  writeFileSync,
-} from "node:fs";
+import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join, resolve } from "node:path";
+import { resolve } from "node:path";
 import { spawnSync } from "node:child_process";
 import { concurrentTest } from "./utils";
-import {
-  deriveProjectName,
-  readProjectConfig,
-  writeProjectConfig,
-} from "../src/init/project-config";
 
 const projectRoot = resolve(import.meta.dir, "..");
 const cliEntrypoint = resolve(projectRoot, "src/index.ts");
@@ -100,75 +90,6 @@ describe("boboddy init", () => {
       } finally {
         rmSync(fakeHome, { recursive: true, force: true });
       }
-    });
-  });
-
-  describe("project config helpers", () => {
-    concurrentTest("readProjectConfig returns null when file does not exist", async () => {
-      const tmpDir = mkdtempSync(resolve(tmpdir(), "boboddy-init-config-"));
-      try {
-        const config = await readProjectConfig(tmpDir);
-        expect(config).toBeNull();
-      } finally {
-        rmSync(tmpDir, { recursive: true, force: true });
-      }
-    });
-
-    concurrentTest("readProjectConfig returns null when file has no projectId", async () => {
-      const tmpDir = mkdtempSync(resolve(tmpdir(), "boboddy-init-config-"));
-      try {
-        mkdirSync(join(tmpDir, ".boboddy"));
-        writeFileSync(join(tmpDir, ".boboddy", "boboddy.jsonc"), '{ "other": "value" }', "utf8");
-        const config = await readProjectConfig(tmpDir);
-        expect(config).toBeNull();
-      } finally {
-        rmSync(tmpDir, { recursive: true, force: true });
-      }
-    });
-
-    concurrentTest("writeProjectConfig then readProjectConfig round-trips projectId", async () => {
-      const tmpDir = mkdtempSync(resolve(tmpdir(), "boboddy-init-config-"));
-      try {
-        await writeProjectConfig("01jv-test-id", tmpDir);
-        const config = await readProjectConfig(tmpDir);
-        expect(config).toEqual({ projectId: "01jv-test-id" });
-      } finally {
-        rmSync(tmpDir, { recursive: true, force: true });
-      }
-    });
-
-    concurrentTest("readProjectConfig handles JSONC with comments", async () => {
-      const tmpDir = mkdtempSync(resolve(tmpdir(), "boboddy-init-config-"));
-      try {
-        mkdirSync(join(tmpDir, ".boboddy"));
-        writeFileSync(
-          join(tmpDir, ".boboddy", "boboddy.jsonc"),
-          '// auto-generated\n{ "projectId": "abc-123" }',
-          "utf8",
-        );
-        const config = await readProjectConfig(tmpDir);
-        expect(config).toEqual({ projectId: "abc-123" });
-      } finally {
-        rmSync(tmpDir, { recursive: true, force: true });
-      }
-    });
-  });
-
-  describe("deriveProjectName", () => {
-    concurrentTest("extracts name from HTTPS URL with .git suffix", () => {
-      expect(deriveProjectName("https://github.com/user/my-repo.git")).toBe("my-repo");
-    });
-
-    concurrentTest("extracts name from HTTPS URL without .git suffix", () => {
-      expect(deriveProjectName("https://github.com/user/my-repo")).toBe("my-repo");
-    });
-
-    concurrentTest("extracts name from SSH URL", () => {
-      expect(deriveProjectName("git@github.com:user/my-repo.git")).toBe("my-repo");
-    });
-
-    concurrentTest("handles URL with no path segments", () => {
-      expect(deriveProjectName("my-repo")).toBe("my-repo");
     });
   });
 });

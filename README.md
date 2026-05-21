@@ -1,5 +1,7 @@
 # boboddy
 
+### Business Oriented Bug Optimization & Diagnostic Deployment sYstem
+
 A distributed workflow platform for running AI-powered pipelines at scale.
 
 You define **steps** (typed units of work) and wire them into **pipelines** that automatically advance based on extracted signals — numeric or boolean metrics pulled from each step's output. Workers running on any machine claim step executions, run them inside Docker containers with an AI agent, and report results back. Signal-driven advancement policies decide whether to continue to the next stage.

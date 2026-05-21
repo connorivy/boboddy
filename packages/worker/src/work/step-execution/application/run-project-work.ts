@@ -1,5 +1,6 @@
 import os, { hostname } from "node:os";
 import path from "node:path";
+import type { DestinationStream } from "pino";
 import { parseUuidV7 } from "../../../common/contracts/uuid-v7";
 import type { RuntimeCommandRunner } from "../../../runtime/runtime-service/application/runtime-command-runner";
 import { systemTimeProvider } from "../../../lib/time-provider";
@@ -36,11 +37,6 @@ const DEFAULT_WORK_CONCURRENCY = 1;
 const DEFAULT_POLL_INTERVAL_MS = 5_000;
 const DEFAULT_LEASE_DURATION_SECONDS = 30;
 
-const logger = createLogger({
-  name: "@boboddy/worker",
-  level: process.env["BOBODDY_LOG_LEVEL"] ?? "info",
-});
-
 export type ProcessProjectWorkOptions = {
   projectId: string;
   baseUrl?: string | undefined;
@@ -52,6 +48,7 @@ export type ProcessProjectWorkOptions = {
   workItemId?: string | undefined;
   preserveRuntimeOnComplete?: boolean | undefined;
   once?: boolean | undefined;
+  dest?: DestinationStream | undefined;
 };
 
 export type ProcessProjectWorkDeps = {
@@ -66,7 +63,11 @@ export type ProcessProjectWorkDeps = {
   logger: ProjectWorkLogger;
 };
 
-function loadDefaultDeps(): ProcessProjectWorkDeps {
+function loadDefaultDeps(dest?: DestinationStream): ProcessProjectWorkDeps {
+  const logger = createLogger(
+    { name: "@boboddy/worker", level: process.env["BOBODDY_LOG_LEVEL"] ?? "info" },
+    dest,
+  );
   const workLogger = logger.child({ scope: "work" });
   return {
     createWorkerClient: createStepExecutionPlaneWorkerClient,
@@ -150,7 +151,7 @@ export async function runProjectWork(
   options: ProcessProjectWorkOptions,
   deps?: ProcessProjectWorkDeps,
 ): Promise<ProcessProjectWorkResult> {
-  const resolvedDeps = deps ?? loadDefaultDeps();
+  const resolvedDeps = deps ?? loadDefaultDeps(options.dest);
   const projectId = parseUuidV7(options.projectId);
   const baseUrl = resolveBoboddyBaseUrl(options.baseUrl);
   const workerClient = await resolvedDeps.createWorkerClient(baseUrl);

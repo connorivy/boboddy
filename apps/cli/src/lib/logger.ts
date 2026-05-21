@@ -4,7 +4,7 @@ import { createLogger, type Logger } from "@boboddy/worker";
 
 export type { Logger };
 
-function createTransport(): DestinationStream | undefined {
+export function createTransport(): DestinationStream | undefined {
   if (!process.stdout.isTTY) {
     return undefined;
   }

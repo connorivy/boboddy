@@ -4,7 +4,7 @@ import {
   resolveBoboddyBaseUrl,
   runProjectWork,
 } from "@boboddy/worker";
-import { createCliLogger } from "../lib/logger";
+import { createCliLogger, createTransport } from "../lib/logger";
 
 export interface WorkArguments {
   projectId: string | undefined;
@@ -58,6 +58,7 @@ async function handler(
     pollIntervalMs: arguments_.pollIntervalMs,
     workerId: arguments_.workerId,
     workItemId: arguments_.workItemId,
+    dest: createTransport(),
   });
 
   if (arguments_.once) {

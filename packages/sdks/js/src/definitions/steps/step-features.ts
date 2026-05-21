@@ -19,63 +19,107 @@ export type StepFeature<
   readonly _promptAddition: string;
   readonly _signals: FeatureSignalSpec[];
   readonly __resultExtension?: TResultExtension; // phantom
-  readonly __signalKeys?: TSignalKeys;           // phantom
+  readonly __signalKeys?: TSignalKeys; // phantom
 };
 
 export type AnyStepFeature = StepFeature<Record<string, unknown>, string>;
 
-type UnionToIntersection<U> =
-  (U extends unknown ? (x: U) => void : never) extends (x: infer I) => void ? I : never;
+type UnionToIntersection<U> = (
+  U extends unknown ? (x: U) => void : never
+) extends (x: infer I) => void
+  ? I
+  : never;
 
 // Merges result extension types from all features into a single intersection.
-export type FeatureResultExtensions<TFeatures extends readonly AnyStepFeature[]> =
-  [TFeatures[number]] extends [never]
-    ? Record<never, never>
-    : UnionToIntersection<
-        TFeatures[number] extends StepFeature<infer R, string> ? R : never
-      >;
+export type FeatureResultExtensions<
+  TFeatures extends readonly AnyStepFeature[],
+> = [TFeatures[number]] extends [never]
+  ? Record<never, never>
+  : UnionToIntersection<
+      TFeatures[number] extends StepFeature<infer R, string> ? R : never
+    >;
 
 // Unions all signal keys contributed by features.
 export type FeatureSignalKeys<TFeatures extends readonly AnyStepFeature[]> =
-  TFeatures[number] extends StepFeature<Record<string, unknown>, infer K> ? K : never;
+  TFeatures[number] extends StepFeature<Record<string, unknown>, infer K>
+    ? K
+    : never;
 
 // ─── Built-in: feedbackRequests ───────────────────────────────────────────────
+
+export type FeedbackRequestUrgency =
+  | "blocking"
+  | "clarification"
+  | "assumption"
+  | "informational";
 
 export type FeedbackRequestItem = {
   question: string;
   category: string;
+  urgency: FeedbackRequestUrgency;
   suggestedKey?: string;
 };
 
 const FEEDBACK_REQUEST_SIGNAL_KEY = "$boboddy_feedback_request_v1" as const;
+const FEEDBACK_REQUEST_RESULT_KEY = "$boboddy_feedbackRequests_v1" as const;
 
-const feedbackRequestItemSchema = z.object({
-  question: z.string(),
-  category: z.string(),
-  suggestedKey: z.string().optional(),
-});
+const feedbackRequestItemSchema = z
+  .object({
+    question: z
+      .string()
+      .describe("The specific question to pose to a human reviewer."),
+    category: z
+      .string()
+      .describe(
+        'A grouping label for the feedback (e.g. "accuracy", "completeness").',
+      ),
+    urgency: z
+      .enum(["blocking", "clarification", "assumption", "informational"])
+      .describe(
+        [
+          "How urgently a human response is needed:",
+          '- "blocking": cannot proceed at all without an answer.',
+          '- "clarification": genuinely ambiguous — unsure how to interpret, but not fully blocked.',
+          '- "assumption": proceeded with a guess; please verify the assumption.',
+          '- "informational": FYI only — agent proceeded fine and no reply is required.',
+        ].join("\n"),
+      ),
+    suggestedKey: z
+      .string()
+      .optional()
+      .describe("An optional suggested answer key for reference."),
+  })
+  .describe("A single feedback request item for human review.");
 
 type FeedbackRequestsFeature = StepFeature<
-  { feedbackRequests?: FeedbackRequestItem[] },
+  { [FEEDBACK_REQUEST_RESULT_KEY]?: FeedbackRequestItem[] },
   typeof FEEDBACK_REQUEST_SIGNAL_KEY
 >;
 
 const feedbackRequestsFeature: FeedbackRequestsFeature = {
   _resultExtension: z.object({
-    feedbackRequests: z.array(feedbackRequestItemSchema).optional(),
+    [FEEDBACK_REQUEST_RESULT_KEY]: z
+      .array(feedbackRequestItemSchema)
+      .optional(),
   }),
   _promptAddition: [
     "## Feedback Requests",
     "",
-    "If you encounter anything that warrants human review, populate the `feedbackRequests` array:",
-    "- **question**: The specific question to pose to a human reviewer",
-    '- **category**: A grouping label for the feedback (e.g. `"accuracy"`, `"completeness"`)',
-    "- **suggestedKey** *(optional)*: A suggested answer key for reference",
+    `If you encounter anything that warrants human review, populate the \`${FEEDBACK_REQUEST_RESULT_KEY}\` array.`,
+    "Each item must include:",
+    "- **question**: The specific question to pose to a human reviewer.",
+    '- **category**: A grouping label for the feedback (e.g. `"accuracy"`, `"completeness"`).',
+    "- **urgency**: How urgently a human response is needed. Must be one of:",
+    '  - `"blocking"`: Cannot proceed at all without an answer.',
+    '  - `"clarification"`: Genuinely ambiguous — unsure how to interpret, but not fully blocked.',
+    '  - `"assumption"`: Proceeded with a guess; please verify the assumption.',
+    '  - `"informational"`: FYI only — agent proceeded fine and no reply is required.',
+    "- **suggestedKey** *(optional)*: A suggested answer key for reference.",
   ].join("\n"),
   _signals: [
     {
       key: FEEDBACK_REQUEST_SIGNAL_KEY,
-      sourcePath: "feedbackRequests",
+      sourcePath: FEEDBACK_REQUEST_RESULT_KEY,
       type: "array",
       required: false,
     },
@@ -93,9 +137,13 @@ export const Features = {
         find(
           signals: Array<{ key: string; valueJson: unknown }>,
         ): FeedbackRequestItem[] | undefined {
-          const match = signals.find((s) => s.key === FEEDBACK_REQUEST_SIGNAL_KEY);
+          const match = signals.find(
+            (s) => s.key === FEEDBACK_REQUEST_SIGNAL_KEY,
+          );
           if (!match) return undefined;
-          const parsed = z.array(feedbackRequestItemSchema).safeParse(match.valueJson);
+          const parsed = z
+            .array(feedbackRequestItemSchema)
+            .safeParse(match.valueJson);
           return parsed.success ? parsed.data : undefined;
         },
       },

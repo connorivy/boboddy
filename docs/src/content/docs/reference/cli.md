@@ -70,40 +70,55 @@ boboddy init
 
 ---
 
-## `boboddy steps`
-
-Manage step definitions.
-
-### `boboddy steps init`
-
-Scaffold the `.boboddy/steps/` directory with a starter `package.json`, `tsconfig.json`, and example step file.
-
-```bash
-boboddy steps init
-```
-
-### `boboddy steps push [projectId]`
-
-Upload step definitions from `.boboddy/steps/` to the server. Reads `projectId` from `.boboddy/boboddy.jsonc` if not provided.
-
-```bash
-boboddy steps push
-boboddy steps push <projectId>
-```
-
----
-
 ## `boboddy pipelines`
 
-Manage pipeline definitions.
+Manage pipeline and step definitions. All step and pipeline authoring lives inside `.boboddy/pipeline-builder/`.
 
-### `boboddy pipelines pull`
+### `boboddy pipelines init`
 
-Scaffold `.boboddy/pipeline-builder/` with TypeScript definitions that import your existing steps. If the server has steps, they are fetched; otherwise example data is used.
+Scaffold `.boboddy/pipeline-builder/` with a starter `package.json`, `tsconfig.json`, and example step and pipeline files. Use this for brand-new projects that have nothing on the server yet.
+
+```bash
+boboddy pipelines init
+```
+
+### `boboddy pipelines pull [projectId]`
+
+Fetch pipeline and step definitions from the server and write them into `.boboddy/pipeline-builder/` as editable TypeScript files. If the directory already contains files you will be prompted before they are overwritten.
 
 ```bash
 boboddy pipelines pull
+boboddy pipelines pull <projectId>
 ```
+
+| Flag | Description |
+|------|-------------|
+| `--base-url <url>` | Override the API server URL |
+
+**What gets written:**
+
+| File | Description |
+|------|-------------|
+| `package.json` | Declares `@boboddy/sdk` and `zod` dependencies (only on first pull) |
+| `tsconfig.json` | TypeScript config scoped to the pipeline-builder package (only on first pull) |
+| `.gitignore` | Ignores `node_modules` (only on first pull) |
+| `steps.ts` | One `defineStep()` export per step definition (latest version of each key) |
+| `<pipeline-key>.ts` | One `definePipeline()` export per pipeline |
+
+After pulling, run `npm install` or `bun install` inside `.boboddy/pipeline-builder/` to install dependencies.
+
+### `boboddy pipelines push [projectId]`
+
+Push step and pipeline definitions from `.boboddy/pipeline-builder/` to the server. Both `steps.ts` and all pipeline files are read; steps are pushed first, then pipelines.
+
+```bash
+boboddy pipelines push
+boboddy pipelines push <projectId>
+```
+
+| Flag | Description |
+|------|-------------|
+| `--base-url <url>` | Override the API server URL |
 
 ---
 

@@ -29,11 +29,36 @@ export const codePipeline = definePipeline({
 
 ## Scaffold pipeline definitions
 
-Run this command to generate a `.boboddy/pipeline-builder/` project pre-populated with your existing step definitions:
+Run this command to fetch your existing step and pipeline definitions from the server and write them as editable TypeScript files:
 
 ```bash
 boboddy pipelines pull
 ```
+
+This creates (or overwrites) the following files inside `.boboddy/pipeline-builder/`:
+
+| File | Description |
+|------|-------------|
+| `steps.ts` | One `defineStep()` export per step (latest version of each key) |
+| `<pipeline-key>.ts` | One `definePipeline()` export per pipeline |
+| `package.json` | SDK and zod dependencies (written once, never overwritten) |
+| `tsconfig.json` | TypeScript config for the package (written once, never overwritten) |
+
+For a brand-new project with no definitions on the server yet, use `boboddy pipelines init` instead to get a starter template.
+
+After pulling, install dependencies inside the directory:
+
+```bash
+cd .boboddy/pipeline-builder && npm install
+```
+
+When you're ready to publish changes back:
+
+```bash
+boboddy pipelines push
+```
+
+This pushes steps first, then pipelines, in a single command.
 
 ## `definePipeline` options
 

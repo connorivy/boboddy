@@ -3,7 +3,7 @@ title: Quickstart
 description: Initialize a project, define a step, and run your first worker
 ---
 
-This guide walks you through creating a Boboddy project, defining a step, pushing it to the server, and running a worker to execute it.
+This guide walks you through creating a Boboddy project, defining steps and a pipeline, and running a worker to execute it.
 
 ## 1. Initialize your project
 
@@ -21,20 +21,27 @@ boboddy init
 
 This creates `.boboddy/boboddy.jsonc` with your `projectId`.
 
-## 2. Scaffold the steps directory
+## 2. Scaffold the pipeline builder
 
 ```bash
-boboddy steps init
+boboddy pipelines pull
 ```
 
-This creates `.boboddy/steps/` with a `package.json`, `tsconfig.json`, and an example step file. All your step definitions live here.
+This fetches your existing step and pipeline definitions from the server and writes them into `.boboddy/pipeline-builder/` as editable TypeScript files. For a brand-new project with nothing on the server yet, use `boboddy pipelines init` instead to get a starter template.
 
-## 3. Define a step
+Then install dependencies:
 
-Edit `.boboddy/steps/index.ts` (or add a new file):
+```bash
+cd .boboddy/pipeline-builder
+npm install   # or bun install
+```
+
+## 3. Define your steps and pipeline
+
+Edit `steps.ts` to define your steps:
 
 ```typescript
-import { defineStep } from '@boboddy/sdk';
+import { defineStep } from '@boboddy/sdk/definitions/steps';
 import { z } from 'zod';
 
 export const reviewCodeStep = defineStep({
@@ -57,31 +64,23 @@ export const reviewCodeStep = defineStep({
 });
 ```
 
-See [Defining Steps](/boboddy/guides/steps/) for full details on all options.
+Then wire steps into a pipeline in the corresponding `<pipeline-key>.ts` file. See [Defining Steps](/boboddy/guides/steps/) and [Building Pipelines](/boboddy/guides/pipelines/) for full details.
 
-## 4. Push your steps
+## 4. Push your definitions
 
-Upload your step definitions to the server:
+Upload both steps and pipeline definitions to the server in one command:
 
 ```bash
-boboddy steps push
+boboddy pipelines push
 ```
 
 Pass an explicit project ID if you're outside a project directory:
 
 ```bash
-boboddy steps push <projectId>
+boboddy pipelines push <projectId>
 ```
 
-## 5. Scaffold a pipeline
-
-```bash
-boboddy pipelines pull
-```
-
-This creates `.boboddy/pipeline-builder/` with TypeScript definitions that import your steps. Edit the generated files to wire steps into a pipeline.
-
-## 6. Run a worker
+## 5. Run a worker
 
 Start a worker on any machine with Docker:
 
@@ -98,15 +97,13 @@ After completing setup, your repo will have:
 ```
 my-repo/
 ├── .boboddy/
-│   ├── boboddy.jsonc          # project config (projectId)
-│   ├── steps/                 # step definitions
-│   │   ├── package.json
-│   │   ├── tsconfig.json
-│   │   └── index.ts
-│   └── pipeline-builder/      # pipeline definitions
+│   ├── boboddy.jsonc              # project config (projectId)
+│   └── pipeline-builder/          # steps and pipeline definitions
 │       ├── package.json
 │       ├── tsconfig.json
-│       └── index.ts
+│       ├── .gitignore
+│       ├── steps.ts               # all step definitions
+│       └── <pipeline-key>.ts      # one file per pipeline
 └── .devcontainer/
-    └── devcontainer.json      # execution environment
+    └── devcontainer.json          # execution environment
 ```

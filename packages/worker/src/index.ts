@@ -63,6 +63,8 @@ export { loadPipelineStepsFromDirectory } from "./pipelines/pipeline-definitions
 export { pushPipelineDefinitions } from "./pipelines/pipeline-definitions/application/push-pipeline-definitions";
 export { scaffoldPipelineBuilderDirectory } from "./pipelines/pipeline-definitions/infra/pipeline-builder-scaffolder";
 export type { StepInfo, StepSignalInfo } from "./pipelines/pipeline-definitions/infra/pipeline-builder-scaffolder";
+export { pullPipelineDefinitions, listExistingPipelineBuilderFiles } from "./pipelines/pipeline-definitions/application/pull-pipeline-definitions";
+export type { PullPipelineDefinitionsResult } from "./pipelines/pipeline-definitions/application/pull-pipeline-definitions";
 export { DefaultOpencodeStepRunner } from "./work/step-execution/infra/opencode-step-runner";
 export { processProjectWork, runProjectWork } from "./work/step-execution/application/run-project-work";
 export type {

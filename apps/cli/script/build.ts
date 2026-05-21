@@ -82,7 +82,8 @@ async function main(): Promise<void> {
   }
 
   if (isDev) {
-    await writeFile(resolve(distDirectory, ".dev"), "", "utf8");
+    const artifactPath = process.env["BOBODDY_SDK_ARTIFACT_PATH"] ?? "";
+    await writeFile(resolve(distDirectory, ".dev"), artifactPath, "utf8");
   }
 }
 

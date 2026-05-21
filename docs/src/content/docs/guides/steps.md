@@ -113,10 +113,10 @@ export const reviewStep = defineStep({
 
 ## Pushing steps
 
-After defining steps, push them to the server:
+Steps are pushed together with pipeline definitions using a single command from `.boboddy/pipeline-builder/`:
 
 ```bash
-boboddy steps push
+boboddy pipelines push
 ```
 
-This creates or updates step definitions on the server. The `key` + `version` pair uniquely identifies each definition.
+This pushes all steps exported from `steps.ts` (and any steps embedded in pipeline files) before pushing the pipeline definitions. The `key` + `version` pair uniquely identifies each step definition on the server.

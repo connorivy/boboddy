@@ -45,6 +45,7 @@ boboddy work <projectId>
 ## Environment requirements
 
 - **Docker** must be running and accessible to the worker process.
+- **OpenCode** must be installed and configured (`~/.config/opencode/opencode.jsonc`). See [opencode.ai/docs](https://opencode.ai/docs) for setup instructions.
 - Your repo must have a `.devcontainer/devcontainer.json` (created by `boboddy init`).
 - Credentials must be present (`boboddy auth login`).
 

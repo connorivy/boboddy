@@ -1,6 +1,7 @@
 import yargs from "yargs/yargs";
 import { hideBin } from "yargs/helpers";
 import dotenv from "dotenv";
+import { CoreError } from "@boboddy/worker";
 
 import { authCommand } from "./commands/auth";
 import { helloCommand } from "./commands/hello";
@@ -57,7 +58,9 @@ export async function run(argv: readonly string[] = hideBin(process.argv)): Prom
     await createCli(argv).parseAsync();
     return 0;
   } catch (error) {
-    if (error instanceof Error) {
+    if (error instanceof CoreError) {
+      logger.error(error.message);
+    } else if (error instanceof Error) {
       logger.error({ err: error }, error.message);
     } else {
       logger.error({ error }, "Unknown CLI error.");

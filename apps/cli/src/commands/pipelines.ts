@@ -108,6 +108,9 @@ const runPush = async (
     return;
   }
 
+  // Collect steps embedded in pipeline specs (steps not explicitly exported still get pushed)
+  const embeddedSteps = specs.flatMap((spec) => spec._stepDefinitions ?? []);
+
   await pushStepDefinitions({
     projectId,
     baseUrl,
@@ -115,7 +118,17 @@ const runPush = async (
     logger,
     dir: PIPELINE_BUILDER_DIR,
     skipMissingDirectory: true,
-    loadSteps: loadPipelineStepsFromDirectory,
+    loadSteps: async (resolvedDir) => {
+      const namedSteps = await loadPipelineStepsFromDirectory(resolvedDir);
+      // Named exports take precedence; embedded steps fill in the gaps
+      const merged = new Map(
+        embeddedSteps.map((s) => [`${s.key}@v${String(s.version)}`, s]),
+      );
+      for (const step of namedSteps) {
+        merged.set(`${step.key}@v${String(step.version)}`, step);
+      }
+      return [...merged.values()];
+    },
   });
 
   const stepDefsClient = createStepDefinitionsClient(baseUrl);

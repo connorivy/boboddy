@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { z } from "zod";
 import { defineStep } from "../src/definitions/steps/define-step";
 import {
+  Computed,
   definePipeline,
   fromPipelineInput,
   fromSignal,
@@ -238,105 +239,160 @@ describe("definePipeline", () => {
       });
     });
 
-    test.concurrent("each step can have an independent advancement policy", () => {
-      const pipeline = definePipeline({
-        key: "p",
-        name: "P",
-        steps: [
-          { step: reproduceStep, advancement: { defaultOutcome: "block" } },
-          { step: verifyStep, advancement: { defaultOutcome: "continue" } },
-        ],
-      });
+    test.concurrent(
+      "each step can have an independent advancement policy",
+      () => {
+        const pipeline = definePipeline({
+          key: "p",
+          name: "P",
+          steps: [
+            { step: reproduceStep, advancement: { defaultOutcome: "block" } },
+            { step: verifyStep, advancement: { defaultOutcome: "continue" } },
+          ],
+        });
 
-      expect(pipeline.steps[0]!.advancementPolicyDefinition.defaultEventType).toBe("block");
-      expect(pipeline.steps[1]!.advancementPolicyDefinition.defaultEventType).toBe("continue");
-    });
+        expect(
+          pipeline.steps[0]!.advancementPolicyDefinition.defaultEventType,
+        ).toBe("block");
+        expect(
+          pipeline.steps[1]!.advancementPolicyDefinition.defaultEventType,
+        ).toBe("continue");
+      },
+    );
 
     describe("Rule.when", () => {
-      test.concurrent("serializes to an all-mode json-rules-engine condition", () => {
-        const pipeline = definePipeline({
-          key: "p",
-          name: "P",
-          steps: [
-            {
-              step: reproduceStep,
-              advancement: {
-                defaultOutcome: "block",
-                rules: [Rule.when("success", "equal", true, "continue")],
+      test.concurrent(
+        "serializes to an all-mode json-rules-engine condition",
+        () => {
+          const pipeline = definePipeline({
+            key: "p",
+            name: "P",
+            steps: [
+              {
+                step: reproduceStep,
+                advancement: {
+                  defaultOutcome: "block",
+                  rules: [Rule.when("success", "equal", true, "continue")],
+                },
               },
+            ],
+          });
+
+          const policy = pipeline.steps[0]!.advancementPolicyDefinition;
+          expect(policy.defaultEventType).toBe("block");
+          expect(policy.allowedEventTypes).toEqual(
+            expect.arrayContaining(["block", "continue"]),
+          );
+          expect(policy.rulesJson.rules[0]).toEqual({
+            conditions: {
+              all: [{ fact: "success", operator: "equal", value: true }],
             },
-          ],
-        });
+            event: { type: "continue" },
+          });
+        },
+      );
 
-        const policy = pipeline.steps[0]!.advancementPolicyDefinition;
-        expect(policy.defaultEventType).toBe("block");
-        expect(policy.allowedEventTypes).toEqual(expect.arrayContaining(["block", "continue"]));
-        expect(policy.rulesJson.rules[0]).toEqual({
-          conditions: { all: [{ fact: "success", operator: "equal", value: true }] },
-          event: { type: "continue" },
-        });
-      });
-
-      test.concurrent("object outcome serializes outcomeJson as event params", () => {
-        const pipeline = definePipeline({
-          key: "p",
-          name: "P",
-          steps: [
-            {
-              step: reproduceStep,
-              advancement: {
-                defaultOutcome: "block",
-                rules: [Rule.when("success", "equal", false, { outcome: "needs_review", outcomeJson: { reason: "failed check" } })],
+      test.concurrent(
+        "object outcome serializes outcomeJson as event params",
+        () => {
+          const pipeline = definePipeline({
+            key: "p",
+            name: "P",
+            steps: [
+              {
+                step: reproduceStep,
+                advancement: {
+                  defaultOutcome: "block",
+                  rules: [
+                    Rule.when(
+                      Computed.sum(["success", "repro_url"]),
+                      "equal",
+                      false,
+                      {
+                        outcome: "needs_review",
+                        outcomeJson: { reason: "failed check" },
+                      },
+                    ),
+                  ],
+                },
               },
-            },
-          ],
-        });
+            ],
+          });
 
-        expect(pipeline.steps[0]!.advancementPolicyDefinition.rulesJson.rules[0]!.event).toEqual({
-          type: "needs_review",
-          params: { reason: "failed check" },
-        });
-      });
+          expect(
+            pipeline.steps[0]!.advancementPolicyDefinition.rulesJson.rules[0]!
+              .event,
+          ).toEqual({
+            type: "needs_review",
+            params: { reason: "failed check" },
+          });
+        },
+      );
 
-      test.concurrent("object outcome with no outcomeJson omits params from the event", () => {
-        const pipeline = definePipeline({
-          key: "p",
-          name: "P",
-          steps: [
-            {
-              step: reproduceStep,
-              advancement: {
-                defaultOutcome: "block",
-                rules: [Rule.when("success", "equal", true, { outcome: "continue" })],
+      test.concurrent(
+        "object outcome with no outcomeJson omits params from the event",
+        () => {
+          const pipeline = definePipeline({
+            key: "p",
+            name: "P",
+            steps: [
+              {
+                step: reproduceStep,
+                advancement: {
+                  defaultOutcome: "block",
+                  rules: [
+                    Rule.when("success", "equal", true, {
+                      outcome: "continue",
+                    }),
+                  ],
+                },
               },
-            },
-          ],
-        });
+            ],
+          });
 
-        const event = pipeline.steps[0]!.advancementPolicyDefinition.rulesJson.rules[0]!.event;
-        expect(event).toEqual({ type: "continue" });
-        expect(event.params).toBeUndefined();
-      });
+          const event =
+            pipeline.steps[0]!.advancementPolicyDefinition.rulesJson.rules[0]!
+              .event;
+          expect(event).toEqual({ type: "continue" });
+          expect(event.params).toBeUndefined();
+        },
+      );
 
-      test.concurrent("greaterThanInclusive operator serializes correctly", () => {
-        const pipeline = definePipeline({
-          key: "p",
-          name: "P",
-          steps: [
-            {
-              step: reproduceStep,
-              advancement: {
-                defaultOutcome: "block",
-                rules: [Rule.when("success", "greaterThanInclusive", 80, "continue")],
+      test.concurrent(
+        "greaterThanInclusive operator serializes correctly",
+        () => {
+          const pipeline = definePipeline({
+            key: "p",
+            name: "P",
+            steps: [
+              {
+                step: reproduceStep,
+                advancement: {
+                  defaultOutcome: "block",
+                  rules: [
+                    Rule.when(
+                      "success",
+                      "greaterThanInclusive",
+                      80,
+                      "continue",
+                    ),
+                  ],
+                },
               },
-            },
-          ],
-        });
+            ],
+          });
 
-        const conditions = pipeline.steps[0]!.advancementPolicyDefinition.rulesJson.rules[0]!
-          .conditions as { all: { fact: string; operator: string; value: unknown }[] };
-        expect(conditions.all[0]).toEqual({ fact: "success", operator: "greaterThanInclusive", value: 80 });
-      });
+          const conditions = pipeline.steps[0]!.advancementPolicyDefinition
+            .rulesJson.rules[0]!.conditions as {
+            all: { fact: string; operator: string; value: unknown }[];
+          };
+          expect(conditions.all[0]).toEqual({
+            fact: "success",
+            operator: "greaterThanInclusive",
+            value: 80,
+          });
+        },
+      );
 
       test.concurrent("in operator accepts an array value", () => {
         const pipeline = definePipeline({
@@ -347,46 +403,74 @@ describe("definePipeline", () => {
               step: reproduceStep,
               advancement: {
                 defaultOutcome: "block",
-                rules: [Rule.when("repro_url", "in", ["https://a.com", "https://b.com"], "continue")],
-              },
-            },
-          ],
-        });
-
-        const conditions = pipeline.steps[0]!.advancementPolicyDefinition.rulesJson.rules[0]!
-          .conditions as { all: { fact: string; operator: string; value: unknown }[] };
-        expect(conditions.all[0]!.operator).toBe("in");
-        expect(conditions.all[0]!.value).toEqual(["https://a.com", "https://b.com"]);
-      });
-    });
-
-    describe("Rule.all", () => {
-      test.concurrent("all conditions must match — serializes to an all-mode rule", () => {
-        const pipeline = definePipeline({
-          key: "p",
-          name: "P",
-          steps: [
-            {
-              step: reproduceStep,
-              advancement: {
-                defaultOutcome: "block",
                 rules: [
-                  Rule.all([
-                    Rule.signal("success", "equal", true),
-                    Rule.signal("repro_url", "contains", "https"),
-                  ], "continue"),
+                  Rule.when(
+                    "repro_url",
+                    "in",
+                    ["https://a.com", "https://b.com"],
+                    "continue",
+                  ),
                 ],
               },
             },
           ],
         });
 
-        const conditions = pipeline.steps[0]!.advancementPolicyDefinition.rulesJson.rules[0]!
-          .conditions as { all: { fact: string; operator: string; value: unknown }[] };
-        expect(conditions.all).toHaveLength(2);
-        expect(conditions.all[0]).toEqual({ fact: "success", operator: "equal", value: true });
-        expect(conditions.all[1]).toEqual({ fact: "repro_url", operator: "contains", value: "https" });
+        const conditions = pipeline.steps[0]!.advancementPolicyDefinition
+          .rulesJson.rules[0]!.conditions as {
+          all: { fact: string; operator: string; value: unknown }[];
+        };
+        expect(conditions.all[0]!.operator).toBe("in");
+        expect(conditions.all[0]!.value).toEqual([
+          "https://a.com",
+          "https://b.com",
+        ]);
       });
+    });
+
+    describe("Rule.all", () => {
+      test.concurrent(
+        "all conditions must match — serializes to an all-mode rule",
+        () => {
+          const pipeline = definePipeline({
+            key: "p",
+            name: "P",
+            steps: [
+              {
+                step: reproduceStep,
+                advancement: {
+                  defaultOutcome: "block",
+                  rules: [
+                    Rule.all(
+                      [
+                        Rule.signal("success", "equal", true),
+                        Rule.signal("repro_url", "contains", "https"),
+                      ],
+                      "continue",
+                    ),
+                  ],
+                },
+              },
+            ],
+          });
+
+          const conditions = pipeline.steps[0]!.advancementPolicyDefinition
+            .rulesJson.rules[0]!.conditions as {
+            all: { fact: string; operator: string; value: unknown }[];
+          };
+          expect(conditions.all).toHaveLength(2);
+          expect(conditions.all[0]).toEqual({
+            fact: "success",
+            operator: "equal",
+            value: true,
+          });
+          expect(conditions.all[1]).toEqual({
+            fact: "repro_url",
+            operator: "contains",
+            value: "https",
+          });
+        },
+      );
 
       test.concurrent("outcome appears in allowedEventTypes", () => {
         const pipeline = definePipeline({
@@ -397,45 +481,63 @@ describe("definePipeline", () => {
               step: reproduceStep,
               advancement: {
                 defaultOutcome: "block",
-                rules: [Rule.all([Rule.signal("success", "equal", true)], "continue")],
-              },
-            },
-          ],
-        });
-
-        expect(pipeline.steps[0]!.advancementPolicyDefinition.allowedEventTypes).toEqual(
-          expect.arrayContaining(["block", "continue"]),
-        );
-      });
-    });
-
-    describe("Rule.any", () => {
-      test.concurrent("any condition matching — serializes to an any-mode rule", () => {
-        const pipeline = definePipeline({
-          key: "p",
-          name: "P",
-          steps: [
-            {
-              step: reproduceStep,
-              advancement: {
-                defaultOutcome: "block",
                 rules: [
-                  Rule.any([
-                    Rule.signal("success", "equal", true),
-                    Rule.signal("repro_url", "contains", "localhost"),
-                  ], "continue"),
+                  Rule.all([Rule.signal("success", "equal", true)], "continue"),
                 ],
               },
             },
           ],
         });
 
-        const conditions = pipeline.steps[0]!.advancementPolicyDefinition.rulesJson.rules[0]!
-          .conditions as { any: { fact: string; operator: string; value: unknown }[] };
-        expect(conditions.any).toHaveLength(2);
-        expect(conditions.any[0]).toEqual({ fact: "success", operator: "equal", value: true });
-        expect(conditions.any[1]).toEqual({ fact: "repro_url", operator: "contains", value: "localhost" });
+        expect(
+          pipeline.steps[0]!.advancementPolicyDefinition.allowedEventTypes,
+        ).toEqual(expect.arrayContaining(["block", "continue"]));
       });
+    });
+
+    describe("Rule.any", () => {
+      test.concurrent(
+        "any condition matching — serializes to an any-mode rule",
+        () => {
+          const pipeline = definePipeline({
+            key: "p",
+            name: "P",
+            steps: [
+              {
+                step: reproduceStep,
+                advancement: {
+                  defaultOutcome: "block",
+                  rules: [
+                    Rule.any(
+                      [
+                        Rule.signal("success", "equal", true),
+                        Rule.signal("repro_url", "contains", "localhost"),
+                      ],
+                      "continue",
+                    ),
+                  ],
+                },
+              },
+            ],
+          });
+
+          const conditions = pipeline.steps[0]!.advancementPolicyDefinition
+            .rulesJson.rules[0]!.conditions as {
+            any: { fact: string; operator: string; value: unknown }[];
+          };
+          expect(conditions.any).toHaveLength(2);
+          expect(conditions.any[0]).toEqual({
+            fact: "success",
+            operator: "equal",
+            value: true,
+          });
+          expect(conditions.any[1]).toEqual({
+            fact: "repro_url",
+            operator: "contains",
+            value: "localhost",
+          });
+        },
+      );
     });
 
     describe("nesting", () => {
@@ -449,27 +551,36 @@ describe("definePipeline", () => {
               advancement: {
                 defaultOutcome: "block",
                 rules: [
-                  Rule.all([
-                    Rule.signal("success", "equal", true),
-                    Rule.any([
-                      Rule.signal("repro_url", "contains", "https"),
-                      Rule.signal("repro_url", "equal", "localhost"),
-                    ]),
-                  ], "continue"),
+                  Rule.all(
+                    [
+                      Rule.signal("success", "equal", true),
+                      Rule.any([
+                        Rule.signal("repro_url", "contains", "https"),
+                        Rule.signal("repro_url", "equal", "localhost"),
+                      ]),
+                    ],
+                    "continue",
+                  ),
                 ],
               },
             },
           ],
         });
 
-        const conditions = pipeline.steps[0]!.advancementPolicyDefinition.rulesJson.rules[0]!
-          .conditions as { all: unknown[] };
+        const conditions = pipeline.steps[0]!.advancementPolicyDefinition
+          .rulesJson.rules[0]!.conditions as { all: unknown[] };
         expect(conditions.all).toHaveLength(2);
-        expect(conditions.all[0]).toEqual({ fact: "success", operator: "equal", value: true });
-        expect(conditions.all[1]).toMatchObject({ any: expect.arrayContaining([
-          { fact: "repro_url", operator: "contains", value: "https" },
-          { fact: "repro_url", operator: "equal", value: "localhost" },
-        ]) });
+        expect(conditions.all[0]).toEqual({
+          fact: "success",
+          operator: "equal",
+          value: true,
+        });
+        expect(conditions.all[1]).toMatchObject({
+          any: expect.arrayContaining([
+            { fact: "repro_url", operator: "contains", value: "https" },
+            { fact: "repro_url", operator: "equal", value: "localhost" },
+          ]),
+        });
       });
 
       test.concurrent("Rule.any can contain a nested Rule.all group", () => {
@@ -482,121 +593,286 @@ describe("definePipeline", () => {
               advancement: {
                 defaultOutcome: "block",
                 rules: [
-                  Rule.any([
-                    Rule.signal("success", "equal", true),
-                    Rule.all([
-                      Rule.signal("repro_url", "contains", "https"),
-                      Rule.signal("success", "notEqual", null),
-                    ]),
-                  ], "continue"),
-                ],
-              },
-            },
-          ],
-        });
-
-        const conditions = pipeline.steps[0]!.advancementPolicyDefinition.rulesJson.rules[0]!
-          .conditions as { any: unknown[] };
-        expect(conditions.any).toHaveLength(2);
-        expect(conditions.any[0]).toEqual({ fact: "success", operator: "equal", value: true });
-        expect(conditions.any[1]).toMatchObject({ all: expect.arrayContaining([
-          { fact: "repro_url", operator: "contains", value: "https" },
-        ]) });
-      });
-
-      test.concurrent("deeply nested all > any > all serializes correctly", () => {
-        const pipeline = definePipeline({
-          key: "p",
-          name: "P",
-          steps: [
-            {
-              step: reproduceStep,
-              advancement: {
-                defaultOutcome: "block",
-                rules: [
-                  Rule.all([
-                    Rule.signal("success", "equal", true),
-                    Rule.any([
+                  Rule.any(
+                    [
+                      Rule.signal("success", "equal", true),
                       Rule.all([
                         Rule.signal("repro_url", "contains", "https"),
                         Rule.signal("success", "notEqual", null),
                       ]),
-                      Rule.signal("repro_url", "equal", "localhost"),
-                    ]),
-                  ], "continue"),
+                    ],
+                    "continue",
+                  ),
                 ],
               },
             },
           ],
         });
 
-        const policy = pipeline.steps[0]!.advancementPolicyDefinition;
-        expect(policy.rulesJson.rules).toHaveLength(1);
-        expect(policy.rulesJson.rules[0]!.event.type).toBe("continue");
-        // Verify the outer "all" has two entries
-        const outerAll = (policy.rulesJson.rules[0]!.conditions as { all: unknown[] }).all;
-        expect(outerAll).toHaveLength(2);
+        const conditions = pipeline.steps[0]!.advancementPolicyDefinition
+          .rulesJson.rules[0]!.conditions as { any: unknown[] };
+        expect(conditions.any).toHaveLength(2);
+        expect(conditions.any[0]).toEqual({
+          fact: "success",
+          operator: "equal",
+          value: true,
+        });
+        expect(conditions.any[1]).toMatchObject({
+          all: expect.arrayContaining([
+            { fact: "repro_url", operator: "contains", value: "https" },
+          ]),
+        });
       });
+
+      test.concurrent(
+        "deeply nested all > any > all serializes correctly",
+        () => {
+          const pipeline = definePipeline({
+            key: "p",
+            name: "P",
+            steps: [
+              {
+                step: reproduceStep,
+                advancement: {
+                  defaultOutcome: "block",
+                  rules: [
+                    Rule.all(
+                      [
+                        Rule.signal("success", "equal", true),
+                        Rule.any([
+                          Rule.all([
+                            Rule.signal("repro_url", "contains", "https"),
+                            Rule.signal("success", "notEqual", null),
+                          ]),
+                          Rule.signal("repro_url", "equal", "localhost"),
+                        ]),
+                      ],
+                      "continue",
+                    ),
+                  ],
+                },
+              },
+            ],
+          });
+
+          const policy = pipeline.steps[0]!.advancementPolicyDefinition;
+          expect(policy.rulesJson.rules).toHaveLength(1);
+          expect(policy.rulesJson.rules[0]!.event.type).toBe("continue");
+          // Verify the outer "all" has two entries
+          const outerAll = (
+            policy.rulesJson.rules[0]!.conditions as { all: unknown[] }
+          ).all;
+          expect(outerAll).toHaveLength(2);
+        },
+      );
     });
 
     describe("multiple rules", () => {
-      test.concurrent("rules are serialized in order and all outcomes appear in allowedEventTypes", () => {
-        const pipeline = definePipeline({
-          key: "p",
-          name: "P",
-          steps: [
-            {
-              step: reproduceStep,
-              advancement: {
-                defaultOutcome: "block",
-                rules: [
-                  Rule.when("success", "equal", true, "continue"),
-                  Rule.when("success", "equal", false, "needs_review"),
-                ],
+      test.concurrent(
+        "rules are serialized in order and all outcomes appear in allowedEventTypes",
+        () => {
+          const pipeline = definePipeline({
+            key: "p",
+            name: "P",
+            steps: [
+              {
+                step: reproduceStep,
+                advancement: {
+                  defaultOutcome: "block",
+                  rules: [
+                    Rule.when("success", "equal", true, "continue"),
+                    Rule.when("success", "equal", false, "needs_review"),
+                  ],
+                },
               },
-            },
-          ],
-        });
+            ],
+          });
 
-        const policy = pipeline.steps[0]!.advancementPolicyDefinition;
-        expect(policy.rulesJson.rules).toHaveLength(2);
-        expect(policy.rulesJson.rules[0]!.event.type).toBe("continue");
-        expect(policy.rulesJson.rules[1]!.event.type).toBe("needs_review");
-        expect(policy.allowedEventTypes).toEqual(
-          expect.arrayContaining(["block", "continue", "needs_review"]),
-        );
-      });
+          const policy = pipeline.steps[0]!.advancementPolicyDefinition;
+          expect(policy.rulesJson.rules).toHaveLength(2);
+          expect(policy.rulesJson.rules[0]!.event.type).toBe("continue");
+          expect(policy.rulesJson.rules[1]!.event.type).toBe("needs_review");
+          expect(policy.allowedEventTypes).toEqual(
+            expect.arrayContaining(["block", "continue", "needs_review"]),
+          );
+        },
+      );
 
-      test.concurrent("Rule.when and Rule.all can be mixed in the same rules array", () => {
-        const pipeline = definePipeline({
-          key: "p",
-          name: "P",
-          steps: [
-            {
-              step: reproduceStep,
-              advancement: {
-                defaultOutcome: "block",
-                rules: [
-                  Rule.when("success", "equal", true, "continue"),
-                  Rule.all([
-                    Rule.signal("repro_url", "contains", "https"),
-                    Rule.signal("success", "notEqual", null),
-                  ], "complete"),
-                ],
+      test.concurrent(
+        "Rule.when and Rule.all can be mixed in the same rules array",
+        () => {
+          const pipeline = definePipeline({
+            key: "p",
+            name: "P",
+            steps: [
+              {
+                step: reproduceStep,
+                advancement: {
+                  defaultOutcome: "block",
+                  rules: [
+                    Rule.when("success", "equal", true, "continue"),
+                    Rule.all(
+                      [
+                        Rule.signal("repro_url", "contains", "https"),
+                        Rule.signal("success", "notEqual", null),
+                      ],
+                      "complete",
+                    ),
+                  ],
+                },
               },
-            },
-          ],
-        });
+            ],
+          });
 
-        const policy = pipeline.steps[0]!.advancementPolicyDefinition;
-        expect(policy.rulesJson.rules).toHaveLength(2);
-        expect(policy.rulesJson.rules[0]!.event.type).toBe("continue");
-        expect(policy.rulesJson.rules[1]!.event.type).toBe("complete");
-        expect(policy.allowedEventTypes).toEqual(
-          expect.arrayContaining(["block", "continue", "complete"]),
-        );
-      });
+          const policy = pipeline.steps[0]!.advancementPolicyDefinition;
+          expect(policy.rulesJson.rules).toHaveLength(2);
+          expect(policy.rulesJson.rules[0]!.event.type).toBe("continue");
+          expect(policy.rulesJson.rules[1]!.event.type).toBe("complete");
+          expect(policy.allowedEventTypes).toEqual(
+            expect.arrayContaining(["block", "continue", "complete"]),
+          );
+        },
+      );
     });
+  });
+
+  describe("Computed", () => {
+    test.concurrent(
+      "inline Computed.sum derives key from type + input signals",
+      () => {
+        const token = Computed.sum(["success", "repro_url"]);
+        expect(token.key).toBe("sum_success_repro_url");
+        expect(token.type).toBe("sum");
+        expect(token.inputSignalKeys).toEqual(["success", "repro_url"]);
+      },
+    );
+
+    test.concurrent("multi-input keys are joined with underscores", () => {
+      const token = Computed.weightedAverage(["success", "repro_url"]);
+      expect(token.key).toBe("weighted_average_success_repro_url");
+    });
+
+    test.concurrent(
+      "inline computed in Rule.when is extracted into computedSignalDefinitions",
+      () => {
+        const pipeline = definePipeline({
+          key: "p",
+          name: "P",
+          steps: [
+            {
+              step: reproduceStep,
+              advancement: {
+                defaultOutcome: "block",
+                rules: [
+                  Rule.when(
+                    Computed.sum(["success", "repro_url"]),
+                    "greaterThan",
+                    0,
+                    "continue",
+                  ),
+                ],
+              },
+            },
+          ],
+        });
+
+        expect(pipeline.steps[0]!.computedSignalDefinitions).toEqual([
+          {
+            key: "sum_success_repro_url",
+            type: "sum",
+            inputSignalKeys: ["success", "repro_url"],
+            configJson: null,
+            availableWhenResultStatusIn: null,
+          },
+        ]);
+        const cond = pipeline.steps[0]!.advancementPolicyDefinition.rulesJson
+          .rules[0]!.conditions as {
+          all: { fact: string }[];
+        };
+        expect(cond.all[0]!.fact).toBe("sum_success_repro_url");
+      },
+    );
+
+    test.concurrent(
+      "inline computed nested inside Rule.all / Rule.any is extracted",
+      () => {
+        const pipeline = definePipeline({
+          key: "p",
+          name: "P",
+          steps: [
+            {
+              step: reproduceStep,
+              advancement: {
+                defaultOutcome: "block",
+                rules: [
+                  Rule.all(
+                    [
+                      Rule.signal(
+                        Computed.max(["success", "repro_url"]),
+                        "equal",
+                        true,
+                      ),
+                      Rule.any([
+                        Rule.signal(
+                          Computed.min(["success", "repro_url"]),
+                          "equal",
+                          false,
+                        ),
+                        Rule.signal("repro_url", "contains", "https"),
+                      ]),
+                    ],
+                    "continue",
+                  ),
+                ],
+              },
+            },
+          ],
+        });
+
+        const defs = pipeline.steps[0]!.computedSignalDefinitions;
+        expect(defs.map((d) => d.key).sort()).toEqual([
+          "max_success_repro_url",
+          "min_success_repro_url",
+        ]);
+      },
+    );
+
+    test.concurrent(
+      "same inline computed signal reused across rules is deduped",
+      () => {
+        const pipeline = definePipeline({
+          key: "p",
+          name: "P",
+          steps: [
+            {
+              step: reproduceStep,
+              advancement: {
+                defaultOutcome: "block",
+                rules: [
+                  Rule.when(
+                    Computed.sum(["success", "repro_url"]),
+                    "equal",
+                    1,
+                    "continue",
+                  ),
+                  Rule.when(
+                    Computed.sum(["success", "repro_url"]),
+                    "equal",
+                    0,
+                    "needs_review",
+                  ),
+                ],
+              },
+            },
+          ],
+        });
+
+        expect(pipeline.steps[0]!.computedSignalDefinitions).toHaveLength(1);
+        expect(pipeline.steps[0]!.computedSignalDefinitions[0]!.key).toBe(
+          "sum_success_repro_url",
+        );
+      },
+    );
   });
 
   describe("timeout", () => {

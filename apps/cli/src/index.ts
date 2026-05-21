@@ -6,6 +6,7 @@ import { authCommand } from "./commands/auth";
 import { helloCommand } from "./commands/hello";
 import { initCommand } from "./commands/init";
 import { proxyCommand } from "./commands/proxy";
+import { reportBugCommand } from "./commands/report-bug";
 import { runtimeCommand } from "./commands/runtime";
 import { stepsCommand } from "./commands/steps";
 import { pipelinesCommand } from "./commands/pipelines";
@@ -43,6 +44,7 @@ export function createCli(argv: readonly string[]) {
     .command(helloCommand)
     .command(initCommand)
     .command(proxyCommand)
+    .command(reportBugCommand)
     .command(runtimeCommand)
     .command(stepsCommand)
     .command(pipelinesCommand)

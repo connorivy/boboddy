@@ -95,8 +95,40 @@ describe("boboddy CLI", () => {
     expect(result.stdout).toContain("hello [name]");
     expect(result.stdout).toContain("runtime <command>");
     expect(result.stdout).toContain("work");
+    expect(result.stdout).toContain("report-bug");
     expect(result.stdout).toContain("--help");
     expect(result.stdout).toContain("--version");
+  });
+
+  concurrentTest("prints a prefilled bug-report URL with --no-browser", () => {
+    const result = run([
+      process.execPath,
+      "run",
+      cliEntrypoint,
+      "report-bug",
+      "--title",
+      "boboddy crashes on init",
+      "--description",
+      "Steps to reproduce: run init in an empty repo.",
+      "--no-browser",
+    ]);
+    const logs = parseLogLines(result.stdout);
+
+    expect(result).toMatchObject({
+      exitCode: 0,
+      stderr: "",
+    });
+    const logged = logs.find(
+      (log) =>
+        log.msg === "Submit this URL to file the bug report" &&
+        typeof log["url"] === "string",
+    );
+    expect(logged).toBeDefined();
+    const url = logged?.["url"] as string;
+    expect(url).toContain("github.com/connorivy/boboddy/issues/new");
+    expect(url).toContain("title=boboddy+crashes+on+init");
+    expect(url).toContain("labels=bug");
+    expect(url).toContain("Diagnostics");
   });
 
   concurrentTest("prints version output", () => {

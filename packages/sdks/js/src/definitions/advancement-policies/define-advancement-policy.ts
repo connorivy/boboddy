@@ -1,3 +1,118 @@
+// ─── Computed signals ─────────────────────────────────────────────────────────
+
+/** Aggregation types supported by the runtime for computed signals. */
+export type PipelineStepComputedSignalType =
+  | "average"
+  | "weighted_average"
+  | "sum"
+  | "min"
+  | "max"
+  | "count"
+  | "boolean_any"
+  | "boolean_all";
+
+// Joins a tuple of literal strings with a delimiter at the type level.
+type Join<T extends readonly string[], D extends string> = T extends readonly [
+  infer Head extends string,
+  ...infer Rest extends readonly string[],
+]
+  ? Rest extends readonly []
+    ? Head
+    : `${Head}${D}${Join<Rest, D>}`
+  : "";
+
+/**
+ * An inline computed-signal token returned by `Computed.X(...)`. Carries the
+ * derived `key` (e.g. `"sum_success"`), the aggregation `type`, and the input
+ * signal keys it aggregates over. At serialization time, every inline token
+ * embedded in a rule's signal position is extracted into the step's
+ * `computedSignalDefinitions` and replaced by its bare key string.
+ *
+ * - `TKey`             — the auto-derived key (literal template).
+ * - `TInputSignalKeys` — the union of input signal keys; constrained to the
+ *                        step's signals via `Rule.signal` / `Rule.when` typing.
+ */
+export type InlineComputedSignal<
+  TKey extends string = string,
+  TInputSignalKeys extends string = string,
+> = {
+  readonly _tag: "computed_signal";
+  readonly key: TKey;
+  readonly type: PipelineStepComputedSignalType;
+  readonly inputSignalKeys: ReadonlyArray<TInputSignalKeys>;
+  readonly configJson: Record<string, unknown> | null;
+  readonly availableWhenResultStatusIn: readonly string[] | null;
+};
+
+type ComputedOptions = {
+  configJson?: Record<string, unknown> | null;
+  availableWhenResultStatusIn?: readonly string[] | null;
+};
+
+function makeComputed<
+  TType extends PipelineStepComputedSignalType,
+  const TInputs extends readonly [string, string, ...string[]],
+>(
+  type: TType,
+  inputSignalKeys: TInputs,
+  options?: ComputedOptions,
+): InlineComputedSignal<`${TType}_${Join<TInputs, "_">}`, TInputs[number]> {
+  const key = [type, ...inputSignalKeys].join(
+    "_",
+  ) as `${TType}_${Join<TInputs, "_">}`;
+  return {
+    _tag: "computed_signal",
+    key,
+    type,
+    inputSignalKeys,
+    configJson: options?.configJson ?? null,
+    availableWhenResultStatusIn: options?.availableWhenResultStatusIn ?? null,
+  };
+}
+
+/**
+ * Factories for inline computed signals. Each call returns a token whose `key`
+ * is auto-derived as `${type}_${inputSignalKeys.join("_")}`.
+ *
+ * @example
+ * Rule.when(Computed.sum(["success"]), "greaterThan", 1, "continue")
+ * Rule.signal(Computed.average(["score"]), "greaterThanInclusive", 80)
+ */
+export const Computed = {
+  average: <const TInputs extends readonly [string, string, ...string[]]>(
+    inputSignalKeys: TInputs,
+    options?: ComputedOptions,
+  ) => makeComputed("average", inputSignalKeys, options),
+  weightedAverage: <const TInputs extends readonly [string, string, ...string[]]>(
+    inputSignalKeys: TInputs,
+    options?: ComputedOptions,
+  ) => makeComputed("weighted_average", inputSignalKeys, options),
+  sum: <const TInputs extends readonly [string, string, ...string[]]>(
+    inputSignalKeys: TInputs,
+    options?: ComputedOptions,
+  ) => makeComputed("sum", inputSignalKeys, options),
+  min: <const TInputs extends readonly [string, string, ...string[]]>(
+    inputSignalKeys: TInputs,
+    options?: ComputedOptions,
+  ) => makeComputed("min", inputSignalKeys, options),
+  max: <const TInputs extends readonly [string, string, ...string[]]>(
+    inputSignalKeys: TInputs,
+    options?: ComputedOptions,
+  ) => makeComputed("max", inputSignalKeys, options),
+  count: <const TInputs extends readonly [string, string, ...string[]]>(
+    inputSignalKeys: TInputs,
+    options?: ComputedOptions,
+  ) => makeComputed("count", inputSignalKeys, options),
+  booleanAny: <const TInputs extends readonly [string, string, ...string[]]>(
+    inputSignalKeys: TInputs,
+    options?: ComputedOptions,
+  ) => makeComputed("boolean_any", inputSignalKeys, options),
+  booleanAll: <const TInputs extends readonly [string, string, ...string[]]>(
+    inputSignalKeys: TInputs,
+    options?: ComputedOptions,
+  ) => makeComputed("boolean_all", inputSignalKeys, options),
+} as const;
+
 // ─── Operators ────────────────────────────────────────────────────────────────
 
 /**
@@ -51,11 +166,14 @@ export type AdvancementOutcome =
  * by `Rule.when()`.
  *
  * `TSignalKeys` is constrained to the declaring step's signal keys, so the
- * `signal` field is validated at compile time.
+ * `signal` field is validated at compile time. `signal` may be either a step
+ * signal key (string) or an inline `Computed.X(...)` token — at serialization
+ * time, inline tokens are hoisted into `computedSignalDefinitions` and replaced
+ * by their bare key string.
  */
 export type SignalCondition<TSignalKeys extends string = string> = {
   readonly _tag: "signal";
-  signal: TSignalKeys;
+  signal: TSignalKeys | InlineComputedSignal<string, TSignalKeys>;
   operator: ConditionOperator;
   value: unknown;
 };
@@ -118,7 +236,7 @@ export type Rule<TSignalKeys extends string = string> = {
  * ], "continue")
  */
 function signal<TSignalKeys extends string>(
-  signal: TSignalKeys,
+  signal: TSignalKeys | InlineComputedSignal<string, TSignalKeys>,
   operator: ConditionOperator,
   value: unknown,
 ): SignalCondition<TSignalKeys> {
@@ -211,7 +329,7 @@ function any<TSignalKeys extends string>(
  * Rule.when("score", "greaterThanInclusive", 80, { outcome: "continue", outcomeJson: { via: "score" } })
  */
 function when<TSignalKeys extends string>(
-  signal: TSignalKeys,
+  signal: TSignalKeys | InlineComputedSignal<string, TSignalKeys>,
   operator: ConditionOperator,
   value: unknown,
   outcome: AdvancementOutcome,
@@ -317,7 +435,10 @@ function resolveOutcome(outcome: AdvancementOutcome): {
 function serializeCondition(condition: RuleCondition): SerializedCondition {
   if (condition._tag === "signal") {
     return {
-      fact: condition.signal,
+      fact:
+        typeof condition.signal === "string"
+          ? condition.signal
+          : condition.signal.key,
       operator: condition.operator,
       value: condition.value,
     };
@@ -365,4 +486,81 @@ export function serializeAdvancementPolicy(
     defaultEventParamsJson: defaultResolved.params,
     allowedEventTypes: [...outcomeSet],
   };
+}
+
+// ─── Inline computed signal extraction ────────────────────────────────────────
+
+/** Wire-format computed signal definition emitted on the pipeline step. */
+export type SerializedComputedSignalDefinition = {
+  key: string;
+  type: PipelineStepComputedSignalType;
+  inputSignalKeys: string[];
+  configJson: Record<string, unknown> | null;
+  availableWhenResultStatusIn: string[] | null;
+};
+
+function visitSignalConditions(
+  conditions: ReadonlyArray<RuleCondition>,
+  visit: (c: SignalCondition) => void,
+): void {
+  for (const c of conditions) {
+    if (c._tag === "signal") {
+      visit(c);
+    } else {
+      visitSignalConditions(c.conditions, visit);
+    }
+  }
+}
+
+function isSameComputedDefinition(
+  a: SerializedComputedSignalDefinition,
+  b: SerializedComputedSignalDefinition,
+): boolean {
+  return (
+    a.type === b.type &&
+    a.inputSignalKeys.length === b.inputSignalKeys.length &&
+    a.inputSignalKeys.every((k, i) => k === b.inputSignalKeys[i]) &&
+    JSON.stringify(a.configJson) === JSON.stringify(b.configJson) &&
+    JSON.stringify(a.availableWhenResultStatusIn) ===
+      JSON.stringify(b.availableWhenResultStatusIn)
+  );
+}
+
+/**
+ * Walks the rules tree, extracts every inline `Computed.X(...)` token embedded
+ * in a `SignalCondition.signal` position, dedupes by key, and returns the
+ * resulting computed-signal definitions. Two tokens with the same key but
+ * differing definitions are a programming error and throw.
+ */
+export function extractInlineComputedSignals(
+  policy: AdvancementPolicy | undefined,
+): SerializedComputedSignalDefinition[] {
+  if (!policy?.rules) return [];
+  const byKey = new Map<string, SerializedComputedSignalDefinition>();
+  for (const rule of policy.rules) {
+    visitSignalConditions(rule.conditions, (cond) => {
+      if (typeof cond.signal === "string") return;
+      const inline = cond.signal;
+      const def: SerializedComputedSignalDefinition = {
+        key: inline.key,
+        type: inline.type,
+        inputSignalKeys: [...inline.inputSignalKeys],
+        configJson: inline.configJson,
+        availableWhenResultStatusIn: inline.availableWhenResultStatusIn
+          ? [...inline.availableWhenResultStatusIn]
+          : null,
+      };
+      const existing = byKey.get(def.key);
+      if (existing) {
+        if (!isSameComputedDefinition(existing, def)) {
+          throw new Error(
+            `Conflicting inline computed signal definitions for key "${def.key}"`,
+          );
+        }
+        return;
+      }
+      byKey.set(def.key, def);
+    });
+  }
+  return [...byKey.values()];
 }

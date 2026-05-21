@@ -2,12 +2,20 @@ import type { ZodType } from "zod";
 import type { DotPaths, TypedStepDefinitionSpec } from "../steps/define-step";
 import {
   type AdvancementPolicy,
+  extractInlineComputedSignals,
   serializeAdvancementPolicy,
   type SerializedAdvancementPolicy,
+  type SerializedComputedSignalDefinition,
 } from "../advancement-policies/define-advancement-policy";
 
-export type { AdvancementPolicy } from "../advancement-policies/define-advancement-policy";
-export { Rule } from "../advancement-policies/define-advancement-policy";
+export type {
+  AdvancementPolicy,
+  PipelineStepComputedSignalType,
+} from "../advancement-policies/define-advancement-policy";
+export {
+  Computed,
+  Rule,
+} from "../advancement-policies/define-advancement-policy";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type AnyTypedStep = TypedStepDefinitionSpec<any, any, any>;
@@ -68,28 +76,6 @@ export function stepOutput(step: AnyTypedStep): StepOutputBinding {
   return { source: "step_output", step };
 }
 
-// ─── Pipeline step computed signals ───────────────────────────────────────────
-
-export type PipelineStepComputedSignalType =
-  | "average"
-  | "weighted_average"
-  | "sum"
-  | "min"
-  | "max"
-  | "count"
-  | "boolean_any"
-  | "boolean_all";
-// | "custom";
-
-export type PipelineStepComputedSignalSpec<TSignalKey extends string = string> =
-  {
-    key: string;
-    type: PipelineStepComputedSignalType;
-    inputSignalKeys: ReadonlyArray<TSignalKey>;
-    configJson?: Record<string, unknown> | null;
-    availableWhenResultStatusIn?: string[] | null;
-  };
-
 // ─── Pipeline step config ─────────────────────────────────────────────────────
 
 export type PipelineStepConfig<TStep extends AnyTypedStep = AnyTypedStep> = {
@@ -101,18 +87,13 @@ export type PipelineStepConfig<TStep extends AnyTypedStep = AnyTypedStep> = {
   timeout?: number | null;
   /**
    * Controls when and how this step advances in the pipeline.
-   * Signal keys in `whenSignal()` rules are type-checked against this step's declared signals.
+   * Signal keys in `Rule.signal()` / `Rule.when()` calls are type-checked
+   * against the step's declared signals. Inline `Computed.X(...)` tokens can
+   * also appear in the signal position; they're hoisted into the step's
+   * `computedSignalDefinitions` at serialization time.
    * Defaults to `{ defaultOutcome: "continue" }` when omitted.
    */
   advancement?: AdvancementPolicy<TStep["__signalKeys"]>;
-  /**
-   * Aggregations derived from this step's emitted signals (extractor keys plus any
-   * earlier computed-signal keys in this list). Each entry's `inputSignalKeys` is
-   * type-checked against the step's declared signal keys.
-   */
-  computedSignals?: ReadonlyArray<
-    PipelineStepComputedSignalSpec<TStep["__signalKeys"]>
-  >;
 };
 
 // ─── Output spec ──────────────────────────────────────────────────────────────
@@ -121,14 +102,6 @@ type SerializedBinding =
   | { source: "pipeline_input"; path: string }
   | { source: "step_signal"; stepKey: string; signalKey: string }
   | { source: "step_output"; stepKey: string };
-
-type SerializedComputedSignalDefinition = {
-  key: string;
-  type: PipelineStepComputedSignalType;
-  inputSignalKeys: string[];
-  configJson: Record<string, unknown> | null;
-  availableWhenResultStatusIn: string[] | null;
-};
 
 export type PipelineDefinitionSpec = {
   key: string;
@@ -182,7 +155,10 @@ function serializeBinding(binding: AnyBinding): SerializedBinding {
  * Defines a pipeline from an ordered list of step configs.
  *
  * Each step's `advancement` policy is typed against that step's declared signal
- * keys — passing an unknown signal key to `whenSignal()` is a compile-time error.
+ * keys — passing an unknown signal key to `Rule.signal()` / `Rule.when()` is a
+ * compile-time error. Inline `Computed.X(...)` tokens can also be used in the
+ * signal position; they're walked out of the rules tree at serialization time
+ * and emitted as the step's `computedSignalDefinitions`.
  *
  * TypeScript achieves per-element signal key checking by constraining `TSteps`
  * to a tuple of step instances (`AnyTypedStep[]`), not step configs. Each element
@@ -198,7 +174,6 @@ export function definePipeline<
   description?: string | null;
   version?: number;
   status?: "draft" | "active";
-  // Each element is PipelineStepConfig typed to the concrete step at that position.
   steps: { [K in keyof TSteps]: PipelineStepConfig<TSteps[K]> };
 }): PipelineDefinitionSpec {
   const steps = config.steps as ReadonlyArray<PipelineStepConfig>;
@@ -224,14 +199,8 @@ export function definePipeline<
       advancementPolicyDefinition: serializeAdvancementPolicy(
         stepConfig.advancement,
       ),
-      computedSignalDefinitions: (stepConfig.computedSignals ?? []).map(
-        (cs) => ({
-          key: cs.key,
-          type: cs.type,
-          inputSignalKeys: [...cs.inputSignalKeys],
-          configJson: cs.configJson ?? null,
-          availableWhenResultStatusIn: cs.availableWhenResultStatusIn ?? null,
-        }),
+      computedSignalDefinitions: extractInlineComputedSignals(
+        stepConfig.advancement,
       ),
     })),
   };

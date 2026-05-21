@@ -25,6 +25,14 @@ type AdvancementPolicy = {
   allowedEventTypes: string[];
 };
 
+type SerializedComputedSignalDefinition = {
+  key: string;
+  type: string;
+  inputSignalKeys: string[];
+  configJson: Record<string, unknown> | null;
+  availableWhenResultStatusIn: string[] | null;
+};
+
 export type PipelineStepContract = {
   stepDefinitionId: string;
   stepDefinitionVersion: number;
@@ -35,6 +43,7 @@ export type PipelineStepContract = {
   inputBindingsJson: Record<string, InputBinding> | null;
   timeoutSeconds: number | null;
   advancementPolicyDefinition: AdvancementPolicy;
+  computedSignalDefinitions: SerializedComputedSignalDefinition[];
 };
 
 export type PipelineContract = {
@@ -47,8 +56,20 @@ export type PipelineContract = {
 };
 
 type StepKeyMap = Map<string, string>; // stepDefinitionId → varName
+type ComputedByKey = Map<string, SerializedComputedSignalDefinition>;
 
 // ─── Advancement policy reconstruction ───────────────────────────────────────
+
+const COMPUTED_TYPE_TO_METHOD: Record<string, string> = {
+  average: "average",
+  weighted_average: "weightedAverage",
+  sum: "sum",
+  min: "min",
+  max: "max",
+  count: "count",
+  boolean_any: "booleanAny",
+  boolean_all: "booleanAll",
+};
 
 function reconstructOutcome(eventType: string, params: Record<string, unknown> | null | undefined): string {
   if (!params || Object.keys(params).length === 0) return JSON.stringify(eventType);
@@ -59,30 +80,45 @@ function isLeafCondition(c: SerializedCondition): c is SerializedLeafCondition {
   return "fact" in c;
 }
 
-function reconstructCondition(cond: SerializedCondition, indent: string): string {
+function reconstructFactExpr(fact: string, computedByKey: ComputedByKey): string {
+  const computed = computedByKey.get(fact);
+  if (!computed) return JSON.stringify(fact);
+  const method = COMPUTED_TYPE_TO_METHOD[computed.type] ?? computed.type;
+  const keysExpr = JSON.stringify(computed.inputSignalKeys);
+  const hasOptions = computed.configJson !== null || computed.availableWhenResultStatusIn !== null;
+  if (!hasOptions) return `Computed.${method}(${keysExpr})`;
+  const opts: Record<string, unknown> = {};
+  if (computed.configJson !== null) opts["configJson"] = computed.configJson;
+  if (computed.availableWhenResultStatusIn !== null) opts["availableWhenResultStatusIn"] = computed.availableWhenResultStatusIn;
+  return `Computed.${method}(${keysExpr}, ${JSON.stringify(opts)})`;
+}
+
+function reconstructCondition(cond: SerializedCondition, indent: string, computedByKey: ComputedByKey): string {
   if (isLeafCondition(cond)) {
-    return `Rule.signal(${JSON.stringify(cond.fact)}, "${cond.operator}", ${JSON.stringify(cond.value)})`;
+    const factExpr = reconstructFactExpr(cond.fact, computedByKey);
+    return `Rule.signal(${factExpr}, "${cond.operator}", ${JSON.stringify(cond.value)})`;
   }
   const mode = cond.all ? "all" : "any";
-  const children = (cond[mode] ?? []).map((c) => reconstructCondition(c, indent + "  ")).join(`, `);
+  const children = (cond[mode] ?? []).map((c) => reconstructCondition(c, indent + "  ", computedByKey)).join(`, `);
   return `Rule.${mode}([${children}])`;
 }
 
-function reconstructRule(rule: AdvancementPolicyRule): string {
+function reconstructRule(rule: AdvancementPolicyRule, computedByKey: ComputedByKey): string {
   const outcome = reconstructOutcome(rule.event.type, rule.event.params);
   const mode = rule.conditions.all ? "all" : "any";
   const conditions = rule.conditions[mode] ?? [];
 
   if (mode === "all" && conditions.length === 1 && isLeafCondition(conditions[0]!)) {
     const cond = conditions[0] as SerializedLeafCondition;
-    return `Rule.when(${JSON.stringify(cond.fact)}, "${cond.operator}", ${JSON.stringify(cond.value)}, ${outcome})`;
+    const factExpr = reconstructFactExpr(cond.fact, computedByKey);
+    return `Rule.when(${factExpr}, "${cond.operator}", ${JSON.stringify(cond.value)}, ${outcome})`;
   }
 
-  const condExprs = conditions.map((c) => reconstructCondition(c, "        ")).join(", ");
+  const condExprs = conditions.map((c) => reconstructCondition(c, "        ", computedByKey)).join(", ");
   return `Rule.${mode}([${condExprs}], ${outcome})`;
 }
 
-function reconstructAdvancementPolicy(policy: AdvancementPolicy): string | null {
+function reconstructAdvancementPolicy(policy: AdvancementPolicy, computedByKey: ComputedByKey): string | null {
   const rules = policy.rulesJson.rules;
   const defaultOutcome = reconstructOutcome(policy.defaultEventType, policy.defaultEventParamsJson);
   const isDefaultContinueNoRules =
@@ -92,7 +128,7 @@ function reconstructAdvancementPolicy(policy: AdvancementPolicy): string | null 
 
   const lines: string[] = [`defaultOutcome: ${defaultOutcome}`];
   if (rules.length > 0) {
-    const ruleExprs = rules.map(reconstructRule).map((r) => `          ${r}`).join(",\n");
+    const ruleExprs = rules.map((r) => reconstructRule(r, computedByKey)).map((r) => `          ${r}`).join(",\n");
     lines.push(`rules: [\n${ruleExprs},\n        ]`);
   }
   return `{\n        ${lines.join(",\n        ")}\n      }`;
@@ -160,6 +196,7 @@ export function generatePipelineFileContent(
   let usesStepOutput = false;
   let usesLiteral = false;
   let usesRules = false;
+  let usesComputed = false;
 
   for (const step of sortedSteps) {
     for (const binding of Object.values(step.inputBindingsJson ?? {})) {
@@ -169,6 +206,7 @@ export function generatePipelineFileContent(
       if (binding.source === "literal") usesLiteral = true;
     }
     if (step.advancementPolicyDefinition.rulesJson.rules.length > 0) usesRules = true;
+    if (step.computedSignalDefinitions.length > 0) usesComputed = true;
   }
 
   // Build imports
@@ -177,6 +215,7 @@ export function generatePipelineFileContent(
   if (usesFromSignal) pipelineImports.push("fromSignal");
   if (usesStepOutput) pipelineImports.push("stepOutput");
   if (usesRules) pipelineImports.push("Rule");
+  if (usesComputed) pipelineImports.push("Computed");
 
   const stepVarNames = sortedSteps.map((s) => keyToVarName(s.key));
   const uniqueStepVarNames = [...new Set(stepVarNames)];
@@ -223,7 +262,10 @@ export function generatePipelineFileContent(
       stepLines.push(`      timeout: ${String(step.timeoutSeconds)}`);
     }
 
-    const advancementExpr = reconstructAdvancementPolicy(step.advancementPolicyDefinition);
+    const computedByKey: ComputedByKey = new Map(
+      step.computedSignalDefinitions.map((d) => [d.key, d]),
+    );
+    const advancementExpr = reconstructAdvancementPolicy(step.advancementPolicyDefinition, computedByKey);
     if (advancementExpr !== null) {
       stepLines.push(`      advancement: ${advancementExpr}`);
     }

@@ -8,19 +8,19 @@ A **pipeline** is an ordered sequence of steps where each step's input can be bo
 ## Basic pipeline
 
 ```typescript
-import { definePipeline, fromPipelineInput } from '@boboddy/sdk';
-import { z } from 'zod';
-import { reviewCodeStep } from './steps';
+import { definePipeline, fromPipelineInput } from "@boboddy/sdk";
+import { z } from "zod";
+import { reviewCodeStep } from "./steps";
 
 export const codePipeline = definePipeline({
-  key: 'code-quality-pipeline',
-  name: 'Code Quality Pipeline',
-  status: 'active',
+  key: "code-quality-pipeline",
+  name: "Code Quality Pipeline",
+  status: "active",
   steps: [
     {
       step: reviewCodeStep,
       input: {
-        code: fromPipelineInput(z.string(), 'code'),
+        code: fromPipelineInput(z.string(), "code"),
       },
     },
   ],
@@ -37,14 +37,14 @@ boboddy pipelines pull
 
 ## `definePipeline` options
 
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `key` | `string` | Yes | Unique identifier for this pipeline |
-| `name` | `string` | Yes | Human-readable display name |
-| `version` | `number` | No | Version number (defaults to 1) |
-| `description` | `string` | No | Brief description |
-| `status` | `"draft" \| "active"` | No | Draft pipelines are not executed |
-| `steps` | `PipelineStep[]` | Yes | Ordered list of step entries |
+| Field         | Type                  | Required | Description                         |
+| ------------- | --------------------- | -------- | ----------------------------------- |
+| `key`         | `string`              | Yes      | Unique identifier for this pipeline |
+| `name`        | `string`              | Yes      | Human-readable display name         |
+| `version`     | `number`              | No       | Version number (defaults to 1)      |
+| `description` | `string`              | No       | Brief description                   |
+| `status`      | `"draft" \| "active"` | No       | Draft pipelines are not executed    |
+| `steps`       | `PipelineStep[]`      | Yes      | Ordered list of step entries        |
 
 ## Input binding
 
@@ -100,29 +100,63 @@ steps: [
 
 If the advancement rule is not satisfied, the pipeline halts at that step and marks the execution as needing review.
 
+## Computed signals in advancement policies
+
+`Computed` methods let you aggregate multiple raw signals into a derived value inline, directly inside an advancement policy — no separate `computedSignals` declaration on the step required.
+
+```typescript
+import { definePipeline, Rule, Computed, fromPipelineInput } from '@boboddy/sdk';
+
+steps: [
+  {
+    step: reviewCodeStep,
+    input: { code: fromPipelineInput(z.string(), 'code') },
+    advancement: Rule.all([
+      Rule.signal(Computed.average(['quality_score', 'security_score']), 'greaterThanInclusive', 7),
+      Rule.signal('flagged', 'equal', false),
+    ], 'continue'),
+  },
+],
+```
+
+### Available methods
+
+| Method                           | Description                                   | Input signal types |
+| -------------------------------- | --------------------------------------------- | ------------------ |
+| `Computed.average(keys)`         | Arithmetic mean of the input signals          | `number`           |
+| `Computed.weightedAverage(keys)` | Weighted mean (pass weights via `configJson`) | `number`           |
+| `Computed.sum(keys)`             | Sum of the input signals                      | `number`           |
+| `Computed.min(keys)`             | Minimum value across the input signals        | `number`           |
+| `Computed.max(keys)`             | Maximum value across the input signals        | `number`           |
+| `Computed.count(keys)`           | Count of truthy or present signal values      | `any`              |
+| `Computed.booleanAny(keys)`      | `true` if any input signal is truthy          | `boolean`          |
+| `Computed.booleanAll(keys)`      | `true` only if all input signals are truthy   | `boolean`          |
+
+Each method accepts an array of **at least two** signal keys and an optional second argument for advanced options (`configJson`, `availableWhenResultStatusIn`).
+
 ## Multi-step pipeline example
 
 ```typescript
-import { definePipeline, fromPipelineInput, fromSignal } from '@boboddy/sdk';
-import { z } from 'zod';
-import { reviewCodeStep, refactorStep, verifyStep } from './steps';
+import { definePipeline, fromPipelineInput, fromSignal } from "@boboddy/sdk";
+import { z } from "zod";
+import { reviewCodeStep, refactorStep, verifyStep } from "./steps";
 
 export const fullReviewPipeline = definePipeline({
-  key: 'full-review',
-  name: 'Full Code Review Pipeline',
-  status: 'active',
+  key: "full-review",
+  name: "Full Code Review Pipeline",
+  status: "active",
   steps: [
     {
       step: reviewCodeStep,
       input: {
-        code: fromPipelineInput(z.string(), 'code'),
+        code: fromPipelineInput(z.string(), "code"),
       },
-      advancement: rule('clarity_score').greaterThan(6),
+      advancement: rule("clarity_score").greaterThan(6),
     },
     {
       step: refactorStep,
       input: {
-        code: fromPipelineInput(z.string(), 'code'),
+        code: fromPipelineInput(z.string(), "code"),
         suggestions: stepOutput(reviewCodeStep),
       },
       timeout: 60_000,
@@ -130,8 +164,8 @@ export const fullReviewPipeline = definePipeline({
     {
       step: verifyStep,
       input: {
-        original: fromPipelineInput(z.string(), 'code'),
-        refactoredScore: fromSignal(reviewCodeStep, 'clarity_score'),
+        original: fromPipelineInput(z.string(), "code"),
+        refactoredScore: fromSignal(reviewCodeStep, "clarity_score"),
       },
     },
   ],

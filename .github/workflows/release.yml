@@ -166,6 +166,7 @@ jobs:
           npm pkg delete dependencies."@boboddy/opencode-plugin" --prefix apps/cli
           npm pkg delete dependencies."@boboddy/runtime-proxy" --prefix apps/cli
           npm pkg delete dependencies."@boboddy/sdk" --prefix apps/cli
+          npm pkg delete dependencies."@boboddy/worker" --prefix apps/cli
 
       - name: Check npm version
         run: npm --version

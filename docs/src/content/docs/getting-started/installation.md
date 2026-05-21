@@ -8,6 +8,7 @@ description: Install the Boboddy CLI and SDK
 - **Node.js** 18+ or **Bun** 1.3+
 - **Docker** (required for `boboddy work` to execute steps locally)
 - **OpenCode** (required for `boboddy work` to run AI agents) — install and configure at [opencode.ai/docs](https://opencode.ai/docs)
+- **`.devcontainer`** — a `devcontainer.json` in your project root is required for `boboddy work` to spin up execution environments. See [Setting up a Dev Container](/boboddy/guides/devcontainer/) to generate one for your project.
 
 ## Install the CLI
 

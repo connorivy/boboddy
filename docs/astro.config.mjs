@@ -25,6 +25,7 @@ export default defineConfig({
             { label: 'Defining Steps', slug: 'guides/steps' },
             { label: 'Building Pipelines', slug: 'guides/pipelines' },
             { label: 'Running Workers', slug: 'guides/workers' },
+            { label: 'Setting up a Dev Container', slug: 'guides/devcontainer' },
           ],
         },
         {

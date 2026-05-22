@@ -10,8 +10,15 @@ function makeUpsert() {
   return vi.fn(() => Promise.resolve({}));
 }
 
-function makeClient(upsert = makeUpsert()) {
-  return vi.fn(() => ({ upsertPipelineDefinition: upsert }));
+function makeListPipelines(keys: string[] = []) {
+  return vi.fn(() => Promise.resolve({ data: keys.map((key) => ({ key })) }));
+}
+
+function makeClient(upsert = makeUpsert(), listPipelines = makeListPipelines()) {
+  return vi.fn(() => ({
+    listPipelineDefinitions: listPipelines,
+    upsertPipelineDefinition: upsert,
+  }));
 }
 
 const ADVANCEMENT_POLICY = {

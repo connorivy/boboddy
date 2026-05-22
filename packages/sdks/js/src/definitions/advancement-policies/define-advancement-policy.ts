@@ -137,8 +137,14 @@ export type ConditionOperator =
 export type AdvancementEventType =
   | "continue"
   | "block"
-  | "needs_review"
+  | "route"
   | "complete";
+
+export type RouteOutcome = {
+  outcome: "route";
+  pipelineKey: string;
+  inputJson?: Record<string, unknown> | null;
+};
 
 /**
  * The outcome emitted when a rule fires (or when no rules match and
@@ -147,16 +153,12 @@ export type AdvancementEventType =
  * Shorthand — use when no extra params are needed:
  *   "continue"
  *
- * Object form — use when the outcome carries additional context the runtime
- * or downstream steps should receive:
- *   { outcome: "needs_review", outcomeJson: { reason: "low confidence" } }
+ * Route to another pipeline:
+ *   { outcome: "route", pipelineKey: "other-pipeline" }
  */
 export type AdvancementOutcome =
-  | AdvancementEventType
-  | {
-      outcome: AdvancementEventType;
-      outcomeJson?: Record<string, unknown> | null;
-    };
+  | Exclude<AdvancementEventType, "route">
+  | RouteOutcome;
 
 // ─── Conditions ───────────────────────────────────────────────────────────────
 
@@ -429,7 +431,13 @@ function resolveOutcome(outcome: AdvancementOutcome): {
   if (typeof outcome === "string") {
     return { type: outcome, params: null };
   }
-  return { type: outcome.outcome, params: outcome.outcomeJson ?? null };
+  return {
+    type: "route",
+    params: {
+      pipelineKey: outcome.pipelineKey,
+      ...(outcome.inputJson != null ? { inputJson: outcome.inputJson } : {}),
+    },
+  };
 }
 
 function serializeCondition(condition: RuleCondition): SerializedCondition {

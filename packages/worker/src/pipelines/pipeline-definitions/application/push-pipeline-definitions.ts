@@ -8,6 +8,10 @@ export type StepDefEntry = {
 };
 
 type PipelineClient = {
+  listPipelineDefinitions: (options: {
+    query: { projectId: string };
+    headers: Record<string, unknown>;
+  }) => Promise<{ data?: Array<{ key: string }> | null }>;
   upsertPipelineDefinition: (options: {
     body: {
       projectId: string;
@@ -58,6 +62,29 @@ export interface PushPipelineDefinitionsResult {
   pushed: number;
 }
 
+function extractRoutePipelineKeys(policy: {
+  defaultEventType: string;
+  defaultEventParamsJson: Record<string, unknown> | null;
+  rulesJson: { rules: Array<{ event: { type: string; params?: Record<string, unknown> } }> };
+}): string[] {
+  const keys: string[] = [];
+  if (
+    policy.defaultEventType === "route" &&
+    typeof policy.defaultEventParamsJson?.["pipelineKey"] === "string"
+  ) {
+    keys.push(policy.defaultEventParamsJson["pipelineKey"] as string);
+  }
+  for (const rule of policy.rulesJson.rules) {
+    if (
+      rule.event.type === "route" &&
+      typeof rule.event.params?.["pipelineKey"] === "string"
+    ) {
+      keys.push(rule.event.params["pipelineKey"] as string);
+    }
+  }
+  return keys;
+}
+
 export async function pushPipelineDefinitions(
   options: PushPipelineDefinitionsOptions,
 ): Promise<PushPipelineDefinitionsResult> {
@@ -71,8 +98,38 @@ export async function pushPipelineDefinitions(
 
   const createClient =
     options.createClient ??
-    ((baseUrl: string) => createBoboddyClient(baseUrl).pipelineDefinitions);
+    ((baseUrl: string) =>
+      createBoboddyClient(baseUrl).pipelineDefinitions as unknown as PipelineClient);
   const client = createClient(options.baseUrl);
+
+  // Build set of pipeline keys being pushed in this batch
+  const localPipelineKeys = new Set(options.specs.map((s) => s.key));
+
+  // Fetch existing pipeline keys from server
+  const existingPipelinesResult = await client.listPipelineDefinitions({
+    query: { projectId: options.projectId },
+    headers: options.headers,
+  });
+  const serverPipelineKeys = new Set(
+    existingPipelinesResult.data?.map((p) => p.key) ?? [],
+  );
+  const knownPipelineKeys = new Set([...localPipelineKeys, ...serverPipelineKeys]);
+
+  // Validate all route pipelineKey references
+  for (const spec of options.specs) {
+    for (const step of spec.steps) {
+      const routeKeys = extractRoutePipelineKeys(step.advancementPolicyDefinition);
+      for (const routeKey of routeKeys) {
+        if (!knownPipelineKeys.has(routeKey)) {
+          throw new Error(
+            `Pipeline "${spec.key}" step "${step.stepKey}" routes to pipeline "${routeKey}", ` +
+              `but no pipeline with that key was found on the server or in the current push batch. ` +
+              `Push the target pipeline first.`,
+          );
+        }
+      }
+    }
+  }
 
   for (const spec of options.specs) {
     const stepDefinitions = spec.steps.map((step) => {

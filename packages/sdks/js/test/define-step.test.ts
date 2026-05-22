@@ -208,14 +208,14 @@ describe("defineStep", () => {
       expect(spec.resultSchemaJson).toMatchObject({
         properties: {
           outcome: { type: "string" },
-          feedbackRequests: { type: "array" },
+          "$boboddy_feedbackRequests_v1": { type: "array" },
         },
       });
       expect(spec.prompt).toContain("## Feedback Requests");
       expect(spec.prompt).toMatch(/^Do the thing\.\n\n/);
       expect(spec.signalExtractorDefinitions).toContainEqual({
         key: "$boboddy_feedback_request_v1",
-        sourcePath: "feedbackRequests",
+        sourcePath: "$boboddy_feedbackRequests_v1",
         type: "array",
         required: false,
         availableWhenResultStatusIn: null,

@@ -1,21 +1,81 @@
 import type { Plugin } from "@opencode-ai/plugin";
 
 const PROJECT_DEPENDENCY_COMMANDS = [
+  // JavaScript / Node.js
   "bun",
+  "bunx",
   "deno",
-  "dotnet",
+  "node",
+  "npm",
+  // "npx",
+  "pnpm",
+  "yarn",
+  "corepack",
+  // Python
   "python",
+  "python2",
   "python3",
   "pip",
+  "pipx",
+  "pip2",
   "pip3",
-  "npm",
-  "yarn",
-  "pnpm",
-  "node",
+  "poetry",
+  "pipenv",
+  "conda",
+  // "uv",
+  // "uvx",
+  "pdm",
+  "rye",
+  // Rust
   "cargo",
+  "rustc",
+  "rustup",
+  // Go
+  "go",
+  // Java / JVM
+  "java",
+  "javac",
   "gradle",
+  "./gradlew",
   "mvn",
+  "./mvnw",
+  "ant",
+  "sbt",
+  "kotlin",
+  // .NET
+  "dotnet",
+  "nuget",
+  // Ruby
+  "ruby",
+  "gem",
+  "bundle",
+  "bundler",
+  "rake",
+  "rails",
+  // PHP
+  "php",
   "composer",
+  // Swift / Dart / Flutter
+  "swift",
+  "dart",
+  "flutter",
+  // Elixir / Erlang
+  "elixir",
+  "iex",
+  "mix",
+  // Clojure
+  "clojure",
+  "clj",
+  "lein",
+  // Haskell
+  "stack",
+  "cabal",
+  // Build tools
+  "cmake",
+  "meson",
+  "make",
+  // "docker",
+  "docker-compose",
 ];
 
 // Match these commands at start of string or after a shell operator

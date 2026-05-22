@@ -19,7 +19,7 @@ export const anyJsonValueSchema: z.ZodType<AnyJsonValue> = z.lazy(() =>
 );
 
 export const anyJsonObjectSchema: z.ZodType<AnyJsonObject> = z.lazy(() =>
-  z.record(anyJsonValueSchema),
+  z.record(z.string(), anyJsonValueSchema),
 );
 
 export const anyJsonArraySchema: z.ZodType<AnyJsonArray> = z.lazy(() =>

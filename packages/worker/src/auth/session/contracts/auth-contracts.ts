@@ -8,7 +8,7 @@ export const authProfileSchema = z.object({
 });
 
 export const authFileSchema = z.object({
-  profiles: z.record(authProfileSchema),
+  profiles: z.record(z.string(), authProfileSchema),
 });
 
 export type AuthProfileContract = z.infer<typeof authProfileSchema>;

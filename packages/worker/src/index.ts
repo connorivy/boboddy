@@ -55,9 +55,7 @@ export { recommendPipelines } from "./project/project-setup/application/recommen
 export { verifyRequirements } from "./project/project-setup/application/verify-requirements";
 export { RuntimeNetworkGarbageCollector } from "./runtime/runtime-gc/application/runtime-network-garbage-collector";
 export { DevcontainerCliLauncher, buildDevcontainerCliCommand, resolveDevcontainerCliPackageJsonPath } from "./runtime/runtime-service/infra/devcontainer-cli-launcher";
-export { loadStepsFromDirectory } from "./steps/step-definitions/application/load-steps-from-directory";
-export { pushStepDefinitions, STEPS_DIR, PIPELINE_BUILDER_DIR } from "./steps/step-definitions/application/push-step-definitions";
-export { scaffoldStepsDirectory } from "./steps/step-definitions/infra/step-scaffolder";
+export { pushStepDefinitions, PIPELINE_BUILDER_DIR } from "./steps/step-definitions/application/push-step-definitions";
 export { loadPipelinesFromDirectory } from "./pipelines/pipeline-definitions/application/load-pipelines-from-directory";
 export { loadPipelineStepsFromDirectory } from "./pipelines/pipeline-definitions/application/load-pipeline-steps-from-directory";
 export { pushPipelineDefinitions } from "./pipelines/pipeline-definitions/application/push-pipeline-definitions";

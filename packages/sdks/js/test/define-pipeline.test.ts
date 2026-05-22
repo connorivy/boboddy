@@ -293,7 +293,7 @@ describe("definePipeline", () => {
       );
 
       test.concurrent(
-        "object outcome serializes outcomeJson as event params",
+        "route outcome serializes pipelineKey and inputJson as event params",
         () => {
           const pipeline = definePipeline({
             key: "p",
@@ -309,8 +309,9 @@ describe("definePipeline", () => {
                       "equal",
                       false,
                       {
-                        outcome: "needs_review",
-                        outcomeJson: { reason: "failed check" },
+                        outcome: "route",
+                        pipelineKey: "other-pipeline",
+                        inputJson: { reason: "failed check" },
                       },
                     ),
                   ],
@@ -323,14 +324,14 @@ describe("definePipeline", () => {
             pipeline.steps[0]!.advancementPolicyDefinition.rulesJson.rules[0]!
               .event,
           ).toEqual({
-            type: "needs_review",
-            params: { reason: "failed check" },
+            type: "route",
+            params: { pipelineKey: "other-pipeline", inputJson: { reason: "failed check" } },
           });
         },
       );
 
       test.concurrent(
-        "object outcome with no outcomeJson omits params from the event",
+        "route outcome without inputJson omits inputJson from event params",
         () => {
           const pipeline = definePipeline({
             key: "p",
@@ -342,7 +343,8 @@ describe("definePipeline", () => {
                   defaultOutcome: "block",
                   rules: [
                     Rule.when("success", "equal", true, {
-                      outcome: "continue",
+                      outcome: "route",
+                      pipelineKey: "other-pipeline",
                     }),
                   ],
                 },
@@ -353,8 +355,8 @@ describe("definePipeline", () => {
           const event =
             pipeline.steps[0]!.advancementPolicyDefinition.rulesJson.rules[0]!
               .event;
-          expect(event).toEqual({ type: "continue" });
-          expect(event.params).toBeUndefined();
+          expect(event).toEqual({ type: "route", params: { pipelineKey: "other-pipeline" } });
+          expect(event.params?.["inputJson"]).toBeUndefined();
         },
       );
 
@@ -681,7 +683,7 @@ describe("definePipeline", () => {
                   defaultOutcome: "block",
                   rules: [
                     Rule.when("success", "equal", true, "continue"),
-                    Rule.when("success", "equal", false, "needs_review"),
+                    Rule.when("success", "equal", false, "block"),
                   ],
                 },
               },
@@ -691,9 +693,9 @@ describe("definePipeline", () => {
           const policy = pipeline.steps[0]!.advancementPolicyDefinition;
           expect(policy.rulesJson.rules).toHaveLength(2);
           expect(policy.rulesJson.rules[0]!.event.type).toBe("continue");
-          expect(policy.rulesJson.rules[1]!.event.type).toBe("needs_review");
+          expect(policy.rulesJson.rules[1]!.event.type).toBe("block");
           expect(policy.allowedEventTypes).toEqual(
-            expect.arrayContaining(["block", "continue", "needs_review"]),
+            expect.arrayContaining(["block", "continue"]),
           );
         },
       );
@@ -859,7 +861,7 @@ describe("definePipeline", () => {
                     Computed.sum(["success", "repro_url"]),
                     "equal",
                     0,
-                    "needs_review",
+                    "block",
                   ),
                 ],
               },
